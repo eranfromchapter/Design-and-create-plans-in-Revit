@@ -1,0 +1,19 @@
+{
+  "catalog_version": "1.0.0",
+  "requires_human_input": false,
+  "note": "Engineering defaults for Part G MEP rules (IPC-derived fixture units and drain sizes). Reviewable constants, not placeholders. slope: 0.0208 (1/4 in/ft) for drains < 76 mm (3 in), 0.0104 (1/8 in/ft) for >= 76 mm (IPC Table 704.1).",
+  "default_fitting_allowance_mm": 150,
+  "slope_rules": [
+    { "max_diameter_mm_exclusive": 76, "slope": 0.0208 },
+    { "min_diameter_mm": 76, "slope": 0.0104 }
+  ],
+  "fixtures": {
+    "wc": { "fixture_units": 4, "drain_diameter_mm": 76, "hookups": ["sanitary", "supply_c", "vent"] },
+    "shower": { "fixture_units": 2, "drain_diameter_mm": 51, "hookups": ["sanitary", "supply_h", "supply_c", "vent"] },
+    "tub": { "fixture_units": 2, "drain_diameter_mm": 38, "hookups": ["sanitary", "supply_h", "supply_c", "vent"] },
+    "kitchen_sink": { "fixture_units": 2, "drain_diameter_mm": 38, "hookups": ["sanitary", "supply_h", "supply_c", "vent"] },
+    "lav": { "fixture_units": 1, "drain_diameter_mm": 32, "hookups": ["sanitary", "supply_h", "supply_c", "vent"] },
+    "dishwasher": { "fixture_units": 2, "drain_diameter_mm": 38, "hookups": ["sanitary", "supply_h", "electrical_120"] },
+    "washer": { "fixture_units": 2, "drain_diameter_mm": 51, "hookups": ["sanitary", "supply_h", "supply_c", "electrical_120"] }
+  }
+}

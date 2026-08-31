@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hub.chapter.internal/schemas/command-envelope-1.json",
+  "title": "CommandEnvelope",
+  "description": "Wire format for signed command envelopes. The gateway serializes EnvelopeBody ONCE (RFC 8785 canonical JSON) into `payload`; verifiers (plugin, revit-sim) compute HMAC-SHA256 over the exact received UTF-8 bytes of `payload` BEFORE any parsing, then parse and validate the body against $defs/EnvelopeBody and each op's args against ops/registry.json. Cross-language canonicalization is therefore never a verification dependency.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["payload", "sig"],
+  "properties": {
+    "payload": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 2000000,
+      "description": "EnvelopeBody as a JSON string, produced once by the gateway"
+    },
+    "sig": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "hex HMAC-SHA256 over the UTF-8 bytes of payload, keyed with HKDF(master, project_id)"
+    }
+  },
+  "$defs": {
+    "EnvelopeBody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["envelope_id", "project_id", "workstation_id", "seq", "issued_at", "ttl_s", "ops"],
+      "properties": {
+        "envelope_id": { "type": "string", "format": "uuid" },
+        "project_id": { "type": "string", "format": "uuid" },
+        "workstation_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+          "description": "inside the signed body: an envelope for workstation A cannot be replayed to workstation B"
+        },
+        "seq": { "type": "integer", "minimum": 1 },
+        "issued_at": { "type": "string", "format": "date-time" },
+        "ttl_s": { "type": "integer", "minimum": 10, "maximum": 3600 },
+        "commit_label": { "type": "string", "maxLength": 80 },
+        "approval_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["review_id", "content_hash"],
+          "properties": {
+            "review_id": { "type": "string", "format": "uuid" },
+            "content_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          },
+          "description": "binds the human-approved review-card content into the signature; REQUIRED for commit-class envelopes (Commit #0/#1/#2)"
+        },
+        "ops": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op", "args"],
+            "properties": {
+              "op": { "type": "string", "minLength": 1 },
+              "args": {
+                "type": "object",
+                "description": "validated against the op's args_schema in ops/registry.json by gateway, sim, and plugin"
+              }
+            }
+          }
+        }
+      }
+    },
+    "blobRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    }
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hub.chapter.internal/schemas/wss-messages-1.json",
+  "title": "WssMessage",
+  "description": "Every frame on the gateway<->plugin(sim) WSS channel, both directions, discriminated on `type`.",
+  "oneOf": [
+    { "$ref": "#/$defs/hello" },
+    { "$ref": "#/$defs/auth_ok" },
+    { "$ref": "#/$defs/auth_error" },
+    { "$ref": "#/$defs/envelope" },
+    { "$ref": "#/$defs/ack" },
+    { "$ref": "#/$defs/busy" },
+    { "$ref": "#/$defs/progress" },
+    { "$ref": "#/$defs/commit_result" },
+    { "$ref": "#/$defs/export_ready" },
+    { "$ref": "#/$defs/clash_delta" },
+    { "$ref": "#/$defs/state_divergence" },
+    { "$ref": "#/$defs/error" }
+  ],
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "sha256hex": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "blobRef": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "hello": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "workstation_id", "plugin_version", "last_committed_seq", "id_map_hash"],
+      "properties": {
+        "type": { "const": "hello" },
+        "workstation_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "plugin_version": { "type": "string", "minLength": 1 },
+        "open_project_id": { "$ref": "#/$defs/uuid" },
+        "last_committed_seq": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "read from Extensible Storage at document open; 0 = no committed envelope. The gateway resumes from the model's truth."
+        },
+        "id_map_hash": {
+          "$ref": "#/$defs/sha256hex",
+          "description": "hash of the persisted id-map; gateway-side mismatch marks the project dirty (drift gate)"
+        }
+      }
+    },
+    "auth_ok": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": { "type": { "const": "auth_ok" } }
+    },
+    "auth_error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "reason"],
+      "properties": {
+        "type": { "const": "auth_error" },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "payload", "sig"],
+      "properties": {
+        "type": { "const": "envelope" },
+        "payload": { "type": "string", "minLength": 2, "maxLength": 2000000 },
+        "sig": { "$ref": "#/$defs/sha256hex" }
+      },
+      "description": "gateway->plugin; payload/sig semantics per command-envelope.v1.json"
+    },
+    "ack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "envelope_id", "status"],
+      "properties": {
+        "type": { "const": "ack" },
+        "envelope_id": { "$ref": "#/$defs/uuid" },
+        "status": { "enum": ["accepted", "rejected"] },
+        "reason": {
+          "enum": ["bad_signature", "expired_ttl", "bad_seq", "unknown_op", "invalid_args", "wrong_workstation", "wrong_document", "schema_invalid", "internal"],
+          "description": "required when status=rejected"
+        }
+      }
+    },
+    "busy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "envelope_id", "reason"],
+      "properties": {
+        "type": { "const": "busy" },
+        "envelope_id": { "$ref": "#/$defs/uuid" },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "description": "plugin->gateway: accepted but execution deferred (modal Revit session, no document open); gateway timeout policy applies"
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "envelope_id", "ops_done", "ops_total"],
+      "properties": {
+        "type": { "const": "progress" },
+        "envelope_id": { "$ref": "#/$defs/uuid" },
+        "ops_done": { "type": "integer", "minimum": 0 },
+        "ops_total": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "commit_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "envelope_id", "status", "id_map_delta", "errors"],
+      "properties": {
+        "type": { "const": "commit_result" },
+        "envelope_id": { "$ref": "#/$defs/uuid" },
+        "status": { "enum": ["committed", "rolled_back"] },
+        "id_map_delta": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["logical_id", "element_id"],
+            "properties": {
+              "logical_id": { "type": "string", "minLength": 1 },
+              "element_id": { "type": "integer" }
+            }
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "message"],
+            "properties": {
+              "op_index": { "type": "integer", "minimum": 0 },
+              "code": { "type": "string", "minLength": 1 },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "export_ready": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "kind", "blob_ref"],
+      "properties": {
+        "type": { "const": "export_ready" },
+        "kind": { "enum": ["view", "parameters", "deviation", "model_state"] },
+        "blob_ref": { "$ref": "#/$defs/blobRef" }
+      }
+    },
+    "clash_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "envelope_id", "pairs"],
+      "properties": {
+        "type": { "const": "clash_delta" },
+        "envelope_id": { "$ref": "#/$defs/uuid" },
+        "pairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["a_id", "b_id", "kind"],
+            "properties": {
+              "a_id": { "type": "string", "minLength": 1 },
+              "b_id": { "type": "string", "minLength": 1 },
+              "kind": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      },
+      "description": "returned with a rolled_back Commit #2; consumed by the merge-gate re-plan loop (Part G clash recovery)"
+    },
+    "state_divergence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "last_valid_seq", "id_map_hash"],
+      "properties": {
+        "type": { "const": "state_divergence" },
+        "last_valid_seq": { "type": "integer", "minimum": 0 },
+        "id_map_hash": { "$ref": "#/$defs/sha256hex" },
+        "detail": { "type": "string" }
+      },
+      "description": "plugin->gateway on detected undo/redo or missing HUB-created elements (DocumentChanged); gateway marks the project dirty and forces the drift gate"
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "code", "message"],
+      "properties": {
+        "type": { "const": "error" },
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string" }
+      }
+    }
+  }
+}

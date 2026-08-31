@@ -1,0 +1,202 @@
+{
+  "description": "Signing/verification conformance vectors. Every implementation (TS, Python, C# Core) must produce these exact outcomes. verify_at is the injected 'now'; last_committed_seq is the persisted state the seq check runs against.",
+  "key_hex": "f00dfeedf00dfeedf00dfeedf00dfeedf00dfeedf00dfeedf00dfeedf00dfeed",
+  "cases": [
+    {
+      "name": "valid",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "accepted"
+    },
+    {
+      "name": "expired_ttl",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+      },
+      "verify_at": "2026-01-01T00:20:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "expired_ttl"
+    },
+    {
+      "name": "tampered_payload",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-02\"}",
+        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "bad_signature"
+    },
+    {
+      "name": "wrong_key",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "17538ac38e932fe77d7a76527ed0b52aafb5a56b8e2c962d0e14e954376965c4"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "bad_signature"
+    },
+    {
+      "name": "replayed_seq",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 2,
+      "expect": "rejected",
+      "reason": "bad_seq"
+    },
+    {
+      "name": "unknown_op",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{},\"op\":\"drop_all_walls\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "23de9b21b125bc4934607ce04f29afc6612a1c6cfee44da20e4646f571e66c4a"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "unknown_op"
+    },
+    {
+      "name": "invalid_args",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"name\":\"L1\"},\"op\":\"create_level\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "6f882c32a648ced93a6471a5269c0421d2eacac4762cc2a6a9e03e351f67df67"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "invalid_args"
+    },
+    {
+      "name": "ttl_boundary_accept",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+      },
+      "verify_at": "2026-01-01T00:10:00Z",
+      "last_committed_seq": 1,
+      "expect": "accepted"
+    },
+    {
+      "name": "ttl_boundary_plus_one_second",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+      },
+      "verify_at": "2026-01-01T00:10:01Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "expired_ttl"
+    },
+    {
+      "name": "malformed_payload_valid_sig",
+      "envelope": {
+        "payload": "{this is not json",
+        "sig": "a6adf90348e7496b388597e1579d70cbc76ed96d42cd7f10808daff9971ccc02"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "schema_invalid"
+    },
+    {
+      "name": "missing_workstation_id",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600}",
+        "sig": "cc6f399e439d5cc37551566e1d1e08e157a0773315e28b3da6ef305ad611c92a"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "schema_invalid"
+    },
+    {
+      "name": "null_ops",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":null,\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "cd4eee06baf99761d24d9bc1cf77b840bda4e52e55808e592ef552524ec3d597"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "schema_invalid"
+    },
+    {
+      "name": "empty_ops",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "e269a629b40a42137fedafabe03254c7437da7d7ca7fd3bc8925cddac33b85b4"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "schema_invalid"
+    },
+    {
+      "name": "args_not_an_object",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":42,\"op\":\"create_level\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "c96f8fe2ee9e6ef350fd56e2779e8f1ae5446201770804e45ff8591f37124f9c"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "schema_invalid"
+    },
+    {
+      "name": "bad_issued_at_date_only",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "ec7adc2d82d2cf6e556a75302bd67edef1ca0df61c64392df06c08f3b8c72d01"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "schema_invalid"
+    },
+    {
+      "name": "uppercase_hex_sig",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "4BAC67EFE123E82821BBA114B28F7B917447244C7CEA08DDBA22D11C22C452EB"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "bad_signature"
+    },
+    {
+      "name": "non_hex_sig",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "bad_signature"
+    },
+    {
+      "name": "non_ascii_sig",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "café67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "bad_signature"
+    }
+  ]
+}

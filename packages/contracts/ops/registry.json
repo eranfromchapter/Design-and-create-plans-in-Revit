@@ -1,0 +1,333 @@
+{
+  "registry_version": "1.0",
+  "description": "The op allowlist — the ONLY things the plugin and revit-sim can execute. Gateway (before signing), revit-sim, and plugin (before enqueue) each validate every ops[i].args against that op's args_schema. Each args_schema is a self-contained JSON Schema 2020-12. Adding an op requires: entry here + plugin handler + sim handler + tests + human sign-off (Rule 2).",
+  "ops": {
+    "create_level": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "elevation"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "elevation": { "type": "number" }
+        }
+      },
+      "revit_mapping": "Level.Create(doc, mmToFt(elevation))",
+      "sim_behavior": "add level record"
+    },
+    "create_wall": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "start", "end", "revit_type", "height", "phase"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
+          "start": { "$ref": "#/$defs/pt2" },
+          "end": { "$ref": "#/$defs/pt2" },
+          "revit_type": { "type": "string", "minLength": 1 },
+          "height": { "type": "number", "minimum": 2100, "maximum": 6000 },
+          "phase": { "enum": ["existing", "new"] },
+          "flags": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "is_exterior": { "type": "boolean" },
+              "is_load_bearing": { "type": "boolean" },
+              "is_demising": { "type": "boolean" },
+              "is_wet_wall": { "type": "boolean" },
+              "fire_rating_hr": { "enum": [0, 1, 2] }
+            }
+          }
+        },
+        "$defs": {
+          "pt2": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }], "items": false, "minItems": 2, "maxItems": 2 }
+        }
+      },
+      "revit_mapping": "Wall.Create(doc, Line(start,end), typeId(revit_type), levelId, mmToFt(height), 0, false, is_load_bearing) + phase param; wall exterior/finish side = the LEFT side of start->end (v1 has no flip flag — emitters orient by choosing vertex order)",
+      "sim_behavior": "add wall; reject duplicate id or revit_type not in catalog"
+    },
+    "create_door": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "host_wall_id", "offset", "revit_type", "width", "height", "swing"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^D-[0-9]{3}$" },
+          "host_wall_id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
+          "offset": { "type": "number", "minimum": 0, "description": "mm from host wall start vertex to opening CENTERLINE" },
+          "revit_type": { "type": "string", "minLength": 1 },
+          "width": { "type": "number", "minimum": 610, "maximum": 1830 },
+          "height": { "type": "number", "minimum": 1980, "maximum": 2440 },
+          "swing": { "enum": ["L", "R"] },
+          "flip_facing": { "type": "boolean" }
+        }
+      },
+      "revit_mapping": "NewFamilyInstance(pointOnWall(host, offset), symbol(revit_type), hostWall, level, NonStructural); swing/facing per D1 conventions",
+      "sim_behavior": "add opening; reject offset +/- width/2 outside host length or unknown host id"
+    },
+    "create_window": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "host_wall_id", "offset", "sill_height", "revit_type", "width", "height"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^N-[0-9]{3}$" },
+          "host_wall_id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
+          "offset": { "type": "number", "minimum": 0 },
+          "sill_height": { "type": "number", "minimum": 0, "maximum": 1800 },
+          "revit_type": { "type": "string", "minLength": 1 },
+          "width": { "type": "number", "exclusiveMinimum": 0 },
+          "height": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      },
+      "revit_mapping": "NewFamilyInstance hosted, sill via INSTANCE_SILL_HEIGHT_PARAM",
+      "sim_behavior": "same as create_door"
+    },
+    "place_family": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "revit_family", "revit_type", "center", "rotation_deg", "footprint", "level"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Z]{1,2}-[0-9]{2,4}$" },
+          "revit_family": { "type": "string", "minLength": 1 },
+          "revit_type": { "type": "string", "minLength": 1 },
+          "center": { "$ref": "#/$defs/pt2" },
+          "rotation_deg": { "type": "number", "minimum": 0, "exclusiveMaximum": 360 },
+          "footprint": { "$ref": "#/$defs/size2" },
+          "level": { "type": "string", "minLength": 1 }
+        },
+        "$defs": {
+          "pt2": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }], "items": false, "minItems": 2, "maxItems": 2 },
+          "size2": { "type": "array", "prefixItems": [{ "type": "number", "exclusiveMinimum": 0 }, { "type": "number", "exclusiveMinimum": 0 }], "items": false, "minItems": 2, "maxItems": 2 }
+        }
+      },
+      "revit_mapping": "NewFamilyInstance + ElementTransformUtils.RotateElement",
+      "sim_behavior": "add instance with oriented footprint rectangle + its AABB"
+    },
+    "place_device": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "host_wall_id", "offset", "height_afl"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^E-[0-9]{2,4}$" },
+          "kind": { "enum": ["receptacle", "switch", "gfci"] },
+          "host_wall_id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
+          "offset": { "type": "number", "minimum": 0 },
+          "height_afl": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      },
+      "revit_mapping": "face-hosted NewFamilyInstance on the host wall face",
+      "sim_behavior": "add device point"
+    },
+    "create_pipe": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "system", "pipe_type", "level", "path", "diameter"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^P-[0-9]{2,4}$" },
+          "system": { "enum": ["sanitary", "supply_h", "supply_c", "vent"] },
+          "pipe_type": { "type": "string", "minLength": 1 },
+          "level": { "type": "string", "minLength": 1 },
+          "path": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 100,
+            "items": { "$ref": "#/$defs/pt3" }
+          },
+          "diameter": { "type": "number", "exclusiveMinimum": 0 }
+        },
+        "$defs": {
+          "pt3": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number" }], "items": false, "minItems": 3, "maxItems": 3 }
+        }
+      },
+      "revit_mapping": "Pipe.Create per segment; fittings: standard 90/45 elbows only in v1 — tee/wye into stacks emits REVIEW for manual completion (requires template with routing preferences; runbook prerequisite)",
+      "sim_behavior": "add polyline with radius"
+    },
+    "create_conduit": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "level", "path", "diameter"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^Q-[0-9]{2,4}$" },
+          "level": { "type": "string", "minLength": 1 },
+          "path": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 100,
+            "items": { "$ref": "#/$defs/pt3" }
+          },
+          "diameter": { "type": "number", "exclusiveMinimum": 0 }
+        },
+        "$defs": {
+          "pt3": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number" }], "items": false, "minItems": 3, "maxItems": 3 }
+        }
+      },
+      "revit_mapping": "Conduit.Create per segment",
+      "sim_behavior": "add polyline"
+    },
+    "set_parameter": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_id", "param", "value"],
+        "properties": {
+          "target_id": { "type": "string", "minLength": 1 },
+          "param": { "type": "string", "minLength": 1, "description": "MUST be present in ops/param_allowlist.json (SI-4); enforced by gateway, sim, and plugin" },
+          "value": { "type": ["string", "number", "boolean"] }
+        }
+      },
+      "revit_mapping": "Parameter.Set on the id-mapped element",
+      "sim_behavior": "update record; reject param not in allowlist"
+    },
+    "set_phase_demolished": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_id"],
+        "properties": {
+          "target_id": { "type": "string", "minLength": 1 }
+        }
+      },
+      "revit_mapping": "set PHASE_DEMOLISHED on the id-mapped element",
+      "sim_behavior": "mark record demolished"
+    },
+    "delete_element": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_id"],
+        "properties": {
+          "target_id": { "type": "string", "minLength": 1 }
+        }
+      },
+      "revit_mapping": "doc.Delete on the id-mapped element; VALID ONLY for source=generated elements (SI-8)",
+      "sim_behavior": "remove record; reject scan-sourced ids"
+    },
+    "update_wall": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id"],
+        "minProperties": 2,
+        "properties": {
+          "id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
+          "start": { "$ref": "#/$defs/pt2" },
+          "end": { "$ref": "#/$defs/pt2" },
+          "height": { "type": "number", "minimum": 2100, "maximum": 6000 },
+          "revit_type": { "type": "string", "minLength": 1 }
+        },
+        "$defs": {
+          "pt2": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }], "items": false, "minItems": 2, "maxItems": 2 }
+        }
+      },
+      "revit_mapping": "location-curve/type/height edit; VALID ONLY for source=generated walls (SI-8)",
+      "sim_behavior": "update record; reject scan-sourced ids"
+    },
+    "link_pointcloud": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["blob_ref"],
+        "properties": {
+          "blob_ref": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$", "description": "pre-indexed .rcs/.rcp (or E57 on Revit 2025+) only — indexing happens out-of-band BEFORE the envelope is issued, never inside an op" }
+        }
+      },
+      "revit_mapping": "resolve ref against configured blob store -> sandbox download (size-capped) -> PointCloudType.Create + instance, pinned",
+      "sim_behavior": "no-op, record ref"
+    },
+    "export_views": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["views"],
+        "properties": {
+          "views": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "kind", "px"],
+              "properties": {
+                "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+                "kind": { "enum": ["plan", "section", "3d_hidden"] },
+                "px": { "type": "integer", "minimum": 256, "maximum": 4096 }
+              }
+            }
+          }
+        }
+      },
+      "revit_mapping": "ImageExportOptions -> PNG -> blob -> export_ready",
+      "sim_behavior": "render canonical SVG -> rasterize to PNG at requested px -> blob (bridge consumes one format from both executors)"
+    },
+    "export_parameters": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["categories"],
+        "properties": {
+          "categories": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 40,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "revit_mapping": "FilteredElementCollector harvest -> JSON blob -> export_ready",
+      "sim_behavior": "dump records"
+    },
+    "verify_deviation": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["wall_ids", "tolerance_mm"],
+        "properties": {
+          "wall_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 400,
+            "items": { "type": "string", "pattern": "^W-[0-9]{3}$" }
+          },
+          "tolerance_mm": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      },
+      "revit_mapping": "sample PointCloudInstance.GetPoints near faces, RMS per wall -> export_ready {kind: deviation}",
+      "sim_behavior": "synthetic pass/fail from fixture"
+    },
+    "verify_model_state": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["element_ids"],
+        "properties": {
+          "element_ids": {
+            "type": "array",
+            "maxItems": 2000,
+            "items": { "type": "string", "minLength": 1 },
+            "description": "empty array = all id-mapped elements"
+          }
+        }
+      },
+      "revit_mapping": "existence + geometry hash per id-mapped element -> JSON blob -> export_ready {kind: model_state}; consumed by the gateway drift gate before any post-Commit-#0 envelope",
+      "sim_behavior": "hash records"
+    },
+    "run_interference_check": {
+      "args_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scope"],
+        "properties": {
+          "scope": { "const": "last_commit" }
+        }
+      },
+      "revit_mapping": "ElementIntersectsElementFilter over the created set; hard interference -> whole-envelope rollback + clash_delta",
+      "sim_behavior": "oriented-footprint overlap check over the created set"
+    }
+  }
+}

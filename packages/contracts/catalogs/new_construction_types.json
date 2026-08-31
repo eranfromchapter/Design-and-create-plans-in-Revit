@@ -1,0 +1,23 @@
+{
+  "catalog_version": "0.0.0-placeholder",
+  "requires_human_input": true,
+  "note": "PLACEHOLDER — replace with the real new-construction type vocabulary from Chapter's Revit template before Phase 4 goes live. The layout-compiler prompt injects this as the closed vocabulary; the validator and revit-sim reject anything outside it.",
+  "walls": [
+    { "revit_type": "CHPT_Partition_92mm_PLACEHOLDER", "thickness_mm": 92 },
+    { "revit_type": "CHPT_Partition_Wet_152mm_PLACEHOLDER", "thickness_mm": 152 },
+    { "revit_type": "CHPT_Partition_1hr_124mm_PLACEHOLDER", "thickness_mm": 124, "fire_rating_hr": 1 }
+  ],
+  "doors": [
+    { "revit_type": "CHPT_Door_Single_PLACEHOLDER", "revit_family": "CHPT_Door_PLACEHOLDER" },
+    { "revit_type": "CHPT_Door_Pocket_PLACEHOLDER", "revit_family": "CHPT_Door_Pocket_PLACEHOLDER" }
+  ],
+  "windows": [
+    { "revit_type": "CHPT_Window_DoubleHung_PLACEHOLDER", "revit_family": "CHPT_Window_PLACEHOLDER" }
+  ],
+  "families": [
+    { "revit_family": "CHPT_Sofa_PLACEHOLDER", "kinds": ["sofa"] },
+    { "revit_family": "CHPT_WC_PLACEHOLDER", "kinds": ["wc"] },
+    { "revit_family": "CHPT_Lav_PLACEHOLDER", "kinds": ["lav"] },
+    { "revit_family": "CHPT_KitchenSink_PLACEHOLDER", "kinds": ["kitchen_sink"] }
+  ]
+}

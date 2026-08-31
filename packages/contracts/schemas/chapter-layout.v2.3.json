@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hub.chapter.internal/schemas/chapter-layout-2.3.json",
+  "title": "ChapterLayout",
+  "description": "Layout document, schema v2.3 (v2.2 + the v1.1 plan amendments). All coordinates in millimeters. No defaults are materialized by this schema; per-field defaults live in code and are documented in packages/contracts/README.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["meta", "walls", "doors", "windows", "rooms", "furniture", "constraints"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_id", "level", "units", "origin", "schema_version", "brief_version", "phase"],
+      "properties": {
+        "project_id": { "type": "string", "format": "uuid" },
+        "level": { "type": "string", "minLength": 1 },
+        "units": { "const": "mm" },
+        "origin": { "const": "revit_internal_origin" },
+        "schema_version": { "const": "2.3" },
+        "brief_version": { "type": "integer", "minimum": 0 },
+        "phase": { "enum": ["existing", "new"] },
+        "levels": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "floor_z": { "type": "number" },
+            "ceiling_z": { "type": "number" },
+            "slab_to_slab": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "electrical": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "panel": { "$ref": "#/$defs/pt2" }
+          }
+        },
+        "scan": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "capture"],
+          "properties": {
+            "source": { "const": "polycam" },
+            "capture": { "enum": ["floorplan_dxf", "pointcloud"] },
+            "cloud_ref": { "$ref": "#/$defs/blobRef" },
+            "scale_factor": { "type": "number", "minimum": 0.99, "maximum": 1.01 },
+            "rms_deviation_mm": { "type": "number", "minimum": 0 }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["scan"],
+            "properties": {
+              "scan": {
+                "required": ["capture"],
+                "properties": { "capture": { "const": "pointcloud" } }
+              }
+            }
+          },
+          "then": {
+            "required": ["levels"],
+            "properties": {
+              "levels": { "required": ["floor_z", "ceiling_z"] }
+            }
+          }
+        }
+      ]
+    },
+    "walls": {
+      "type": "array",
+      "maxItems": 400,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "start", "end", "revit_type", "height"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
+          "start": { "$ref": "#/$defs/pt2" },
+          "end": { "$ref": "#/$defs/pt2" },
+          "revit_type": { "type": "string", "minLength": 1 },
+          "height": { "type": "number", "minimum": 2100, "maximum": 6000 },
+          "is_exterior": { "type": "boolean" },
+          "is_load_bearing": { "type": "boolean" },
+          "is_demising": { "type": "boolean" },
+          "is_wet_wall": { "type": "boolean" },
+          "fire_rating_hr": { "enum": [0, 1, 2] },
+          "as_built_thickness": { "type": "number", "exclusiveMinimum": 0 },
+          "curved_approximation": { "type": "boolean" },
+          "confidence": { "$ref": "#/$defs/confidence" },
+          "source": { "enum": ["scan", "generated"] }
+        }
+      }
+    },
+    "doors": {
+      "type": "array",
+      "maxItems": 120,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "host_wall_id", "offset", "width", "height", "revit_type"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^D-[0-9]{3}$" },
+          "host_wall_id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
+          "offset": {
+            "type": "number",
+            "minimum": 0,
+            "description": "mm from the host wall's start vertex, along the start-to-end centerline, to the opening CENTERLINE"
+          },
+          "width": { "type": "number", "minimum": 610, "maximum": 1830 },
+          "height": { "type": "number", "minimum": 1980, "maximum": 2440 },
+          "revit_type": { "type": "string", "minLength": 1 },
+          "swing": {
+            "enum": ["L", "R"],
+            "description": "hinge side viewed along the host wall's start-to-end direction from the flip_facing=false side"
+          },
+          "flip_facing": { "type": "boolean" },
+          "confidence": { "$ref": "#/$defs/confidence" }
+        }
+      }
+    },
+    "windows": {
+      "type": "array",
+      "maxItems": 120,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "host_wall_id", "offset", "width", "height", "sill_height", "revit_type"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^N-[0-9]{3}$" },
+          "host_wall_id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
+          "offset": {
+            "type": "number",
+            "minimum": 0,
+            "description": "mm from the host wall's start vertex to the opening centerline (same convention as doors)"
+          },
+          "width": { "type": "number", "exclusiveMinimum": 0 },
+          "height": { "type": "number", "exclusiveMinimum": 0 },
+          "sill_height": { "type": "number", "minimum": 0, "maximum": 1800 },
+          "revit_type": { "type": "string", "minLength": 1 },
+          "confidence": { "$ref": "#/$defs/confidence" }
+        }
+      }
+    },
+    "rooms": {
+      "type": "array",
+      "maxItems": 60,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "program", "boundary", "boundary_wall_ids"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^R-[0-9]{3}$" },
+          "name": { "type": "string", "minLength": 1 },
+          "program": {
+            "enum": ["kitchen", "bathroom", "powder", "bedroom", "living", "dining", "laundry", "closet", "corridor", "office", "other"]
+          },
+          "boundary": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 100,
+            "items": { "$ref": "#/$defs/pt2" },
+            "description": "ordered simple polygon (implicit closure; first vertex not repeated); all room geometry predicates derive from this"
+          },
+          "boundary_wall_ids": {
+            "type": "array",
+            "minItems": 3,
+            "items": { "type": "string", "pattern": "^W-[0-9]{3}$" }
+          },
+          "adjacent_room_ids": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^R-[0-9]{3}$" }
+          },
+          "wet_zone": { "type": "boolean" },
+          "min_area_m2": { "type": "number", "minimum": 1 }
+        }
+      }
+    },
+    "furniture": {
+      "type": "array",
+      "maxItems": 60,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["room_id", "items"],
+        "properties": {
+          "room_id": { "type": "string", "pattern": "^R-[0-9]{3}$" },
+          "items": {
+            "type": "array",
+            "maxItems": 40,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "kind", "revit_family", "revit_type", "center", "rotation_deg", "footprint"],
+              "properties": {
+                "id": { "type": "string", "pattern": "^F-[0-9]{3,4}$" },
+                "kind": {
+                  "enum": ["wc", "lav", "shower", "tub", "kitchen_sink", "dishwasher", "washer", "dryer", "range", "oven", "refrigerator", "sofa", "bed", "table", "chair", "desk", "wardrobe", "generic"],
+                  "description": "semantic kind consumed by Part G MEP rules; never inferred from family-name strings"
+                },
+                "revit_family": { "type": "string", "minLength": 1 },
+                "revit_type": { "type": "string", "minLength": 1 },
+                "center": { "$ref": "#/$defs/pt2" },
+                "rotation_deg": { "type": "number", "minimum": 0, "exclusiveMaximum": 360 },
+                "footprint": {
+                  "$ref": "#/$defs/size2",
+                  "description": "[width_mm, depth_mm]; rotation_deg rotates the width axis CCW about center; clash geometry is the rotated oriented rectangle"
+                },
+                "fixture_units": { "type": "number", "minimum": 0 },
+                "hookups": {
+                  "type": "array",
+                  "items": { "enum": ["sanitary", "supply_h", "supply_c", "vent", "gas", "electrical_120", "electrical_240"] }
+                },
+                "clearance_front": { "type": "number", "minimum": 0 },
+                "wall_seeking": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "casework": {
+      "type": "array",
+      "maxItems": 80,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "host_wall_id", "offset", "length", "depth", "height", "is_counter", "revit_family", "revit_type"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^K-[0-9]{3}$" },
+          "host_wall_id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
+          "offset": { "type": "number", "minimum": 0, "description": "mm from host wall start vertex to the run's start" },
+          "length": { "type": "number", "exclusiveMinimum": 0 },
+          "depth": { "type": "number", "exclusiveMinimum": 0 },
+          "height": { "type": "number", "exclusiveMinimum": 0 },
+          "is_counter": { "type": "boolean", "description": "true = counter run; E-2 counter-receptacle rules apply to the host wall segment" },
+          "revit_family": { "type": "string", "minLength": 1 },
+          "revit_type": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "columns": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "center", "footprint"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^C-[0-9]{3}$" },
+          "center": { "$ref": "#/$defs/pt2" },
+          "footprint": { "$ref": "#/$defs/size2" },
+          "confidence": { "$ref": "#/$defs/confidence" }
+        }
+      }
+    },
+    "risers": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "center"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^RS-[0-9]{2}$" },
+          "type": { "enum": ["sanitary", "vent", "gas", "steam", "electrical"] },
+          "center": { "$ref": "#/$defs/pt2" }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "circulation_min": { "type": "number", "exclusiveMinimum": 0 },
+        "ada": { "type": "boolean" },
+        "outlet_spacing": { "type": "number", "exclusiveMinimum": 0 },
+        "style_tags": {
+          "type": "array",
+          "maxItems": 12,
+          "items": { "type": "string", "minLength": 1, "maxLength": 40 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "pt2": {
+      "type": "array",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "size2": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number", "exclusiveMinimum": 0 },
+        { "type": "number", "exclusiveMinimum": 0 }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "blobRef": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+      "description": "opaque id resolved only against the configured blob store; never a URL or filesystem path"
+    }
+  }
+}

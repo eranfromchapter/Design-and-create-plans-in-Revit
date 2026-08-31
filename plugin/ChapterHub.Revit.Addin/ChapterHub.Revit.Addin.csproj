@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The Revit-facing add-in shell. Phase 1 adds the Nice3point Revit API packages
+       (compile-only), the WSS transport, the ExternalEvent executor (one envelope per pass,
+       Part G), op handlers, and the Extensible Storage id-map/seq store. It carries NO tests
+       (all pure logic lives in ChapterHub.Core). EnableWindowsTargeting lets Linux CI build
+       the net8.0-windows target compile-only. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ChapterHub.Core/ChapterHub.Core.csproj" />
+  </ItemGroup>
+
+</Project>

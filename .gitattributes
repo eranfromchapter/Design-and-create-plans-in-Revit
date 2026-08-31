@@ -1,0 +1,17 @@
+# The CI codegen drift gates compare regenerated output byte-for-byte; keep line endings
+# deterministic across contributor platforms (Phase 1 adds Windows workstations).
+* text=auto
+
+*.sh text eol=lf
+Makefile text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+packages/contracts/ts/src/generated/** text eol=lf
+packages/contracts/python/src/chapter_contracts/generated/** text eol=lf
+packages/contracts/fixtures/** text eol=lf
+
+*.png binary
+*.rcs binary
+*.rcp binary
+*.las binary

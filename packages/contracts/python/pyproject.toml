@@ -1,0 +1,35 @@
+[project]
+name = "chapter-contracts"
+version = "0.1.0"
+description = "Generated pydantic v2 contract types + envelope verification (Python side of packages/contracts)"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.11,<3",
+    "jsonschema[format]>=4.25,<5",
+    "rfc8785>=0.1.4,<0.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4,<9",
+    "ruff>=0.13,<0.15",
+    "datamodel-code-generator>=0.35,<0.36",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chapter_contracts"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["src/chapter_contracts/generated"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

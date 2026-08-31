@@ -1,0 +1,6 @@
+{
+  "catalog_version": "0.0.0-placeholder",
+  "requires_human_input": true,
+  "note": "PLACEHOLDER — seed with the 30 real Chapter SKUs (ask Eran; critical path for Phase 8). Fields per SKU: sku, manufacturer, model, description, finish_tier, csi_section, unit.",
+  "skus": []
+}
