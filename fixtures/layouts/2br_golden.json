@@ -1,0 +1,383 @@
+{
+  "meta": {
+    "project_id": "1f6b3c58-7a2d-4e90-9c41-2b8f5d6a7e01",
+    "level": "Level 1",
+    "units": "mm",
+    "origin": "revit_internal_origin",
+    "schema_version": "2.3",
+    "brief_version": 0,
+    "phase": "existing",
+    "scan": {
+      "source": "polycam",
+      "capture": "floorplan_dxf"
+    }
+  },
+  "walls": [
+    {
+      "id": "W-001",
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        7000.0
+      ],
+      "revit_type": "CHPT_AsBuilt_250mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 250.0,
+      "confidence": 0.85,
+      "source": "scan"
+    },
+    {
+      "id": "W-002",
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        8000.0,
+        0.0
+      ],
+      "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 300.0,
+      "confidence": 0.85,
+      "source": "scan"
+    },
+    {
+      "id": "W-003",
+      "start": [
+        0.0,
+        3825.0
+      ],
+      "end": [
+        3600.0,
+        3825.0
+      ],
+      "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 100.0,
+      "confidence": 0.85,
+      "source": "scan"
+    },
+    {
+      "id": "W-004",
+      "start": [
+        0.0,
+        7000.0
+      ],
+      "end": [
+        11400.0,
+        7000.0
+      ],
+      "revit_type": "CHPT_AsBuilt_200mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 200.0,
+      "confidence": 0.85,
+      "source": "scan"
+    },
+    {
+      "id": "W-005",
+      "start": [
+        3600.0,
+        0.0
+      ],
+      "end": [
+        3600.0,
+        7000.0
+      ],
+      "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 100.0,
+      "confidence": 0.85,
+      "source": "scan"
+    },
+    {
+      "id": "W-006",
+      "start": [
+        3600.0,
+        4600.0
+      ],
+      "end": [
+        7000.0,
+        4600.0
+      ],
+      "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 100.0,
+      "confidence": 0.85,
+      "source": "scan"
+    },
+    {
+      "id": "W-007",
+      "start": [
+        5300.0,
+        4600.0
+      ],
+      "end": [
+        5300.0,
+        7000.0
+      ],
+      "revit_type": "CHPT_AsBuilt_150mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 150.0,
+      "confidence": 0.85,
+      "source": "scan"
+    },
+    {
+      "id": "W-008",
+      "start": [
+        7000.0,
+        4600.0
+      ],
+      "end": [
+        7150.0,
+        7000.0
+      ],
+      "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 100.0,
+      "confidence": 0.7,
+      "source": "scan"
+    },
+    {
+      "id": "W-009",
+      "start": [
+        8000.0,
+        0.0
+      ],
+      "end": [
+        8258.1,
+        -168.1
+      ],
+      "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 300.0,
+      "confidence": 0.6,
+      "source": "scan",
+      "curved_approximation": true
+    },
+    {
+      "id": "W-010",
+      "start": [
+        8258.1,
+        -168.1
+      ],
+      "end": [
+        8543.6,
+        -283.7
+      ],
+      "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 300.0,
+      "confidence": 0.6,
+      "source": "scan",
+      "curved_approximation": true
+    },
+    {
+      "id": "W-011",
+      "start": [
+        8543.6,
+        -283.7
+      ],
+      "end": [
+        8846.0,
+        -342.6
+      ],
+      "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 300.0,
+      "confidence": 0.6,
+      "source": "scan",
+      "curved_approximation": true
+    },
+    {
+      "id": "W-012",
+      "start": [
+        8846.0,
+        -342.6
+      ],
+      "end": [
+        9154.0,
+        -342.6
+      ],
+      "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 300.0,
+      "confidence": 0.6,
+      "source": "scan",
+      "curved_approximation": true
+    },
+    {
+      "id": "W-013",
+      "start": [
+        9154.0,
+        -342.6
+      ],
+      "end": [
+        9456.4,
+        -283.7
+      ],
+      "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 300.0,
+      "confidence": 0.6,
+      "source": "scan",
+      "curved_approximation": true
+    },
+    {
+      "id": "W-014",
+      "start": [
+        9456.4,
+        -283.7
+      ],
+      "end": [
+        9741.9,
+        -168.1
+      ],
+      "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 300.0,
+      "confidence": 0.6,
+      "source": "scan",
+      "curved_approximation": true
+    },
+    {
+      "id": "W-015",
+      "start": [
+        9741.9,
+        -168.1
+      ],
+      "end": [
+        10000.0,
+        0.0
+      ],
+      "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 300.0,
+      "confidence": 0.6,
+      "source": "scan",
+      "curved_approximation": true
+    },
+    {
+      "id": "W-016",
+      "start": [
+        10000.0,
+        0.0
+      ],
+      "end": [
+        11400.0,
+        0.0
+      ],
+      "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 300.0,
+      "confidence": 0.85,
+      "source": "scan"
+    },
+    {
+      "id": "W-017",
+      "start": [
+        11400.0,
+        0.0
+      ],
+      "end": [
+        11400.0,
+        7000.0
+      ],
+      "revit_type": "CHPT_AsBuilt_250mm_PLACEHOLDER",
+      "height": 2700.0,
+      "as_built_thickness": 250.0,
+      "confidence": 0.85,
+      "source": "scan"
+    }
+  ],
+  "doors": [
+    {
+      "id": "D-001",
+      "host_wall_id": "W-004",
+      "offset": 8600.0,
+      "width": 915.0,
+      "height": 2040.0,
+      "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+      "swing": "L",
+      "confidence": 0.8
+    },
+    {
+      "id": "D-002",
+      "host_wall_id": "W-005",
+      "offset": 2000.0,
+      "width": 762.0,
+      "height": 2040.0,
+      "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+      "swing": "L",
+      "confidence": 0.8
+    },
+    {
+      "id": "D-003",
+      "host_wall_id": "W-005",
+      "offset": 4212.0,
+      "width": 711.0,
+      "height": 2040.0,
+      "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+      "swing": "L",
+      "confidence": 0.8
+    },
+    {
+      "id": "D-004",
+      "host_wall_id": "W-006",
+      "offset": 850.0,
+      "width": 711.0,
+      "height": 2040.0,
+      "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+      "swing": "L",
+      "confidence": 0.8
+    },
+    {
+      "id": "D-005",
+      "host_wall_id": "W-006",
+      "offset": 2550.0,
+      "width": 915.0,
+      "height": 2040.0,
+      "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+      "swing": "L",
+      "confidence": 0.8
+    }
+  ],
+  "windows": [
+    {
+      "id": "N-001",
+      "host_wall_id": "W-002",
+      "offset": 1800.0,
+      "width": 1067.0,
+      "height": 1400.0,
+      "sill_height": 900.0,
+      "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+      "confidence": 0.8
+    },
+    {
+      "id": "N-002",
+      "host_wall_id": "W-002",
+      "offset": 6800.0,
+      "width": 1067.0,
+      "height": 1400.0,
+      "sill_height": 900.0,
+      "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+      "confidence": 0.8
+    },
+    {
+      "id": "N-003",
+      "host_wall_id": "W-016",
+      "offset": 700.0,
+      "width": 915.0,
+      "height": 1400.0,
+      "sill_height": 900.0,
+      "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+      "confidence": 0.8
+    }
+  ],
+  "rooms": [],
+  "furniture": [],
+  "constraints": {}
+}

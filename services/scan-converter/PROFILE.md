@@ -11,7 +11,7 @@ profile-v2 item if it differs. Constants live in `src/scan_converter/profile.py`
 
 | Element | Layer (case-insensitive synonyms) | Entity | Semantics |
 | --- | --- | --- | --- |
-| Wall | `WALLS`, `WALL`, `A-WALL` | LWPOLYLINE / POLYLINE with `const_width > 0` | Vertices trace the wall **centerline**; `const_width` = thickness; bulges allowed (tessellated at max sagitta 10 mm) |
+| Wall | `WALLS`, `WALL`, `A-WALL` | LWPOLYLINE with `const_width > 0` | Vertices trace the wall **centerline**; `const_width` = thickness; bulges allowed (tessellated at max sagitta 10 mm). LINEs and heavyweight POLYLINEs on a wall layer are `profile_violation`s |
 | Door | `DOORS`, `DOOR`, `A-DOOR` | LINE or 2-vertex LWPOLYLINE | Segment lies **along** the host wall centerline spanning the opening width |
 | Window | `WINDOWS`, `WINDOW`, `A-GLAZ` | LINE or 2-vertex LWPOLYLINE | Same as doors |
 | Room label | `ROOMS`, `ROOM`, `A-AREA` | TEXT / MTEXT | Informational only (review payload; `rooms: []` at Commit #0) |
