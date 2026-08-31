@@ -13,6 +13,65 @@ def test_unknown_wall_type_rolls_back(make_executor):
     assert ex.model.walls == {}
 
 
+def test_asbuilt_opening_types_accepted(make_executor):
+    """Commit #0 doors/windows carry the as-built placeholder types (Phase 2 Lane A);
+    Catalogs.load unions them with the new-construction vocabulary."""
+    ex = make_executor()
+    host = wall_op(1, revit_type="CHPT_AsBuilt_200mm_PLACEHOLDER")
+    host["args"]["phase"] = "existing"
+    ops = [
+        host,
+        {
+            "op": "create_door",
+            "args": {
+                "id": "D-001",
+                "host_wall_id": "W-001",
+                "offset": 1000,
+                "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+                "width": 915,
+                "height": 2040,
+                "swing": "L",
+            },
+        },
+        {
+            "op": "create_window",
+            "args": {
+                "id": "N-001",
+                "host_wall_id": "W-001",
+                "offset": 3000,
+                "sill_height": 900,
+                "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+                "width": 1067,
+                "height": 1400,
+            },
+        },
+    ]
+    messages = ex.handle_envelope(sign_envelope(make_body(1, ops)))
+    assert messages[-1]["status"] == "committed"
+    assert "D-001" in ex.model.doors and "N-001" in ex.model.windows
+
+
+def test_unknown_door_type_rolls_back(make_executor):
+    ex = make_executor()
+    host = wall_op(1, revit_type="CHPT_AsBuilt_200mm_PLACEHOLDER")
+    door = {
+        "op": "create_door",
+        "args": {
+            "id": "D-001",
+            "host_wall_id": "W-001",
+            "offset": 1000,
+            "revit_type": "Single-Flush 36x80",
+            "width": 915,
+            "height": 2040,
+            "swing": "L",
+        },
+    }
+    messages = ex.handle_envelope(sign_envelope(make_body(1, [host, door])))
+    assert messages[-1]["status"] == "rolled_back"
+    assert messages[-1]["errors"][0]["code"] == "unknown_revit_type"
+    assert ex.model.walls == {} and ex.model.doors == {}
+
+
 def test_param_allowlist_enforced(make_executor):
     ex = make_executor()
     ex.handle_envelope(sign_envelope(make_body(1, [wall_op(1)])))

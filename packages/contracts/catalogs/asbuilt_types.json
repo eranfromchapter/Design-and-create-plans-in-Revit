@@ -9,5 +9,11 @@
     { "revit_type": "CHPT_AsBuilt_250mm_PLACEHOLDER", "thickness_mm": 250 },
     { "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER", "thickness_mm": 300 }
   ],
+  "doors": [
+    { "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER", "revit_family": "CHPT_AsBuilt_Door_PLACEHOLDER" }
+  ],
+  "windows": [
+    { "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER", "revit_family": "CHPT_AsBuilt_Window_PLACEHOLDER" }
+  ],
   "bucket_tolerance_mm": 10
 }
