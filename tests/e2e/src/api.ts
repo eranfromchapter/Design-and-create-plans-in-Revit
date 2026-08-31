@@ -7,6 +7,7 @@ const enrolled = z.object({ workstation_id: z.string(), token: z.string() });
 const issued = z.object({ envelope_id: z.string(), seq: z.number() });
 const stateSchema = z.object({
   drift_state: z.enum(["clean", "dirty"]),
+  commit0_done: z.boolean(),
   executor_connected: z.boolean(),
   last_committed_seq: z.number(),
   id_map: z.record(z.string(), z.number()),
@@ -81,9 +82,33 @@ export class GatewayApi {
     return reviews.parse(res.json).reviews;
   }
 
-  async approveReview(reviewId: string) {
-    const res = await this.request("POST", `/reviews/${reviewId}/approve`, ACTOR_TOKEN, {});
-    if (res.status !== 200) throw new Error(`approve ${res.status}`);
+  async approveReview(
+    reviewId: string,
+    confirmations?: { unit?: string; ceiling_height_mm?: number },
+  ) {
+    const res = await this.request("POST", `/reviews/${reviewId}/approve`, ACTOR_TOKEN,
+      confirmations ? { confirmations } : {});
+    if (res.status !== 200) throw new Error(`approve ${res.status}: ${JSON.stringify(res.json)}`);
+  }
+
+  async postScanBundle(projectId: string, dxfBase64: string, extra: Record<string, unknown> = {}) {
+    const res = await this.request("POST", `/projects/${projectId}/scan-bundles`, SERVICE_TOKEN, {
+      dxf_base64: dxfBase64,
+      ...extra,
+    });
+    if (res.status !== 201) throw new Error(`scan-bundle ${res.status}: ${JSON.stringify(res.json)}`);
+    return z
+      .object({
+        review_id: z.string(),
+        content_hash: z.string(),
+        status: z.string(),
+        counts: z.object({ walls: z.number(), doors: z.number(), windows: z.number() }),
+      })
+      .parse(res.json);
+  }
+
+  async issueCommit0(projectId: string) {
+    return this.request("POST", `/projects/${projectId}/issue-commit0`, SERVICE_TOKEN, {});
   }
 
   raw(method: string, path: string, token: string | null, body?: unknown) {

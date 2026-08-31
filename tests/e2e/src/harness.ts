@@ -13,6 +13,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = join(here, "..", "..", "..");
 const TSX_BIN = join(REPO_ROOT, "services", "gateway", "node_modules", ".bin", "tsx");
 const SIM_PYTHON = join(REPO_ROOT, "tools", "revit-sim", ".venv", "bin", "python");
+const CONVERTER_PYTHON = join(REPO_ROOT, "services", "scan-converter", ".venv", "bin", "python");
 
 export const SERVICE_TOKEN = "service-token-0123456789";
 export const ACTOR_TOKEN = "actor-token-eran";
@@ -111,6 +112,26 @@ export async function startGateway(
     }
     await sleep(100);
   }
+  return { port, url: `http://127.0.0.1:${port}`, proc };
+}
+
+export interface ConverterProc {
+  port: number;
+  url: string;
+  proc: ChildProcess;
+}
+
+/** Third child process of the Phase 2 suite: the real scan-converter service.
+ *  It binds port 0 itself and prints "LISTENING <port>" before uvicorn starts. */
+export async function startConverter(): Promise<ConverterProc> {
+  const proc = spawn(CONVERTER_PYTHON, ["-m", "scan_converter", "--serve", "--port", "0"], {
+    cwd: join(REPO_ROOT, "services", "scan-converter"),
+    env: { ...process.env, PYTHONPATH: join(REPO_ROOT, "services", "scan-converter", "src") },
+    stdio: ["ignore", "pipe", "inherit"],
+  });
+  const output = new Output(proc);
+  const line = await output.waitForLine("LISTENING ", proc);
+  const port = Number(line.split(" ")[1]);
   return { port, url: `http://127.0.0.1:${port}`, proc };
 }
 
