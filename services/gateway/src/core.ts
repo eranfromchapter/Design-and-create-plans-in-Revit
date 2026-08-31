@@ -154,15 +154,17 @@ export class GatewayCore {
   }
 
   /** Drift gate marking. Drift reviews are anomaly reports: NEVER auto-approved, even in
-   *  CI (AUTO_APPROVE covers pipeline gates, not divergence). A human clears them. */
+   *  CI (AUTO_APPROVE covers pipeline gates, not divergence). A human clears them.
+   *  Ordering matters: the review is created BEFORE the project flips dirty, so any
+   *  observer that sees drift_state=dirty also sees a pending review to act on. */
   private async markDrift(projectId: string, executorHash: string, content: object): Promise<void> {
-    await this.repos.setExecutorState(projectId, executorHash, "dirty");
     const pending = (await this.repos.listReviews(projectId)).some(
       (r) => r.kind === "drift" && r.status === "pending",
     );
     if (!pending) {
       await this.repos.createReview(projectId, "drift", { ...content, executor_hash: executorHash }, false);
     }
+    await this.repos.setExecutorState(projectId, executorHash, "dirty");
     this.log.warn({ project: projectId }, "model state divergence — project marked dirty");
   }
 

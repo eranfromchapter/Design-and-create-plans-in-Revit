@@ -35,9 +35,14 @@ it("state_divergence → dirty + review → 409 → approve → flow resumes", a
   await api.postEnvelopeExpect202(project.id, { ops: WALL_OPS });
   await api.waitForState(project.id, (s) => s.last_committed_seq === 1);
 
-  // inject the divergence signal (what DocumentChangedWatcher sends on a manual edit)
-  expect(await controlCommand(sim.controlPort!, "diverge")).toBe("ok");
-  const dirty = await api.waitForState(project.id, (s) => s.drift_state === "dirty");
+  // inject the divergence signal (what DocumentChangedWatcher sends on a manual edit);
+  // the gateway creates the review BEFORE flipping dirty, so both must be observable
+  const controlReply = await controlCommand(sim.controlPort!, "diverge");
+  expect(controlReply).toBe("ok");
+  const dirty = await api.waitForState(
+    project.id,
+    (s) => s.drift_state === "dirty" && s.pending_reviews === 1,
+  );
   expect(dirty.pending_reviews).toBe(1);
 
   const blocked = await api.postEnvelope(project.id, { ops: [{ op: "create_level", args: { name: "L2", elevation: 3000 } }] });
