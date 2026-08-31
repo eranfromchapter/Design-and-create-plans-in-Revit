@@ -16,7 +16,7 @@ MANIFEST = json.loads(
 def test_conformance_case(case):
     result = verify_envelope(
         case["envelope"],
-        MANIFEST["key_hex"],
+        MANIFEST["public_key_hex"],
         case["verify_at"],
         case["last_committed_seq"],
     )

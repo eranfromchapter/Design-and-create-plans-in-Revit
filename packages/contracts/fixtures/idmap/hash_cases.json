@@ -1,0 +1,41 @@
+{
+  "description": "Cross-language id-map hash cases: sha256 over the UTF-8 bytes of the JCS serialization of [[logical_id, element_id], ...] sorted by logical_id (codepoint order). Implemented by idMapHash (TS), chapter_contracts.id_map_hash (Python), and ChapterHub.Core IdMapHash (C#).",
+  "cases": [
+    {
+      "name": "empty",
+      "entries": {},
+      "expected_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "name": "single",
+      "entries": {
+        "W-001": 316222
+      },
+      "expected_hash": "18d37e792ed2fdeb4cb63e031b8086be35f3f956dd486bcdbb14e16b1a7a5926"
+    },
+    {
+      "name": "multi_unsorted_input",
+      "entries": {
+        "W-002": 316223,
+        "D-001": 316501,
+        "W-001": 316222,
+        "N-001": 316777
+      },
+      "expected_hash": "e6f398e5647b0ada1960c8b0712902b40ec6dc99c6e71d04116411f6e50f1953"
+    },
+    {
+      "name": "full_commit0",
+      "entries": {
+        "W-001": 1000001,
+        "W-002": 1000002,
+        "W-003": 1000003,
+        "W-004": 1000004,
+        "D-001": 1000101,
+        "N-001": 1000201,
+        "R-001": 1000301,
+        "F-001": 1000401
+      },
+      "expected_hash": "a7b6637528f33c8309d858156ec380228b8f89e7f6cad3c913495ff46cfc5c1a"
+    }
+  ]
+}

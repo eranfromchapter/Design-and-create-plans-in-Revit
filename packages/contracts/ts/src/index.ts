@@ -1,5 +1,7 @@
-export { verifyEnvelope, hmacHex } from "./verify.js";
+export { verifyEnvelope, validateOps } from "./verify.js";
 export type { VerifyResult, RejectReason, EnvelopeBody } from "./verify.js";
+export { ed25519SignHex, ed25519VerifyHex, ed25519PublicKeyHexFromSeed } from "./ed25519.js";
+export { idMapHash } from "./idmap.js";
 export { chapterLayoutSchema } from "./generated/chapter-layout.js";
 export type { ChapterLayout } from "./generated/chapter-layout.js";
 export { clientBriefSchema } from "./generated/brief.js";

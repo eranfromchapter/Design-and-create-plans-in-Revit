@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-250.0 -250.0 4500.0 3500.0">
+<line class="wall standing" data-id="W-001" x1="0.0" y1="0.0" x2="4000.0" y2="0.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-002" x1="4000.0" y1="0.0" x2="4000.0" y2="3000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-003" x1="4000.0" y1="3000.0" x2="0.0" y2="3000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-004" x1="0.0" y1="3000.0" x2="0.0" y2="0.0" stroke="black" stroke-width="100.0"/>
+</svg>

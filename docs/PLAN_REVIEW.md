@@ -555,13 +555,13 @@ The panel covered contracts, Revit realism, algorithms, security, delivery, and 
 
 These do not block Phase 0; each blocks the phase noted.
 
-1. **Ed25519 vs per-project HMAC** (blocks Phase 1). The v1.1 wire format `{payload, sig}` is
-   signature-scheme agnostic. HMAC (specified lifecycle: HKDF per project, enrollment delivery, DPAPI,
-   rotation runbook) is simpler; Ed25519 removes workstation key secrecy entirely — a workstation
-   compromise can then never forge envelopes for other workstations. Recommendation: Ed25519.
-2. **Review-card UI surface** (blocks Phase 2 usability). Render approvals in the existing HUB UI
-   (itemize that integration) or build a minimal internal page on the gateway. The Phase 1 approvals
-   REST API supports either.
+1. ~~**Ed25519 vs per-project HMAC**~~ — **DECIDED at the Phase 0 gate: Ed25519** (per this
+   review's recommendation). Applied in Phase 1: `sig` is a 128-hex Ed25519 signature; the gateway
+   holds per-project private seeds (encrypted at rest); executors hold only pinned public keys
+   delivered at enrollment (`auth_ok.signing_public_key`).
+2. ~~**Review-card UI surface**~~ — **DECIDED at the Phase 0 gate: minimal gateway-served page**
+   on the Phase 1 approvals REST API; HUB integration deferred to a later decision.
+
 3. **Catalog contents** (block Phases 2/4/8). As-built wall type names + thicknesses from Chapter's
    Revit template; the new-construction wall/door/window type vocabulary; the 30 real product SKUs.
    Placeholders exist and are marked — they will not resolve on the live template.

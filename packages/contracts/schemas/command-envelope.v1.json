@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://hub.chapter.internal/schemas/command-envelope-1.json",
   "title": "CommandEnvelope",
-  "description": "Wire format for signed command envelopes. The gateway serializes EnvelopeBody ONCE (RFC 8785 canonical JSON) into `payload`; verifiers (plugin, revit-sim) compute HMAC-SHA256 over the exact received UTF-8 bytes of `payload` BEFORE any parsing, then parse and validate the body against $defs/EnvelopeBody and each op's args against ops/registry.json. Cross-language canonicalization is therefore never a verification dependency.",
+  "description": "Wire format for signed command envelopes. The gateway serializes EnvelopeBody ONCE (RFC 8785 canonical JSON) into `payload` and signs it with the per-project Ed25519 private key (held only by the gateway); verifiers (plugin, revit-sim) check the Ed25519 signature over the exact received UTF-8 bytes of `payload` BEFORE any parsing, then parse and validate the body against $defs/EnvelopeBody and each op's args against ops/registry.json. Executors hold only the per-project PUBLIC key, delivered at workstation enrollment over the authenticated WSS channel (auth_ok.signing_public_key) and integrity-pinned locally; rotation = new keypair + re-delivery with a dual-accept grace window (Phase 10 runbook). Cross-language canonicalization is never a verification dependency.",
   "type": "object",
   "additionalProperties": false,
   "required": ["payload", "sig"],
@@ -15,8 +15,8 @@
     },
     "sig": {
       "type": "string",
-      "pattern": "^[0-9a-f]{64}$",
-      "description": "hex HMAC-SHA256 over the UTF-8 bytes of payload, keyed with HKDF(master, project_id)"
+      "pattern": "^[0-9a-f]{128}$",
+      "description": "hex Ed25519 signature (RFC 8032) over the UTF-8 bytes of payload, made with the per-project private key held only by the gateway"
     }
   },
   "$defs": {

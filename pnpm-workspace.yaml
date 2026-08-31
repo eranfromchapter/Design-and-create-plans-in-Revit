@@ -1,2 +1,4 @@
 packages:
   - "packages/contracts/ts"
+  - "services/gateway"
+  - "tests/e2e"
