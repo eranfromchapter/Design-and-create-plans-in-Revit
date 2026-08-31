@@ -39,8 +39,10 @@ class Catalogs:
         return cls(
             wall_types={t["revit_type"] for t in asbuilt["types"]}
             | {t["revit_type"] for t in newc["walls"]},
-            door_types={t["revit_type"] for t in newc["doors"]},
-            window_types={t["revit_type"] for t in newc["windows"]},
+            door_types={t["revit_type"] for t in asbuilt.get("doors", [])}
+            | {t["revit_type"] for t in newc["doors"]},
+            window_types={t["revit_type"] for t in asbuilt.get("windows", [])}
+            | {t["revit_type"] for t in newc["windows"]},
             param_allowlist={p["name"] for p in allowlist["params"]},
         )
 
