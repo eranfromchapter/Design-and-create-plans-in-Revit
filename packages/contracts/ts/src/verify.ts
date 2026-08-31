@@ -91,3 +91,20 @@ export function verifyEnvelope(
 
   return { status: "accepted", body: b };
 }
+
+/**
+ * Builder-side op validation (gateway, BEFORE signing — SI-2 upstream half): returns the
+ * first problem or null when every op is allowlisted with schema-valid args.
+ */
+export function validateOps(
+  ops: { op: string; args: unknown }[],
+): { index: number; op: string; reason: "unknown_op" | "invalid_args"; detail?: string } | null {
+  for (const [index, { op, args }] of ops.entries()) {
+    const validateArgs = argsValidators.get(op);
+    if (!validateArgs) return { index, op, reason: "unknown_op" };
+    if (!validateArgs(args)) {
+      return { index, op, reason: "invalid_args", detail: ajv.errorsText(validateArgs.errors) };
+    }
+  }
+  return null;
+}

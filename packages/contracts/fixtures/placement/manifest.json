@@ -1,0 +1,93 @@
+{
+  "description": "Sim-vs-plugin placement cross-check (PLAN.md Phase 1 acceptance, amendment revit-6). Both executors implement the same pure function and must reproduce these hand-computed points to 1e-6 mm: kind=centerline places at start + offset * unit(end-start) (doors z=0, windows z=sill_height); kind=face_left / face_right offsets the centerline point by thickness/2 along the left / right normal of the start->end direction (left = +90deg CCW), z = height_afl. Implemented by revit_sim.placement (Python, pytest) and ChapterHub.Core.Placement (C#, xUnit).",
+  "cases": [
+    {
+      "name": "door_horizontal_wall",
+      "wall": { "start": [0, 0], "end": [4000, 0], "thickness_mm": 100 },
+      "kind": "centerline",
+      "offset_mm": 1000,
+      "z_mm": 0,
+      "expected_point_mm": [1000, 0]
+    },
+    {
+      "name": "window_horizontal_wall_sill_900",
+      "wall": { "start": [0, 0], "end": [4000, 0], "thickness_mm": 100 },
+      "kind": "centerline",
+      "offset_mm": 2000,
+      "z_mm": 900,
+      "expected_point_mm": [2000, 0]
+    },
+    {
+      "name": "device_left_face_horizontal_wall",
+      "wall": { "start": [0, 0], "end": [4000, 0], "thickness_mm": 100 },
+      "kind": "face_left",
+      "offset_mm": 3000,
+      "z_mm": 380,
+      "expected_point_mm": [3000, 50]
+    },
+    {
+      "name": "device_right_face_horizontal_wall",
+      "wall": { "start": [0, 0], "end": [4000, 0], "thickness_mm": 100 },
+      "kind": "face_right",
+      "offset_mm": 3000,
+      "z_mm": 380,
+      "expected_point_mm": [3000, -50]
+    },
+    {
+      "name": "door_reversed_wall_direction",
+      "wall": { "start": [4000, 0], "end": [0, 0], "thickness_mm": 100 },
+      "kind": "centerline",
+      "offset_mm": 1000,
+      "z_mm": 0,
+      "expected_point_mm": [3000, 0]
+    },
+    {
+      "name": "device_left_face_reversed_wall",
+      "wall": { "start": [4000, 0], "end": [0, 0], "thickness_mm": 100 },
+      "kind": "face_left",
+      "offset_mm": 1000,
+      "z_mm": 1220,
+      "expected_point_mm": [3000, -50]
+    },
+    {
+      "name": "door_skewed_wall_3_4_5",
+      "wall": { "start": [0, 0], "end": [4000, 3000], "thickness_mm": 100 },
+      "kind": "centerline",
+      "offset_mm": 2500,
+      "z_mm": 0,
+      "expected_point_mm": [2000, 1500]
+    },
+    {
+      "name": "device_left_face_skewed_wall_3_4_5",
+      "wall": { "start": [0, 0], "end": [4000, 3000], "thickness_mm": 100 },
+      "kind": "face_left",
+      "offset_mm": 2500,
+      "z_mm": 380,
+      "expected_point_mm": [1970, 1540]
+    },
+    {
+      "name": "device_right_face_skewed_wall_3_4_5",
+      "wall": { "start": [0, 0], "end": [4000, 3000], "thickness_mm": 100 },
+      "kind": "face_right",
+      "offset_mm": 2500,
+      "z_mm": 380,
+      "expected_point_mm": [2030, 1460]
+    },
+    {
+      "name": "window_vertical_wall",
+      "wall": { "start": [0, 3000], "end": [0, 0], "thickness_mm": 152 },
+      "kind": "centerline",
+      "offset_mm": 1200,
+      "z_mm": 1050,
+      "expected_point_mm": [0, 1800]
+    },
+    {
+      "name": "device_left_face_vertical_wall",
+      "wall": { "start": [0, 3000], "end": [0, 0], "thickness_mm": 152 },
+      "kind": "face_left",
+      "offset_mm": 1200,
+      "z_mm": 380,
+      "expected_point_mm": [76, 1800]
+    }
+  ]
+}

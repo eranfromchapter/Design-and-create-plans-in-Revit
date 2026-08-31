@@ -1,4 +1,4 @@
-export { verifyEnvelope } from "./verify.js";
+export { verifyEnvelope, validateOps } from "./verify.js";
 export type { VerifyResult, RejectReason, EnvelopeBody } from "./verify.js";
 export { ed25519SignHex, ed25519VerifyHex, ed25519PublicKeyHexFromSeed } from "./ed25519.js";
 export { idMapHash } from "./idmap.js";
