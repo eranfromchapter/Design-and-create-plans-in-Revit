@@ -15,8 +15,19 @@ plugin version, and outcome for each run.
 - [ ] Ctrl+Z after the commit → plugin sends `state_divergence`; gateway marks project dirty.
 
 ## Phase 2 gate
-- [ ] Real Polycam DXF of a real unit → review card → approve → Commit #0 on a throwaway model.
-- [ ] Deliberately mis-scaled DXF (unitless header) → review card demands unit confirmation.
+- [ ] **DXF profile calibration**: open the first real Polycam export and record its layer
+      names, entity types, and wall-width encoding against
+      `services/scan-converter/PROFILE.md` (that profile is a documented assumption —
+      `uv run python -m scan_converter <file.dxf> --review` surfaces `profile_violation`
+      diagnostics). If it differs, open a profile-v2 item before going further.
+- [ ] Real Polycam DXF of a real unit → review card → approve (confirm ceiling height,
+      confirm unit if demanded) → `issue-commit0` → Commit #0 on a throwaway model with the
+      REAL as-built catalog names (placeholders will not resolve on the live template).
+- [ ] Deliberately mis-scaled DXF (unitless header) → review card demands unit confirmation;
+      confirming a wrong unit is refused (`unit_mismatch`) — reject + re-upload with
+      `unit_override`.
+- [ ] After Commit #0: manual wall edit in Revit → `state_divergence` → project dirty; scan
+      re-upload refused (`commit0_already_done`).
 
 ## Pre-Phase-6 spike (before the MEP agent is built)
 - [ ] One `create_pipe` envelope (two segments + one 90° elbow) executes; tee case emits REVIEW.

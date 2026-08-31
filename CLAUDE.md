@@ -47,11 +47,23 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
 
 - Phase 0: complete (PR #1). `make verify` green (TS + Python + C#); minimal.json validates
   in all three languages; signing conformance vectors verified cross-language.
-- Phase 1: code complete on this branch. Envelope signatures switched to Ed25519 (decided at
+- Phase 1: code complete (PR #2). Envelope signatures switched to Ed25519 (decided at
   the Phase 0 gate; conformance re-pinned, 19 vectors × 3 languages). Gateway (WSS + signer +
-  approvals + drift gate, 21 tests), revit-sim (31 tests), plugin Core+Addin (46 tests,
-  Addin compile-only vs pinned Nice3point 2025.4.60), full-stack e2e suite green (5 tests:
-  golden 4-wall pipeline, rollback isolation, SIGKILL resync, SI-10, drift gate).
+  approvals + drift gate), revit-sim, plugin Core+Addin (46 tests, Addin compile-only vs
+  pinned Nice3point 2025.4.60), full-stack e2e green (golden 4-wall pipeline, rollback
+  isolation, SIGKILL resync, SI-10, drift gate).
   OPEN GATE ITEM (human): live-Revit checklist, docs/MANUAL_REVIT_TEST.md Phase 1 section.
-  Open items for Eran: catalog contents (as-built wall types, new-construction vocabulary,
-  30 SKUs).
+- Phase 2: code complete on this branch (Lane A). services/scan-converter (pure lane_a lib +
+  FastAPI /convert + CLI, 40 tests; DXF profile v1 pinned in PROFILE.md as a documented
+  assumption); gateway scan flow (scan-bundles → scan_commit0 review → approve with
+  {unit, ceiling_height_mm} confirmations persisted in reviews.decision_payload → issue-commit0
+  → commit0_done flips on commit_result; 35 gateway tests); fixture 2br_uws.dxf (17 walls incl.
+  curved bay 7 chords + skew; spec module = provenance, entity-wise drift test); goldens
+  2br_golden.json (semantic) + phase2_2br.svg (byte, eyeballed); phase2 e2e (3 child
+  processes) green; make demo-phase2.
+  OPEN GATE ITEM (human): docs/MANUAL_REVIT_TEST.md Phase 2 section — needs a real Polycam
+  DXF + real as-built catalog names (profile calibration is the first checklist item).
+  Gate question for Eran: add `skewed: boolean` to the wall schema? (Skews currently ride in
+  review-payload flags + confidence only — no schema change without approval.)
+  Open items for Eran: catalog contents (as-built wall types incl. door/window placeholders
+  now in asbuilt_types.json, new-construction vocabulary, 30 SKUs).
