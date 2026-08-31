@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "project_id": "6f1c2a3e-9b4d-4c5e-8f70-123456789abc",
+    "level": "L1",
+    "units": "mm",
+    "origin": "revit_internal_origin",
+    "schema_version": "2.3",
+    "brief_version": 0,
+    "phase": "new",
+    "levels": { "floor_z": 0, "ceiling_z": 2700, "slab_to_slab": 3000 }
+  },
+  "walls": [
+    { "id": "W-001", "start": [0, 0], "end": [4000, 0], "revit_type": "CHPT_Partition_92mm_PLACEHOLDER", "height": 2700, "source": "generated" },
+    { "id": "W-002", "start": [4000, 0], "end": [4000, 3000], "revit_type": "CHPT_Partition_92mm_PLACEHOLDER", "height": 2700, "source": "generated" },
+    { "id": "W-003", "start": [4000, 3000], "end": [0, 3000], "revit_type": "CHPT_Partition_92mm_PLACEHOLDER", "height": 2700, "source": "generated" },
+    { "id": "W-004", "start": [0, 3000], "end": [0, 0], "revit_type": "CHPT_Partition_92mm_PLACEHOLDER", "height": 2700, "source": "generated" }
+  ],
+  "doors": [
+    { "id": "D-001", "host_wall_id": "W-001", "offset": 1000, "width": 813, "height": 2032, "revit_type": "CHPT_Door_Single_PLACEHOLDER", "swing": "L" }
+  ],
+  "windows": [
+    { "id": "N-001", "host_wall_id": "W-003", "offset": 2000, "width": 900, "height": 1200, "sill_height": 900, "revit_type": "CHPT_Window_DoubleHung_PLACEHOLDER" }
+  ],
+  "rooms": [
+    {
+      "id": "R-001",
+      "name": "Living",
+      "program": "living",
+      "boundary": [[0, 0], [4000, 0], [4000, 3000], [0, 3000]],
+      "boundary_wall_ids": ["W-001", "W-002", "W-003", "W-004"]
+    }
+  ],
+  "furniture": [
+    {
+      "room_id": "R-001",
+      "items": [
+        {
+          "id": "F-001",
+          "kind": "sofa",
+          "revit_family": "CHPT_Sofa_PLACEHOLDER",
+          "revit_type": "CHPT_Sofa_PLACEHOLDER",
+          "center": [2000, 2400],
+          "rotation_deg": 180,
+          "footprint": [2200, 900],
+          "clearance_front": 760,
+          "wall_seeking": true
+        }
+      ]
+    }
+  ],
+  "constraints": {
+    "circulation_min": 915,
+    "outlet_spacing": 3660
+  }
+}

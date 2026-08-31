@@ -1,0 +1,13 @@
+{
+  "catalog_version": "0.0.0-placeholder",
+  "requires_human_input": true,
+  "note": "PLACEHOLDER — replace with the real as-built wall type names + thicknesses from Chapter's Revit template before Phase 2 goes live. These names will NOT resolve on the live template.",
+  "types": [
+    { "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER", "thickness_mm": 100 },
+    { "revit_type": "CHPT_AsBuilt_150mm_PLACEHOLDER", "thickness_mm": 150 },
+    { "revit_type": "CHPT_AsBuilt_200mm_PLACEHOLDER", "thickness_mm": 200 },
+    { "revit_type": "CHPT_AsBuilt_250mm_PLACEHOLDER", "thickness_mm": 250 },
+    { "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER", "thickness_mm": 300 }
+  ],
+  "bucket_tolerance_mm": 10
+}

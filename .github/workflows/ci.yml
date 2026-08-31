@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: codegen drift check (TS)
+        run: |
+          node packages/contracts/ts/scripts/codegen.mjs
+          git add -N packages/contracts/ts/src/generated
+          git diff --exit-code -- packages/contracts/ts/src/generated
+
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/contracts/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          # Pin the resolver that wrote uv.lock; uv is 0.x and floats otherwise.
+          version: "0.8.17"
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+      - name: codegen drift check (Python)
+        run: |
+          bash scripts/codegen.sh
+          git add -N src/chapter_contracts/generated
+          git diff --exit-code -- src/chapter_contracts/generated
+
+  conformance-vectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: conformance vectors drift check
+        run: |
+          python3 packages/contracts/scripts/gen_conformance.py
+          git add -N packages/contracts/fixtures/conformance
+          git diff --exit-code -- packages/contracts/fixtures/conformance
+
+  dotnet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Core must reference no Revit assembly (Rule 5)
+        run: |
+          if grep -riE 'revitapi|nice3point' plugin/ChapterHub.Core/ChapterHub.Core.csproj plugin/ChapterHub.Core.Tests/ChapterHub.Core.Tests.csproj; then
+            echo "ChapterHub.Core(.Tests) must stay free of Revit references"; exit 1
+          fi
+      - run: dotnet build plugin/ChapterHub.sln --nologo
+      - run: dotnet test plugin/ChapterHub.sln --no-build --nologo
