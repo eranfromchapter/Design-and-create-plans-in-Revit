@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@chapter/contracts": "workspace:*",
+    "@fastify/formbody": "8.0.2",
     "canonicalize": "4.0.0",
     "fastify": "5.12.1",
     "pg": "8.23.0",

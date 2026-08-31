@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import formbody from "@fastify/formbody";
 import type { Config } from "./config.js";
 import { createPool, type Db } from "./db/pool.js";
 import { migrate } from "./db/migrate.js";
@@ -21,6 +22,8 @@ export async function buildGateway(config: Config, opts?: { logger?: boolean }):
   const app = Fastify({
     logger: opts?.logger === false ? false : { level: process.env["LOG_LEVEL"] ?? "info" },
   });
+  // urlencoded parsing for the no-JS review UI forms (confirmation inputs)
+  await app.register(formbody);
   const repos = new Repos(pool);
   const core = new GatewayCore(repos, config, app.log);
   registerRoutes(app, { config, repos, core });

@@ -32,6 +32,7 @@ const reviewRow = z.object({
   decided_at: z.date().nullable(),
   decided_by: z.string().nullable(),
   decision_note: z.string().nullable(),
+  decision_payload: z.unknown().nullable(),
 });
 export type ReviewRow = z.infer<typeof reviewRow>;
 
@@ -233,6 +234,22 @@ export class Repos {
             [projectId, d.logical_id, d.element_id, seq],
           );
         }
+        // Commit #0 completion: a committed envelope whose approval_ref points at a
+        // scan_commit0 review flips the project flag, atomically with the result.
+        const commit0 = await client.query(
+          `UPDATE projects p SET commit0_done = true
+           FROM envelopes e JOIN reviews rv ON rv.id = (e.approval_ref->>'review_id')::uuid
+           WHERE e.envelope_id = $1 AND rv.kind = 'scan_commit0'
+             AND p.id = e.project_id AND p.commit0_done = false
+           RETURNING p.id`,
+          [r.envelopeId],
+        );
+        if (commit0.rowCount) {
+          await this.logEvent(client, projectId, "gateway", "commit0_done", {
+            envelope_id: r.envelopeId,
+            seq: Number(seq),
+          });
+        }
       }
       await this.logEvent(client, projectId, "gateway", "commit_result", {
         envelope_id: r.envelopeId,
@@ -338,19 +355,34 @@ export class Repos {
     return res.rowCount ? reviewRow.parse(res.rows[0]) : null;
   }
 
+  /** Most recent review of a kind — a newer pending upload supersedes a stale approval. */
+  async latestReviewOfKind(projectId: string, kind: string): Promise<ReviewRow | null> {
+    const res = await this.db.query(
+      `SELECT * FROM reviews WHERE project_id = $1 AND kind = $2
+       ORDER BY created_at DESC LIMIT 1`,
+      [projectId, kind],
+    );
+    return res.rowCount ? reviewRow.parse(res.rows[0]) : null;
+  }
+
   async decideReview(
     id: string,
     approved: boolean,
     decidedBy: string,
     note?: string,
+    decisionPayload?: unknown,
   ): Promise<ReviewRow | null> {
     const client = await this.db.connect();
     try {
       await client.query("BEGIN");
       const res = await client.query(
-        `UPDATE reviews SET status = $2, decided_at = now(), decided_by = $3, decision_note = $4
+        `UPDATE reviews SET status = $2, decided_at = now(), decided_by = $3, decision_note = $4,
+           decision_payload = $5
          WHERE id = $1 AND status = 'pending' RETURNING *`,
-        [id, approved ? "approved" : "rejected", decidedBy, note ?? null],
+        [
+          id, approved ? "approved" : "rejected", decidedBy, note ?? null,
+          decisionPayload === undefined ? null : JSON.stringify(decisionPayload),
+        ],
       );
       if (!res.rowCount) {
         await client.query("ROLLBACK");

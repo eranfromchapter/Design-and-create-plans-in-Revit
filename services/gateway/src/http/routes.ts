@@ -1,12 +1,14 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { Config } from "../config.js";
-import type { Repos } from "../db/repos.js";
+import type { Repos, ReviewRow } from "../db/repos.js";
 import type { GatewayCore } from "../core.js";
-import { buildEnvelope } from "../envelope/builder.js";
+import { buildEnvelope, type OpInput } from "../envelope/builder.js";
 import { newProjectKeypair } from "../crypto/keystore.js";
 import { requireActor, requireService, resolveActor } from "./auth.js";
 import { renderReviewsPage } from "../ui/reviews.js";
+import { convertScanBundle, type ReviewPayload } from "../scan/converter-client.js";
+import { opsFromScanLayout } from "../scan/ops.js";
 
 const createProjectBody = z.object({ name: z.string().min(1).max(200) });
 const enrollBody = z.object({
@@ -20,7 +22,23 @@ const envelopeBody = z.object({
     .optional(),
   ttl_s: z.number().int().min(10).max(3600).optional(),
 });
-const decideBody = z.object({ note: z.string().max(2000).optional() }).default({});
+const confirmationsSchema = z.object({
+  unit: z.enum(["mm", "inch", "ft", "cm", "m"]).optional(),
+  ceiling_height_mm: z.number().min(2100).max(6000).optional(), // create_wall bounds
+});
+const decideBody = z
+  .object({
+    note: z.string().max(2000).optional(),
+    confirmations: confirmationsSchema.optional(),
+  })
+  .default({});
+const scanBundleBody = z.object({
+  dxf_base64: z.string().min(1),
+  cloud_ref: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/).optional(),
+  level_name: z.string().min(1).max(80).optional(),
+  ceiling_default_mm: z.number().min(2100).max(6000).optional(),
+  unit_override: z.enum(["mm", "inch", "ft", "cm", "m"]).optional(),
+});
 
 export function registerRoutes(
   app: FastifyInstance,
@@ -48,8 +66,18 @@ export function registerRoutes(
     return reply.code(201).send({ workstation_id: body.workstation_id, token });
   });
 
-  app.post("/projects/:id/envelopes", { preHandler: serviceAuth }, async (req, reply) => {
-    const projectId = (req.params as { id: string }).id;
+  /** Shared envelope-issuing path: drift gate -> executor -> build/sign -> persist
+   *  (one-in-flight) -> dispatch. Used by POST /envelopes and POST /issue-commit0. */
+  async function issueEnvelope(
+    reply: FastifyReply,
+    projectId: string,
+    spec: {
+      ops: OpInput[];
+      ttlS?: number;
+      commitLabel?: string;
+      approvalRef?: { review_id: string; content_hash: string };
+    },
+  ): Promise<FastifyReply> {
     const project = await repos.getProject(projectId);
     if (!project) return reply.code(404).send({ error: "unknown_project" });
 
@@ -59,20 +87,21 @@ export function registerRoutes(
       return reply.code(409).send({ error: "drift_review_pending" });
     }
 
-    const session = core.executorReady(projectId);
-    if (!session) return reply.code(409).send({ error: "no_executor_connected" });
+    if (!core.executorReady(projectId)) {
+      return reply.code(409).send({ error: "no_executor_connected" });
+    }
 
-    const body = envelopeBody.parse(req.body);
+    const workstationId = core.workstationFor(projectId) ?? "";
     const seq = (await repos.lastCommittedSeq(projectId)) + 1;
     const built = buildEnvelope(
       {
         projectId,
-        workstationId: (await currentWorkstation(core, projectId)) ?? "",
+        workstationId,
         seq,
-        ops: body.ops as { op: string; args: Record<string, unknown> }[],
-        ttlS: body.ttl_s ?? config.envelopeTtlDefaultS,
-        commitLabel: body.commit_label,
-        approvalRef: body.approval_ref,
+        ops: spec.ops,
+        ttlS: spec.ttlS ?? config.envelopeTtlDefaultS,
+        commitLabel: spec.commitLabel,
+        approvalRef: spec.approvalRef,
         issuedAt: new Date(),
       },
       project.signing_seed_enc,
@@ -84,12 +113,12 @@ export function registerRoutes(
       await repos.insertIssuedEnvelope({
         envelopeId: built.envelopeId,
         projectId,
-        workstationId: (await currentWorkstation(core, projectId)) ?? "",
+        workstationId,
         seq,
         payload: built.payload,
         sig: built.sig,
-        commitLabel: body.commit_label,
-        approvalRef: body.approval_ref,
+        commitLabel: spec.commitLabel,
+        approvalRef: spec.approvalRef,
         issuedAt: built.issuedAt,
       });
     } catch (err) {
@@ -103,6 +132,88 @@ export function registerRoutes(
       return reply.code(409).send({ error: "no_executor_connected" });
     }
     return reply.code(202).send({ envelope_id: built.envelopeId, seq });
+  }
+
+  app.post("/projects/:id/envelopes", { preHandler: serviceAuth }, async (req, reply) => {
+    const projectId = (req.params as { id: string }).id;
+    const body = envelopeBody.parse(req.body);
+    return issueEnvelope(reply, projectId, {
+      ops: body.ops as OpInput[],
+      ttlS: body.ttl_s,
+      commitLabel: body.commit_label,
+      approvalRef: body.approval_ref,
+    });
+  });
+
+  // ---- Lane A scan flow (Phase 2): upload -> review -> approve -> Commit #0 ----
+
+  app.post(
+    "/projects/:id/scan-bundles",
+    // real base64 DXFs overflow Fastify's 1MB default body cap
+    { preHandler: serviceAuth, bodyLimit: 32 * 1024 * 1024 },
+    async (req, reply) => {
+      const projectId = (req.params as { id: string }).id;
+      const project = await repos.getProject(projectId);
+      if (!project) return reply.code(404).send({ error: "unknown_project" });
+      if (project.commit0_done) return reply.code(409).send({ error: "commit0_already_done" });
+      if (!config.scanConverterUrl) {
+        return reply.code(503).send({ error: "scan_converter_unavailable" });
+      }
+
+      const body = scanBundleBody.parse(req.body);
+      const outcome = await convertScanBundle(config.scanConverterUrl, {
+        dxf_base64: body.dxf_base64,
+        project_id: projectId,
+        level_name: body.level_name,
+        ceiling_default_mm: body.ceiling_default_mm,
+        unit_override: body.unit_override,
+        cloud_ref: body.cloud_ref,
+      });
+      if (!outcome.ok) {
+        return reply.code(422).send({ error: outcome.error, message: outcome.message });
+      }
+
+      // Pipeline gate: honors AUTO_APPROVE (CI-only) — unlike drift reviews.
+      const review = await repos.createReview(
+        projectId, "scan_commit0", outcome.reviewPayload, config.autoApprove,
+      );
+      return reply.code(201).send({
+        review_id: review.id,
+        content_hash: review.content_hash,
+        status: review.status,
+        counts: outcome.reviewPayload.counts,
+      });
+    },
+  );
+
+  app.post("/projects/:id/issue-commit0", { preHandler: serviceAuth }, async (req, reply) => {
+    const projectId = (req.params as { id: string }).id;
+    const project = await repos.getProject(projectId);
+    if (!project) return reply.code(404).send({ error: "unknown_project" });
+    if (project.commit0_done) return reply.code(409).send({ error: "commit0_already_done" });
+
+    const review = await repos.latestReviewOfKind(projectId, "scan_commit0");
+    if (!review) return reply.code(409).send({ error: "no_scan_review" });
+    if (review.status !== "approved") {
+      return reply.code(409).send({ error: "scan_review_not_approved", status: review.status });
+    }
+
+    const content = review.content as ReviewPayload;
+    const decision = (review.decision_payload ?? {}) as {
+      confirmations?: { ceiling_height_mm?: number };
+    };
+    // auto-approved (CI) reviews carry no confirmations -> converter defaults apply
+    const ceilingMm =
+      decision.confirmations?.ceiling_height_mm ?? content.height_assumption_mm;
+    const ops = opsFromScanLayout(content.layout, {
+      ceilingMm,
+      cloudRef: content.layout.meta.scan?.cloud_ref,
+    });
+    return issueEnvelope(reply, projectId, {
+      ops,
+      commitLabel: "Commit #0",
+      approvalRef: { review_id: review.id, content_hash: review.content_hash },
+    });
   });
 
   app.get("/projects/:id/state", { preHandler: serviceAuth }, async (req, reply) => {
@@ -139,11 +250,21 @@ export function registerRoutes(
       const reviewId = (req.params as { id: string }).id;
       const actor = resolveActor(config, req)!;
       const body = decideBody.parse(req.body ?? {});
-      const review = await repos.decideReview(reviewId, decision === "approve", actor, body.note);
-      if (!review) {
-        const exists = await repos.getReview(reviewId);
-        return reply.code(exists ? 409 : 404).send({ error: exists ? "already_decided" : "unknown_review" });
+
+      const existing = await repos.getReview(reviewId);
+      if (!existing) return reply.code(404).send({ error: "unknown_review" });
+      if (decision === "approve") {
+        const problem = confirmationProblem(existing, body.confirmations);
+        if (problem) return reply.code(422).send(problem);
       }
+      const review = await repos.decideReview(
+        reviewId,
+        decision === "approve",
+        actor,
+        body.note,
+        body.confirmations ? { confirmations: body.confirmations } : undefined,
+      );
+      if (!review) return reply.code(409).send({ error: "already_decided" });
       return { review_id: review.id, status: review.status, decided_by: review.decided_by };
     });
   }
@@ -165,12 +286,69 @@ export function registerRoutes(
       return reply.code(404).send({ error: "unknown_action" });
     }
     const actor = resolveActor(config, req)!;
-    const review = await repos.decideReview(id, decision === "approve", actor);
+
+    // form fields (urlencoded) -> confirmations, validated exactly like the REST path
+    const form = (req.body ?? {}) as Record<string, string | undefined>;
+    let confirmations: { unit?: "mm" | "inch" | "ft" | "cm" | "m"; ceiling_height_mm?: number } | undefined;
+    if (form["ceiling_height_mm"] || form["unit"]) {
+      const parsed = confirmationsSchema.safeParse({
+        unit: form["unit"] || undefined,
+        ceiling_height_mm: form["ceiling_height_mm"]
+          ? Number(form["ceiling_height_mm"])
+          : undefined,
+      });
+      if (!parsed.success) return reply.code(422).send({ error: "bad_confirmations" });
+      confirmations = parsed.data;
+    }
+    if (decision === "approve") {
+      const existing = await repos.getReview(id);
+      if (!existing) return reply.code(404).send({ error: "unknown_review" });
+      const problem = confirmationProblem(existing, confirmations);
+      if (problem) return reply.code(422).send(problem);
+    }
+
+    const review = await repos.decideReview(
+      id, decision === "approve", actor, undefined,
+      confirmations ? { confirmations } : undefined,
+    );
     const token = (req.query as Record<string, string | undefined>)["actor_token"] ?? "";
     const projectId =
       review?.project_id ?? (await repos.getReview(id))?.project_id ?? "";
     return reply.redirect(`/ui/projects/${projectId}/reviews?actor_token=${encodeURIComponent(token)}`);
   });
+}
+
+/** Approval-time confirmation rules for scan_commit0 reviews (PLAN.md Phase 2):
+ *  the ceiling height must be confirmed; the unit must be confirmed when the
+ *  converter used the heuristic; a DIFFERENT unit is confirm-or-reupload, never a
+ *  gateway-side rescale (reject, then re-POST /scan-bundles with unit_override). */
+function confirmationProblem(
+  review: ReviewRow,
+  confirmations?: { unit?: string; ceiling_height_mm?: number },
+): { error: string; message: string } | null {
+  if (review.kind !== "scan_commit0") return null;
+  const unit = (review.content as ReviewPayload).unit;
+  if (confirmations?.ceiling_height_mm === undefined) {
+    return {
+      error: "confirmation_required",
+      message: "approving a scan_commit0 review requires confirmations.ceiling_height_mm",
+    };
+  }
+  if (unit.confirmation_required && confirmations.unit === undefined) {
+    return {
+      error: "confirmation_required",
+      message: `unit was heuristically detected (${unit.detected}); confirmations.unit is required`,
+    };
+  }
+  if (confirmations.unit !== undefined && confirmations.unit !== unit.detected) {
+    return {
+      error: "unit_mismatch",
+      message:
+        `confirmed unit ${confirmations.unit} != detected ${unit.detected}; ` +
+        "reject this review and re-upload the bundle with unit_override",
+    };
+  }
+  return null;
 }
 
 function actorOrService(config: Config) {
@@ -184,6 +362,3 @@ function actorOrService(config: Config) {
   };
 }
 
-async function currentWorkstation(core: GatewayCore, projectId: string): Promise<string | null> {
-  return core.workstationFor(projectId);
-}

@@ -11,6 +11,29 @@ function esc(s: string): string {
     .replaceAll("'", "&#39;");
 }
 
+/** scan_commit0 cards carry the Phase 2 confirmations: ceiling height always,
+ *  unit only when the converter had to guess it (heuristic detection). */
+function confirmationInputs(r: ReviewRow): string {
+  if (r.kind !== "scan_commit0") return "";
+  const content = r.content as {
+    height_assumption_mm?: number;
+    unit?: { detected?: string; confirmation_required?: boolean };
+  };
+  const ceiling = Number(content?.height_assumption_mm ?? 2700);
+  let html = `<label>Ceiling height (mm)
+      <input type="number" name="ceiling_height_mm" value="${esc(String(ceiling))}"
+             min="2100" max="6000" required>
+    </label> `;
+  if (content?.unit?.confirmation_required) {
+    const detected = String(content.unit.detected ?? "mm");
+    const options = ["mm", "inch", "ft", "cm", "m"]
+      .map((u) => `<option value="${u}"${u === detected ? " selected" : ""}>${u}</option>`)
+      .join("");
+    html += `<label>Unit (heuristic — confirm) <select name="unit">${options}</select></label> `;
+  }
+  return html;
+}
+
 export function renderReviewsPage(
   projectName: string,
   projectId: string,
@@ -24,6 +47,7 @@ export function renderReviewsPage(
       const actions =
         r.status === "pending"
           ? `<form method="post" action="/ui/reviews/${esc(r.id)}/approve?${tokenQuery}" style="display:inline">
+               ${confirmationInputs(r)}
                <button type="submit">Approve</button>
              </form>
              <form method="post" action="/ui/reviews/${esc(r.id)}/reject?${tokenQuery}" style="display:inline">

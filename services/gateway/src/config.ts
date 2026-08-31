@@ -12,6 +12,8 @@ const envSchema = z.object({
   AUTO_APPROVE: z.enum(["0", "1"]).default("0"),
   CI: z.string().optional(),
   ENVELOPE_TTL_DEFAULT_S: z.coerce.number().int().min(10).max(3600).default(600),
+  // Lane A converter base URL (Phase 2); scan routes 503 when unset.
+  SCAN_CONVERTER_URL: z.url().optional(),
 });
 
 export interface Config {
@@ -22,6 +24,7 @@ export interface Config {
   actors: Map<string, string>; // token -> email
   autoApprove: boolean;
   envelopeTtlDefaultS: number;
+  scanConverterUrl: string | null;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -49,5 +52,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     actors,
     autoApprove,
     envelopeTtlDefaultS: parsed.ENVELOPE_TTL_DEFAULT_S,
+    scanConverterUrl: parsed.SCAN_CONVERTER_URL ?? null,
   };
 }
