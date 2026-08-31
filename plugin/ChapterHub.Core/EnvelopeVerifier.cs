@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using ChapterHub.Core.Contracts;
@@ -25,9 +23,9 @@ public sealed record VerifyResult(bool Accepted, RejectReason? Reason, EnvelopeB
 
 /// <summary>
 /// Envelope verification — the C# reference implementation of the D3 contract, shared by the
-/// Revit add-in. Order: sig (over received payload bytes) → parse → body shape → TTL → seq →
-/// op allowlist → per-op args (strict records). Pinned against the same conformance vectors
-/// as the TS and Python implementations.
+/// Revit add-in. Order: sig (Ed25519 over received payload bytes) → parse → body shape →
+/// TTL → seq → op allowlist → per-op args (strict records). Pinned against the same
+/// conformance vectors as the TS and Python implementations.
 ///
 /// Threading contract (Part G): sig + TTL run on the network thread at enqueue; seq is
 /// re-checked at Execute time against the last-committed seq persisted in Extensible Storage,
@@ -37,6 +35,9 @@ public static partial class EnvelopeVerifier
 {
     [GeneratedRegex("^[0-9a-f]{64}$")]
     private static partial Regex Sha256HexLower();
+
+    [GeneratedRegex("^[0-9a-f]{128}$")]
+    private static partial Regex Ed25519SigHexLower();
 
     [GeneratedRegex("^[a-z0-9][a-z0-9_-]{0,63}$")]
     private static partial Regex WorkstationIdPattern();
@@ -49,25 +50,17 @@ public static partial class EnvelopeVerifier
         "yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK",
     ];
 
-    public static string HmacHex(string payload, byte[] key)
-    {
-        using var hmac = new HMACSHA256(key);
-        return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
-    }
-
     public static VerifyResult Verify(
         WireEnvelope envelope,
-        byte[] key,
+        byte[] publicKey,
         DateTimeOffset verifyAt,
         long lastCommittedSeq)
     {
-        // The sig contract is 64 lowercase hex chars (D3). Rejecting other spellings up
+        // The sig contract is 128 lowercase hex chars (D3). Rejecting other spellings up
         // front keeps the three implementations byte-for-byte agreed on what verifies.
-        if (!Sha256HexLower().IsMatch(envelope.Sig))
+        if (!Ed25519SigHexLower().IsMatch(envelope.Sig))
             return VerifyResult.Rejected(RejectReason.BadSignature);
-        var expected = Convert.FromHexString(HmacHex(envelope.Payload, key));
-        var given = Convert.FromHexString(envelope.Sig);
-        if (!CryptographicOperations.FixedTimeEquals(expected, given))
+        if (!Ed25519.Verify(envelope.Payload, Convert.FromHexString(envelope.Sig), publicKey))
             return VerifyResult.Rejected(RejectReason.BadSignature);
 
         EnvelopeBody body;

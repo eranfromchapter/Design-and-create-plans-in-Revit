@@ -29,7 +29,8 @@ public sealed class ConformanceTests
         string Name, WireEnvelope Envelope, string VerifyAt, long LastCommittedSeq,
         string Expect, string? Reason);
 
-    private sealed record ManifestDoc(string KeyHex, IReadOnlyList<ManifestCase> Cases);
+    private sealed record ManifestDoc(
+        string PublicKeyHex, string PrivateSeedHex, IReadOnlyList<ManifestCase> Cases);
 
     private static ManifestDoc Manifest()
     {
@@ -50,7 +51,7 @@ public sealed class ConformanceTests
 
         var result = EnvelopeVerifier.Verify(
             c.Envelope,
-            Convert.FromHexString(manifest.KeyHex),
+            Convert.FromHexString(manifest.PublicKeyHex),
             DateTimeOffset.Parse(c.VerifyAt),
             c.LastCommittedSeq);
 

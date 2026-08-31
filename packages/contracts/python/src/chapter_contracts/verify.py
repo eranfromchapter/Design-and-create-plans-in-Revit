@@ -1,14 +1,12 @@
 """Envelope verification — the Python reference implementation of the D3 contract.
 
-Order: sig (over received payload bytes) -> parse -> body schema -> TTL -> seq ->
+Order: sig (Ed25519 over received payload bytes) -> parse -> body schema -> TTL -> seq ->
 op allowlist -> per-op args_schema. Mirrored by @chapter/contracts (TS) and
 ChapterHub.Core (C#); the shared conformance vectors pin all three.
 """
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import json
 import re
 from dataclasses import dataclass
@@ -17,6 +15,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
 
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from jsonschema import Draft202012Validator, FormatChecker
 
 _CONTRACTS_DIR = Path(__file__).resolve().parents[3]
@@ -55,23 +55,26 @@ def _parse_instant(value: str) -> datetime:
 
 def verify_envelope(
     envelope: dict[str, str],
-    key_hex: str,
+    public_key_hex: str,
     verify_at: datetime | str,
     last_committed_seq: int,
 ) -> VerifyResult:
-    """Verify a wire envelope {payload, sig}.
+    """Verify a wire envelope {payload, sig} with the per-project Ed25519 public key.
 
     verify_at is the injected "now"; last_committed_seq is the persisted state the
     monotonicity check runs against.
     """
     payload = envelope["payload"]
     given = envelope.get("sig", "")
-    # Guard before compare_digest: the sig contract is lowercase hex (D3); a non-ASCII
-    # string would otherwise raise TypeError out of a security check.
-    if not isinstance(given, str) or not re.fullmatch(r"[0-9a-f]{64}", given):
+    # The sig contract is 128 lowercase hex chars (D3); other spellings never reach the
+    # signature check, keeping all three implementations agreed on what verifies.
+    if not isinstance(given, str) or not re.fullmatch(r"[0-9a-f]{128}", given):
         return VerifyResult("rejected", "bad_signature")
-    expected = hmac.new(bytes.fromhex(key_hex), payload.encode("utf-8"), hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(expected, given):
+    try:
+        Ed25519PublicKey.from_public_bytes(bytes.fromhex(public_key_hex)).verify(
+            bytes.fromhex(given), payload.encode("utf-8")
+        )
+    except InvalidSignature:
         return VerifyResult("rejected", "bad_signature")
 
     try:

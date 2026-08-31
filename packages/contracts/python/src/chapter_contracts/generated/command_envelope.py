@@ -25,8 +25,8 @@ class CommandEnvelope(StrictBaseModel):
     sig: Annotated[
         str,
         Field(
-            description='hex HMAC-SHA256 over the UTF-8 bytes of payload, keyed with HKDF(master, project_id)',
-            pattern='^[0-9a-f]{64}$',
+            description='hex Ed25519 signature (RFC 8032) over the UTF-8 bytes of payload, made with the per-project private key held only by the gateway',
+            pattern='^[0-9a-f]{128}$',
         ),
     ]
 

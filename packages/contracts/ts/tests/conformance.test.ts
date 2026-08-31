@@ -8,7 +8,7 @@ describe("signing conformance vectors", () => {
     it(c.name, () => {
       const result = verifyEnvelope(
         c.envelope,
-        manifest.key_hex,
+        manifest.public_key_hex,
         new Date(c.verify_at),
         c.last_committed_seq,
       );

@@ -54,11 +54,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+          python-version: "3.12"
       - name: conformance vectors drift check
         run: |
-          python3 packages/contracts/scripts/gen_conformance.py
-          git add -N packages/contracts/fixtures/conformance
-          git diff --exit-code -- packages/contracts/fixtures/conformance
+          uv run packages/contracts/scripts/gen_conformance.py
+          git add -N packages/contracts/fixtures/conformance packages/contracts/fixtures/idmap
+          git diff --exit-code -- packages/contracts/fixtures/conformance packages/contracts/fixtures/idmap
 
   dotnet:
     runs-on: ubuntu-latest

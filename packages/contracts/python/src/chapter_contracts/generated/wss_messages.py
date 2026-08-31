@@ -19,6 +19,14 @@ class Sha256hex(RootModel[str]):
     root: Annotated[str, Field(pattern='^[0-9a-f]{64}$')]
 
 
+class Ed25519SigHex(RootModel[str]):
+    root: Annotated[str, Field(pattern='^[0-9a-f]{128}$')]
+
+
+class Ed25519PublicKeyHex(RootModel[str]):
+    root: Annotated[str, Field(pattern='^[0-9a-f]{64}$')]
+
+
 class BlobRef(RootModel[str]):
     root: Annotated[str, Field(pattern='^[a-z0-9][a-z0-9_-]{0,63}$')]
 
@@ -51,6 +59,13 @@ class AuthOk(StrictBaseModel):
         extra='forbid',
     )
     type: Literal['auth_ok']
+    project_id: Uuid
+    signing_public_key: Annotated[
+        Ed25519PublicKeyHex,
+        Field(
+            description='per-project Ed25519 public key, delivered at enrollment; the executor integrity-pins it locally and refuses a silently changed key'
+        ),
+    ]
 
 
 class AuthError(StrictBaseModel):
@@ -67,7 +82,7 @@ class Envelope(StrictBaseModel):
     )
     type: Literal['envelope']
     payload: Annotated[str, Field(max_length=2000000, min_length=2)]
-    sig: Sha256hex
+    sig: Ed25519SigHex
 
 
 class Status(Enum):

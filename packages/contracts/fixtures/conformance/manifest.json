@@ -1,12 +1,13 @@
 {
-  "description": "Signing/verification conformance vectors. Every implementation (TS, Python, C# Core) must produce these exact outcomes. verify_at is the injected 'now'; last_committed_seq is the persisted state the seq check runs against.",
-  "key_hex": "f00dfeedf00dfeedf00dfeedf00dfeedf00dfeedf00dfeedf00dfeedf00dfeed",
+  "description": "Signing/verification conformance vectors. Every implementation (TS, Python, C# Core) must produce these exact outcomes. sig = hex Ed25519 signature (RFC 8032) over the UTF-8 bytes of payload; public_key_hex is the verifier input. private_seed_hex is TEST-ONLY (gateway signer tests + sim/plugin test signing) — production private keys never leave the gateway. verify_at is the injected 'now'; last_committed_seq is the persisted state the seq check runs against.",
+  "public_key_hex": "2ec4206fc00e05d53224f11def2f8513a39af5d48af55811124071439f0434e1",
+  "private_seed_hex": "f00dfeedf00dfeedf00dfeedf00dfeedf00dfeedf00dfeedf00dfeedf00dfeed",
   "cases": [
     {
       "name": "valid",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+        "sig": "5ff819d4f8d8d04f300257987a7263c777649517534cbc6450e9d7acf12bfa5cce8ca09b5d414de530beb3b58ae6b22302d641fa6d306c70b5591573c769f107"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -16,7 +17,7 @@
       "name": "expired_ttl",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+        "sig": "5ff819d4f8d8d04f300257987a7263c777649517534cbc6450e9d7acf12bfa5cce8ca09b5d414de530beb3b58ae6b22302d641fa6d306c70b5591573c769f107"
       },
       "verify_at": "2026-01-01T00:20:00Z",
       "last_committed_seq": 1,
@@ -27,7 +28,7 @@
       "name": "tampered_payload",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-02\"}",
-        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+        "sig": "5ff819d4f8d8d04f300257987a7263c777649517534cbc6450e9d7acf12bfa5cce8ca09b5d414de530beb3b58ae6b22302d641fa6d306c70b5591573c769f107"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -38,7 +39,7 @@
       "name": "wrong_key",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "17538ac38e932fe77d7a76527ed0b52aafb5a56b8e2c962d0e14e954376965c4"
+        "sig": "9b9975f8240d3c53ab661a0cae18f7b0e2619cbd5da714815afbeb6772df291002e0084aaaa29e1dc9b0c90957d5f3788f6531e1f1f719c79231bde40dc8d701"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -49,7 +50,7 @@
       "name": "replayed_seq",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+        "sig": "5ff819d4f8d8d04f300257987a7263c777649517534cbc6450e9d7acf12bfa5cce8ca09b5d414de530beb3b58ae6b22302d641fa6d306c70b5591573c769f107"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 2,
@@ -60,7 +61,7 @@
       "name": "unknown_op",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{},\"op\":\"drop_all_walls\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "23de9b21b125bc4934607ce04f29afc6612a1c6cfee44da20e4646f571e66c4a"
+        "sig": "9976ddb147d8d68910c60f92c4621fa074ef3b406590cb7f59d2a5d4fca3c283ed33b28db8ac4a7b7908281fe4158af4a9a248b9ccfedd3de27b41a9dec00209"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -71,7 +72,7 @@
       "name": "invalid_args",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"name\":\"L1\"},\"op\":\"create_level\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "6f882c32a648ced93a6471a5269c0421d2eacac4762cc2a6a9e03e351f67df67"
+        "sig": "fe3a8962c4f1cdf4e21e54ca1a9928be82ef799ef9b7f2a8b2ae03b9edab1a5d44efea9f434fd3fbcb92b6caf395229c1b9d4755f901ec5d7b437af0e922f104"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -82,7 +83,7 @@
       "name": "ttl_boundary_accept",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+        "sig": "5ff819d4f8d8d04f300257987a7263c777649517534cbc6450e9d7acf12bfa5cce8ca09b5d414de530beb3b58ae6b22302d641fa6d306c70b5591573c769f107"
       },
       "verify_at": "2026-01-01T00:10:00Z",
       "last_committed_seq": 1,
@@ -92,7 +93,7 @@
       "name": "ttl_boundary_plus_one_second",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "4bac67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+        "sig": "5ff819d4f8d8d04f300257987a7263c777649517534cbc6450e9d7acf12bfa5cce8ca09b5d414de530beb3b58ae6b22302d641fa6d306c70b5591573c769f107"
       },
       "verify_at": "2026-01-01T00:10:01Z",
       "last_committed_seq": 1,
@@ -103,7 +104,7 @@
       "name": "malformed_payload_valid_sig",
       "envelope": {
         "payload": "{this is not json",
-        "sig": "a6adf90348e7496b388597e1579d70cbc76ed96d42cd7f10808daff9971ccc02"
+        "sig": "d51e7dea26c48cf579822ee651a778f8461e21cfec2de2557954ac05d74b9a9c639737cd207312e8878b12a8553a935ce5e50c906f91654b1396f75036751a0d"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -114,7 +115,7 @@
       "name": "missing_workstation_id",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600}",
-        "sig": "cc6f399e439d5cc37551566e1d1e08e157a0773315e28b3da6ef305ad611c92a"
+        "sig": "69a2ad8105ba865070461cd3a064dfa176dde28872e0edc309ca27323b449dee52b819135ac88da6dd2487a9cb880624a97a1f55f07804b8cfb542956c6b0a0f"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -125,7 +126,7 @@
       "name": "null_ops",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":null,\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "cd4eee06baf99761d24d9bc1cf77b840bda4e52e55808e592ef552524ec3d597"
+        "sig": "5aec9d0ca12eb2caef76e68dcb887ff531e39a928a1f4a1b565d7cbf49cc300a6aa7277d53ac6e9d602c0b543e9bcd67dde84d9bcdab0db5b7be882af6faee03"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -136,7 +137,7 @@
       "name": "empty_ops",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "e269a629b40a42137fedafabe03254c7437da7d7ca7fd3bc8925cddac33b85b4"
+        "sig": "d2b72bc7d69b72d3ed565be3ee871316474baa7704a5e78eb129f4b27d00177d475ff40b09a1f281012e05dc9f92b622e0d7c14e7b5155f15475d5e8b17d0409"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -147,7 +148,7 @@
       "name": "args_not_an_object",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":42,\"op\":\"create_level\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "c96f8fe2ee9e6ef350fd56e2779e8f1ae5446201770804e45ff8591f37124f9c"
+        "sig": "c723561bb6a1689c34efcd1a330406010828d2b48f1278a6e2d7db61f34d6b7fad6f03d76c421b0e0cb5cdfb54d0d1ac0895744b515231f2a617eb51043cc70f"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -158,7 +159,7 @@
       "name": "bad_issued_at_date_only",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "ec7adc2d82d2cf6e556a75302bd67edef1ca0df61c64392df06c08f3b8c72d01"
+        "sig": "75decf457c02df215974c3b0002f3c46d91ae5ea58e1601e7b8725d233fbe94566538fa916272a85dd8cc7131948c77b98d053defba55999b52d342ff8a65e02"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -169,7 +170,7 @@
       "name": "uppercase_hex_sig",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "4BAC67EFE123E82821BBA114B28F7B917447244C7CEA08DDBA22D11C22C452EB"
+        "sig": "5FF819D4F8D8D04F300257987A7263C777649517534CBC6450E9D7ACF12BFA5CCE8CA09B5D414DE530BEB3B58AE6B22302D641FA6D306C70B5591573C769F107"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -180,7 +181,7 @@
       "name": "non_hex_sig",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+        "sig": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,
@@ -191,7 +192,18 @@
       "name": "non_ascii_sig",
       "envelope": {
         "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
-        "sig": "café67efe123e82821bba114b28f7b917447244c7cea08ddba22d11c22c452eb"
+        "sig": "café19d4f8d8d04f300257987a7263c777649517534cbc6450e9d7acf12bfa5cce8ca09b5d414de530beb3b58ae6b22302d641fa6d306c70b5591573c769f107"
+      },
+      "verify_at": "2026-01-01T00:05:00Z",
+      "last_committed_seq": 1,
+      "expect": "rejected",
+      "reason": "bad_signature"
+    },
+    {
+      "name": "sig_wrong_length_64",
+      "envelope": {
+        "payload": "{\"commit_label\":\"conformance\",\"envelope_id\":\"0b5e7a1c-2d3f-4a5b-8c9d-0e1f2a3b4c5d\",\"issued_at\":\"2026-01-01T00:00:00Z\",\"ops\":[{\"args\":{\"elevation\":0,\"name\":\"L1\"},\"op\":\"create_level\"},{\"args\":{\"end\":[4000,0],\"height\":2700,\"id\":\"W-001\",\"phase\":\"new\",\"revit_type\":\"CHPT_Partition_92mm_PLACEHOLDER\",\"start\":[0,0]},\"op\":\"create_wall\"}],\"project_id\":\"6f1c2a3e-9b4d-4c5e-8f70-123456789abc\",\"seq\":2,\"ttl_s\":600,\"workstation_id\":\"ws-design-01\"}",
+        "sig": "5ff819d4f8d8d04f300257987a7263c777649517534cbc6450e9d7acf12bfa5c"
       },
       "verify_at": "2026-01-01T00:05:00Z",
       "last_committed_seq": 1,

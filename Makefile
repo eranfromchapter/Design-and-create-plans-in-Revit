@@ -33,14 +33,14 @@ test-cs:
 codegen:
 	cd $(TS_DIR) && node scripts/codegen.mjs
 	bash $(PY_DIR)/scripts/codegen.sh
-	python3 packages/contracts/scripts/gen_conformance.py
+	uv run packages/contracts/scripts/gen_conformance.py
 
 # CI hygiene: regenerating must be a no-op — generated code and conformance vectors are
 # committed and may not drift from the schemas. `git add -N` makes brand-new (untracked)
 # generated files fail the gate too.
 codegen-check: codegen
-	git add -N $(TS_DIR)/src/generated $(PY_DIR)/src/chapter_contracts/generated packages/contracts/fixtures/conformance
-	git diff --exit-code -- $(TS_DIR)/src/generated $(PY_DIR)/src/chapter_contracts/generated packages/contracts/fixtures/conformance
+	git add -N $(TS_DIR)/src/generated $(PY_DIR)/src/chapter_contracts/generated packages/contracts/fixtures/conformance packages/contracts/fixtures/idmap
+	git diff --exit-code -- $(TS_DIR)/src/generated $(PY_DIR)/src/chapter_contracts/generated packages/contracts/fixtures/conformance packages/contracts/fixtures/idmap
 
 dev-up:
 	docker compose up -d

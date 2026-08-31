@@ -20,6 +20,8 @@
   "$defs": {
     "uuid": { "type": "string", "format": "uuid" },
     "sha256hex": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "ed25519SigHex": { "type": "string", "pattern": "^[0-9a-f]{128}$" },
+    "ed25519PublicKeyHex": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "blobRef": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
     "hello": {
       "type": "object",
@@ -44,8 +46,15 @@
     "auth_ok": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type"],
-      "properties": { "type": { "const": "auth_ok" } }
+      "required": ["type", "project_id", "signing_public_key"],
+      "properties": {
+        "type": { "const": "auth_ok" },
+        "project_id": { "$ref": "#/$defs/uuid" },
+        "signing_public_key": {
+          "$ref": "#/$defs/ed25519PublicKeyHex",
+          "description": "per-project Ed25519 public key, delivered at enrollment; the executor integrity-pins it locally and refuses a silently changed key"
+        }
+      }
     },
     "auth_error": {
       "type": "object",
@@ -63,7 +72,7 @@
       "properties": {
         "type": { "const": "envelope" },
         "payload": { "type": "string", "minLength": 2, "maxLength": 2000000 },
-        "sig": { "$ref": "#/$defs/sha256hex" }
+        "sig": { "$ref": "#/$defs/ed25519SigHex" }
       },
       "description": "gateway->plugin; payload/sig semantics per command-envelope.v1.json"
     },

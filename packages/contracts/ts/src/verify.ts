@@ -1,10 +1,10 @@
 // Envelope verification — the TS reference implementation of the D3 contract.
-// Order: sig (over received payload bytes) → parse → body schema → TTL → seq →
+// Order: sig (Ed25519 over received payload bytes) → parse → body schema → TTL → seq →
 // op allowlist → per-op args_schema. Mirrored by revit-sim (Python) and
 // ChapterHub.Core (C#); the shared conformance vectors pin all three.
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { Ajv2020, type ValidateFunction } from "ajv/dist/2020.js";
 import { fullFormats } from "ajv-formats/dist/formats.js";
+import { ed25519VerifyHex } from "./ed25519.js";
 import envelopeSchema from "../../schemas/command-envelope.v1.json" with { type: "json" };
 import registry from "../../ops/registry.json" with { type: "json" };
 
@@ -47,27 +47,25 @@ const argsValidators = new Map<string, ValidateFunction>(
   ]),
 );
 
-export function hmacHex(payload: string, keyHex: string): string {
-  return createHmac("sha256", Buffer.from(keyHex, "hex")).update(payload, "utf8").digest("hex");
-}
-
 /**
  * Verify a wire envelope {payload, sig}.
  *
+ * @param publicKeyHex  raw 64-hex per-project Ed25519 public key (delivered at enrollment)
  * @param verifyAt   injected "now" (tests use the manifest's fixed instants)
  * @param lastCommittedSeq  persisted seq state the monotonicity check runs against
  */
 export function verifyEnvelope(
   envelope: { payload: string; sig: string },
-  keyHex: string,
+  publicKeyHex: string,
   verifyAt: Date,
   lastCommittedSeq: number,
 ): VerifyResult {
-  const expected = Buffer.from(hmacHex(envelope.payload, keyHex), "hex");
-  const given = /^[0-9a-f]{64}$/.test(envelope.sig)
-    ? Buffer.from(envelope.sig, "hex")
-    : Buffer.alloc(32);
-  if (expected.length !== given.length || !timingSafeEqual(expected, given)) {
+  // The sig contract is 128 lowercase hex chars (D3); other spellings never reach the
+  // signature check, keeping all three implementations agreed on what verifies.
+  if (!/^[0-9a-f]{128}$/.test(envelope.sig)) {
+    return { status: "rejected", reason: "bad_signature" };
+  }
+  if (!ed25519VerifyHex(envelope.payload, envelope.sig, publicKeyHex)) {
     return { status: "rejected", reason: "bad_signature" };
   }
 

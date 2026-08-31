@@ -14,8 +14,9 @@ Work one phase at a time; stop at every phase gate.
 - All coordinates in contracts are millimeters. Plugin converts to Revit feet (/304.8).
   Every Part G scoring constant is stated in mm.
 - Every solver loop is bounded and time-limited.
-- Envelope verification HMACs the received payload bytes verbatim (wire = {payload, sig});
-  never verify a reserialized object.
+- Envelope verification checks the Ed25519 signature over the received payload bytes
+  verbatim (wire = {payload, sig}); never verify a reserialized object. Private keys live
+  only in the gateway; executors hold pinned public keys.
 - Never run against live Revit from CI; use tools/revit-sim. Plugin compiles + unit-tests only
   (ChapterHub.Core carries all pure logic; the Addin project has zero tests).
 - Catalog vocabulary (wall types, SKUs) is human-supplied — never invent it; placeholders are
