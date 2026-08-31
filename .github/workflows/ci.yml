@@ -78,3 +78,84 @@ jobs:
           fi
       - run: dotnet build plugin/ChapterHub.sln --nologo
       - run: dotnet test plugin/ChapterHub.sln --no-build --nologo
+
+  gateway:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: chapter
+          POSTGRES_PASSWORD: chapter
+          POSTGRES_DB: revit_agent
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U chapter -d revit_agent"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgres://chapter:chapter@localhost:5432/revit_agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @chapter/gateway lint
+      - run: pnpm --filter @chapter/gateway typecheck
+      - run: pnpm --filter @chapter/gateway test
+
+  revit-sim:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/revit-sim
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: chapter
+          POSTGRES_PASSWORD: chapter
+          POSTGRES_DB: revit_agent
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U chapter -d revit_agent"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgres://chapter:chapter@localhost:5432/revit_agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+          python-version: "3.12"
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --locked
+        working-directory: tools/revit-sim
+      - run: pnpm --filter @chapter/e2e lint
+      - run: pnpm --filter @chapter/e2e typecheck
+      - name: full-stack Phase 1 suite (gateway + sim child processes)
+        run: pnpm --filter @chapter/e2e test

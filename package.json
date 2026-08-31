@@ -9,7 +9,8 @@
     "codegen": "pnpm -r --if-present codegen",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "pnpm -r --if-present test"
+    "test": "pnpm -r --filter '!@chapter/e2e' --if-present test",
+    "test:e2e": "pnpm --filter @chapter/e2e test"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

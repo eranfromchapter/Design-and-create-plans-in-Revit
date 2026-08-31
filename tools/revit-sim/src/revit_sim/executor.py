@@ -132,6 +132,10 @@ class Executor:
         for entry in delta:
             self.state.id_map[entry["logical_id"]] = entry["element_id"]
         self.state.save()
+        # Debug/demo artifact (not a wire contract): the current plan, canonical bytes.
+        # `make demo-phase1` and the e2e golden comparison read this file directly.
+        self.blob_dir.mkdir(parents=True, exist_ok=True)
+        (self.blob_dir / "current_plan.svg").write_text(render_plan(self.model))
 
         messages.append(self._commit_result(body, committed=True, delta=delta))
         messages.extend(side_messages)

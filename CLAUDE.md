@@ -27,8 +27,9 @@ Work one phase at a time; stop at every phase gate.
 - make dev-up        # postgres (services + revit-sim join the compose stack in Phase 1)
 - make codegen       # regenerate TS/Python types + conformance vectors from schemas
 - make verify        # lint + typecheck + all unit/contract tests (TS, Python, C#)
-- make e2e           # golden pipeline end-to-end (LLM mocked, AUTO_APPROVE=1) — lands Phase 10
-- make demo-phaseN   # phase demo artifact — each lands with its phase (1+)
+- make e2e           # full-stack spine suite: real gateway + real sim child processes
+                     #   (needs postgres; Phase 10 grows this into the golden pipeline)
+- make demo-phase1   # golden 4-wall pipeline; plan SVG at fixtures/goldens/phase1_4walls.svg
 
 ## Conventions
 - TS: Node 22, pnpm, strict, eslint, vitest, zod at boundaries.
@@ -44,7 +45,13 @@ Work one phase at a time; stop at every phase gate.
 ## Current status
 Update this section at every phase gate: phase number, what passed, open REVIEW items.
 
-- Phase 0: complete on this branch. `make verify` green (TS + Python + C#); minimal.json
-  validates in all three languages; signing conformance vectors verified cross-language.
+- Phase 0: complete (PR #1). `make verify` green (TS + Python + C#); minimal.json validates
+  in all three languages; signing conformance vectors verified cross-language.
+- Phase 1: code complete on this branch. Envelope signatures switched to Ed25519 (decided at
+  the Phase 0 gate; conformance re-pinned, 19 vectors × 3 languages). Gateway (WSS + signer +
+  approvals + drift gate, 21 tests), revit-sim (31 tests), plugin Core+Addin (46 tests,
+  Addin compile-only vs pinned Nice3point 2025.4.60), full-stack e2e suite green (5 tests:
+  golden 4-wall pipeline, rollback isolation, SIGKILL resync, SI-10, drift gate).
+  OPEN GATE ITEM (human): live-Revit checklist, docs/MANUAL_REVIT_TEST.md Phase 1 section.
   Open items for Eran: catalog contents (as-built wall types, new-construction vocabulary,
-  30 SKUs), Ed25519-vs-HMAC decision (Phase 1), review-card UI surface (HUB vs portal).
+  30 SKUs).
