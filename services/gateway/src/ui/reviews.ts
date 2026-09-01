@@ -67,6 +67,47 @@ function layoutCommit1Card(r: ReviewRow): string {
     ${demolition ? `<details open><summary>Demolition by phasing (${(content.demolition_list ?? []).length})</summary><ul>${demolition}</ul></details>` : "<p>No demolition.</p>"}`;
 }
 
+/** interior_plan cards show Commit #1 vs the furnished plan side by side plus
+ *  the unplaced (REVIEW) items — the human decision surface for the interior
+ *  branch delta Phase 6 will merge. */
+function interiorPlanCard(r: ReviewRow): string {
+  if (r.kind !== "interior_plan") return "";
+  const content = r.content as {
+    svgs?: { commit1?: string; furnished?: string };
+    unplaced?: { item?: { id?: string; kind?: string }; room_id: string; reason: string }[];
+    counts?: Record<string, number>;
+  };
+  const svg = (s: string | undefined, caption: string): string => {
+    if (!s) return "";
+    const uri = `data:image/svg+xml;base64,${Buffer.from(s, "utf8").toString("base64")}`;
+    return `<figure style="margin:0;flex:1;min-width:0">
+        <img src="${uri}" alt="${esc(caption)}" style="width:100%;border:1px solid #ddd">
+        <figcaption style="text-align:center">${esc(caption)}</figcaption>
+      </figure>`;
+  };
+  const unplaced = (content.unplaced ?? [])
+    .map(
+      (u) =>
+        `<tr><td><code>${esc(u.item?.id ?? "?")}</code></td><td>${esc(u.item?.kind ?? "?")}</td>` +
+        `<td>${esc(u.room_id)}</td><td>${esc(u.reason)}</td></tr>`,
+    )
+    .join("");
+  const counts = Object.entries(content.counts ?? {})
+    .map(([k, v]) => `${esc(k)}: ${esc(String(v))}`)
+    .join(" · ");
+  return `<div style="display:flex;gap:12px;margin:8px 0">
+      ${svg(content.svgs?.commit1, "Commit #1 (approved plan)")}
+      ${svg(content.svgs?.furnished, "Furnished proposal")}
+    </div>
+    <p>${counts}</p>
+    ${
+      unplaced
+        ? `<details open><summary>Unplaced — needs review (${(content.unplaced ?? []).length})</summary>
+           <table border="1" cellpadding="4"><tr><th>id</th><th>kind</th><th>room</th><th>reason</th></tr>${unplaced}</table></details>`
+        : "<p>Every proposed item placed.</p>"
+    }`;
+}
+
 export function renderReviewsPage(
   projectName: string,
   projectId: string,
@@ -89,7 +130,7 @@ export function renderReviewsPage(
           : `<em>${esc(r.status)} by ${esc(r.decided_by ?? "?")}</em>`;
       return `<section style="border:1px solid #ccc;border-radius:6px;padding:12px;margin:12px 0">
         <strong>${esc(r.kind)}</strong> · <code>${esc(r.id)}</code> · ${esc(r.status)}
-        ${layoutCommit1Card(r)}
+        ${layoutCommit1Card(r)}${interiorPlanCard(r)}
         <pre style="background:#f6f6f6;padding:8px;overflow-x:auto">${content}</pre>
         ${actions}
       </section>`;

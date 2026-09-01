@@ -11,6 +11,7 @@ import { convertScanBundle, type ReviewPayload } from "../scan/converter-client.
 import { opsFromScanLayout } from "../scan/ops.js";
 import { extractBrief } from "../brief/extractor-client.js";
 import { compileLayout } from "../layout/compiler-client.js";
+import { furnishLayout } from "../layout/furnish-client.js";
 import { commit0LayoutFromReview } from "../layout/snapshot.js";
 
 const createProjectBody = z.object({ name: z.string().min(1).max(200) });
@@ -298,6 +299,83 @@ export function registerRoutes(
     });
   });
 
+  // ---- Phase 5 interior flow: furnish -> interior_plan review (the BRANCH
+  //      DELTA Phase 6's merge gate consumes — Phase 5 commits nothing) ----
+
+  app.post("/projects/:id/furnish-layout", { preHandler: serviceAuth }, async (req, reply) => {
+    const projectId = (req.params as { id: string }).id;
+    if (!(await repos.getProject(projectId))) {
+      return reply.code(404).send({ error: "unknown_project" });
+    }
+    if (!config.layoutCompilerUrl) {
+      return reply.code(503).send({ error: "layout_compiler_unavailable" });
+    }
+    const commit0 = await repos.getSnapshot(projectId, "commit0");
+    if (!commit0) return reply.code(409).send({ error: "commit0_not_done" });
+    const commit1 = await repos.getSnapshot(projectId, "commit1");
+    if (!commit1) return reply.code(409).send({ error: "commit1_not_done" });
+    // the ops that actually built Commit #1 (the snapshot's review is the one
+    // that committed, by construction) — they rebuild the card's left pane
+    const commit1Review = await repos.getReview(commit1.review_id);
+    if (!commit1Review) return reply.code(409).send({ error: "no_commit1_review" });
+    const brief = await repos.latestBrief(projectId);
+    if (!brief) return reply.code(409).send({ error: "no_brief" });
+    if (!brief.confirmed_by_client) {
+      return reply.code(409).send({ error: "brief_not_confirmed" });
+    }
+
+    const outcome = await furnishLayout(config.layoutCompilerUrl, {
+      project_id: projectId,
+      brief: brief.content,
+      commit0_layout: commit0.layout,
+      commit1_layout: commit1.layout,
+      commit1_ops: (commit1Review.content as { ops: unknown[] }).ops,
+    });
+    if (!outcome.ok) {
+      // REVIEW on failure: informational card, NEVER auto-approved
+      await repos.createReview(
+        projectId,
+        "interior_failure",
+        { error: outcome.error, message: outcome.message, brief_version: brief.brief_version },
+        false,
+      );
+      await repos.logEventDirect(projectId, "gateway", "furnish_failed", {
+        error: outcome.error,
+        message: outcome.message,
+        raw_outputs: outcome.rawOutputs,
+      });
+      return reply.code(422).send({ error: outcome.error, message: outcome.message });
+    }
+
+    const { result } = outcome;
+    // re-runs are always allowed: a newer interior_plan supersedes (Phase 6
+    // reads the LATEST interior_plan and requires it approved)
+    const review = await repos.createReview(
+      projectId,
+      "interior_plan",
+      {
+        layout: result.layout,
+        ops: result.ops,
+        svgs: result.svgs,
+        unplaced: result.unplaced,
+        diagnostics: result.diagnostics,
+        brief_version: brief.brief_version,
+        counts: {
+          items_placed: result.ops.length,
+          items_unplaced: result.unplaced.length,
+          rooms_furnished: result.layout.furniture.length,
+        },
+      },
+      config.autoApprove,
+    );
+    return reply.code(201).send({
+      review_id: review.id,
+      content_hash: review.content_hash,
+      status: review.status,
+      counts: (review.content as { counts: unknown }).counts,
+    });
+  });
+
   app.post("/projects/:id/issue-commit1", { preHandler: serviceAuth }, async (req, reply) => {
     const projectId = (req.params as { id: string }).id;
     const project = await repos.getProject(projectId);
@@ -398,6 +476,10 @@ export function registerRoutes(
       drift_state: project.drift_state,
       commit0_done: project.commit0_done,
       commit1_done: await repos.hasSnapshot(projectId, "commit1"),
+      interior_plan_ready: await (async () => {
+        const plan = await repos.latestReviewOfKind(projectId, "interior_plan");
+        return plan !== null && plan.status === "approved";
+      })(),
       executor_connected: core.executorReady(projectId),
       last_committed_seq: await repos.lastCommittedSeq(projectId),
       id_map: await repos.idMapEntries(projectId),
