@@ -85,7 +85,7 @@ def compile_layout(
             },
             **{k: v for k, v in emitted.items() if k != "meta"},
         }
-        errors = validate_layout(candidate)
+        errors = validate_layout(candidate, frozen=existing_layout)
         attempts += 1
 
         # Part G identity diff on every schema-valid attempt, BEFORE any repair:

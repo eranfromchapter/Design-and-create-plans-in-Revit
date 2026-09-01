@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import math
+from functools import cache
 from typing import Any
 
 import jsonschema
@@ -36,10 +37,32 @@ from layout_compiler.catalogs import (
 
 DEFAULT_CIRCULATION_MIN_MM = 915.0  # packages/contracts/README.md defaults table
 BOUNDARY_EDGE_TOLERANCE_MM = 1.0  # edge-to-centerline slack on top of t/2
+EDGE_SAMPLE_STEP_MM = 100.0  # boundary edges sampled per-point: collinear walls may share one edge
+
+# Room min clear widths (inscribed-width check): engineering defaults, human-reviewable,
+# same status as the plumbing defaults table. Corridor = max(900, circulation_min), inline.
+MIN_WIDTH_MM: dict[str, float] = {
+    "bedroom": 2000.0,
+    "living": 2000.0,
+    "dining": 2000.0,
+    "office": 2000.0,
+    "kitchen": 1800.0,
+    "bathroom": 900.0,
+    "powder": 900.0,
+    "laundry": 900.0,
+    "closet": 900.0,
+    "other": 900.0,
+}
 
 
 def _layout_schema() -> dict[str, Any]:
     return json.loads((CONTRACTS_DIR / "schemas" / "chapter-layout.v2.3.json").read_text())
+
+
+@cache
+def _op_names() -> frozenset[str]:
+    registry = json.loads((CONTRACTS_DIR / "ops" / "registry.json").read_text())
+    return frozenset(registry["ops"])
 
 
 def _pt_on_wall(wall: dict[str, Any], offset: float) -> tuple[float, float]:
@@ -62,7 +85,9 @@ def _thickness(wall: dict[str, Any]) -> float | None:
     return wall_thickness_mm().get(wall["revit_type"])
 
 
-def validate_layout(layout: dict[str, Any]) -> list[str]:
+def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None) -> list[str]:
+    """`frozen` (the Commit #0 snapshot) enables the envelope check: generated
+    walls must stay within the existing conditions' bounding box."""
     errors: list[str] = []
 
     # 1. contract schema (strict pydantic + raw JSON schema)
@@ -134,21 +159,78 @@ def validate_layout(layout: dict[str, Any]) -> list[str]:
                 f"windows.{window['id']}: revit_type {window['revit_type']!r} not in any catalog"
             )
 
+    # generated walls must bound at least one room (a wall bounding nothing is
+    # floating or outside the plan — also the cheap envelope-closure rule)
+    bounded = {wall_id for r in layout["rooms"] for wall_id in r["boundary_wall_ids"]}
+    for wall in layout["walls"]:
+        if wall.get("source") == "generated" and wall["id"] not in bounded:
+            errors.append(
+                f"walls.{wall['id']}: generated wall bounds no room (floating or outside "
+                "the envelope)"
+            )
+
+    # SI-7 output guard: op-registry vocabulary laundered into free text is
+    # rejected (repairable — it is content, not identity)
+    free_text = [("rooms", r["id"], r["name"]) for r in layout["rooms"]]
+    free_text += [
+        ("constraints", "style_tags", tag)
+        for tag in layout.get("constraints", {}).get("style_tags", [])
+    ]
+    for group, ident, text in free_text:
+        lowered = text.lower()
+        if any(op_name in lowered for op_name in _op_names()):
+            errors.append(f"{group}.{ident}: free text contains op-registry vocabulary (SI-7)")
+
     if errors:
         return sorted(errors)  # geometry needs sane references; report and stop
 
-    # 4a. openings within their host span (same predicate the sim enforces)
+    # 4a. openings within their host span (same predicate the sim enforces) and
+    #     with a clear span no other wall abuts into
     for group in ("doors", "windows"):
         for opening in layout[group]:
             host = walls[opening["host_wall_id"]]
             length = _wall_len(host)
-            if opening["offset"] - opening["width"] / 2 < 0 or (
-                opening["offset"] + opening["width"] / 2 > length
-            ):
+            lo = opening["offset"] - opening["width"] / 2
+            hi = opening["offset"] + opening["width"] / 2
+            if lo < 0 or hi > length:
                 errors.append(
                     f"{group}.{opening['id']}: offset {opening['offset']} ± width/2 outside host "
                     f"{host['id']} (length {length:.0f})"
                 )
+                continue
+            host_line = LineString([host["start"], host["end"]])
+            host_t = _thickness(host) or 0.0
+            for other in layout["walls"]:
+                if other["id"] == host["id"]:
+                    continue
+                for pt in (other["start"], other["end"]):
+                    point = Point(pt)
+                    if (
+                        host_line.distance(point) <= host_t / 2 + BOUNDARY_EDGE_TOLERANCE_MM
+                        and lo + 1.0 < host_line.project(point) < hi - 1.0
+                    ):
+                        errors.append(
+                            f"{group}.{opening['id']}: wall {other['id']} abuts host "
+                            f"{host['id']} inside the opening clear span"
+                        )
+                        break
+
+    # 4a'. envelope: generated walls stay within the existing conditions' AABB
+    if frozen is not None:
+        points = [pt for w in frozen["walls"] for pt in (w["start"], w["end"])]
+        min_x = min(p[0] for p in points) - BOUNDARY_EDGE_TOLERANCE_MM
+        max_x = max(p[0] for p in points) + BOUNDARY_EDGE_TOLERANCE_MM
+        min_y = min(p[1] for p in points) - BOUNDARY_EDGE_TOLERANCE_MM
+        max_y = max(p[1] for p in points) + BOUNDARY_EDGE_TOLERANCE_MM
+        for wall in layout["walls"]:
+            if wall.get("source") != "generated":
+                continue
+            for pt in (wall["start"], wall["end"]):
+                if not (min_x <= pt[0] <= max_x and min_y <= pt[1] <= max_y):
+                    errors.append(
+                        f"walls.{wall['id']}: endpoint ({pt[0]:.0f},{pt[1]:.0f}) outside the "
+                        "existing envelope"
+                    )
 
     circulation_min = float(
         layout.get("constraints", {}).get("circulation_min", DEFAULT_CIRCULATION_MIN_MM)
@@ -167,7 +249,9 @@ def validate_layout(layout: dict[str, Any]) -> list[str]:
             errors.append(f"rooms.{room['id']}: boundary is not a simple positive-area polygon")
             continue
 
-        # every boundary edge lies within t/2 (+1mm) of some boundary wall centerline
+        # every boundary edge lies within t/2 (+1mm) of the boundary wall centerlines,
+        # sampled every 100mm so collinear walls may share one edge (architect pass);
+        # every listed wall must in turn cover at least one sample (no phantom listings)
         centerlines: list[tuple[str, LineString, float]] = []
         for wall_id in room["boundary_wall_ids"]:
             wall = walls[wall_id]
@@ -177,17 +261,44 @@ def validate_layout(layout: dict[str, Any]) -> list[str]:
                 continue
             centerlines.append((wall_id, LineString([wall["start"], wall["end"]]), thickness))
         ring = [*boundary, boundary[0]]
+        matched_walls: set[str] = set()
         for a, b in zip(ring, ring[1:], strict=False):
             edge = LineString([a, b])
-            probes = [Point(a), Point(b), edge.interpolate(0.5, normalized=True)]
-            if not any(
-                all(line.distance(p) <= t / 2 + BOUNDARY_EDGE_TOLERANCE_MM for p in probes)
-                for _, line, t in centerlines
-            ):
+            steps = max(1, math.ceil(edge.length / EDGE_SAMPLE_STEP_MM))
+            uncovered = False
+            for i in range(steps + 1):
+                sample = edge.interpolate(i / steps, normalized=True)
+                covering = [
+                    wall_id
+                    for wall_id, line, t in centerlines
+                    if line.distance(sample) <= t / 2 + BOUNDARY_EDGE_TOLERANCE_MM
+                ]
+                if covering:
+                    matched_walls.update(covering)
+                else:
+                    uncovered = True
+            if uncovered:
                 errors.append(
                     f"rooms.{room['id']}: boundary edge {a}->{b} lies on no boundary wall "
                     "centerline (within half thickness)"
                 )
+        for wall_id, _line, _t in centerlines:
+            if wall_id not in matched_walls:
+                errors.append(
+                    f"rooms.{room['id']}: listed boundary wall {wall_id} touches no boundary edge"
+                )
+
+        # per-program min clear width (inscribed-width erosion, architect pass)
+        program = room["program"]
+        min_width = (
+            max(900.0, circulation_min)
+            if program == "corridor"
+            else MIN_WIDTH_MM.get(program, 900.0)
+        )
+        if polygon.buffer(-min_width / 2).is_empty:
+            errors.append(
+                f"rooms.{room['id']}: {program} min clear width {min_width:.0f}mm not met"
+            )
 
         # free space = room minus furniture footprints (inflated by clearances)
         free = polygon

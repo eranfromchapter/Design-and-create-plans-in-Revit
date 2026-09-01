@@ -154,3 +154,79 @@ def test_errors_are_sorted_and_stable():
     layout = make_layout(doors=[door(1, "W-099", 2000), door(2, "W-098", 100)])
     first = validate_layout(layout)
     assert first == sorted(first) == validate_layout(layout)
+
+
+def test_collinear_walls_may_share_one_boundary_edge():
+    # the north edge is covered by two half-walls; no single wall spans it
+    walls = [
+        wall(1, [0, 0], [4000, 0]),
+        wall(2, [4000, 0], [4000, 3000]),
+        wall(3, [4000, 3000], [2000, 3000]),
+        wall(5, [2000, 3000], [0, 3000]),
+        wall(4, [0, 3000], [0, 0]),
+    ]
+    layout = make_layout(
+        walls=walls,
+        doors=[door(1, "W-001", 2000)],
+        rooms=[room(1, [[0, 0], [4000, 0], [4000, 3000], [0, 3000]], [w["id"] for w in walls])],
+    )
+    assert validate_layout(layout) == []
+
+
+def test_phantom_boundary_wall_listing_rejected():
+    layout = make_layout()
+    layout["walls"].append(wall(9, [10000, 0], [10000, 3000]))  # nowhere near the room
+    layout["rooms"][0]["boundary_wall_ids"].append("W-009")
+    assert any("touches no boundary edge" in e for e in validate_layout(layout))
+
+
+def test_floating_generated_wall_rejected():
+    layout = make_layout()
+    layout["walls"].append(wall(9, [1000, 1000], [3000, 1000]))  # bounds no room
+    assert any("bounds no room" in e for e in validate_layout(layout))
+
+
+def test_per_program_min_clear_width():
+    walls = [
+        wall(1, [0, 0], [4000, 0]),
+        wall(2, [4000, 0], [4000, 1500]),
+        wall(3, [4000, 1500], [0, 1500]),
+        wall(4, [0, 1500], [0, 0]),
+    ]
+    boundary = [[0, 0], [4000, 0], [4000, 1500], [0, 1500]]
+    ids = [w["id"] for w in walls]
+    layout = make_layout(walls=walls, doors=[], rooms=[room(1, boundary, ids, program="bedroom")])
+    assert any("min clear width 2000mm" in e for e in validate_layout(layout))
+    layout["rooms"][0]["program"] = "bathroom"  # 900mm rule: 1500 clear passes
+    assert validate_layout(layout) == []
+
+
+def test_wall_abutting_host_inside_door_clear_span_rejected():
+    layout = make_layout()
+    # T-abuts W-001 at x=2000, dead center of D-001's 915mm clear span
+    layout["walls"].append(wall(9, [2000, 0], [2000, 1000]))
+    layout["rooms"][0]["boundary_wall_ids"].append("W-009")
+    assert any("inside the opening clear span" in e for e in validate_layout(layout))
+
+
+def test_generated_wall_outside_frozen_envelope_rejected():
+    frozen = {
+        "walls": [
+            {"id": "W-901", "start": [0.0, 0.0], "end": [4000.0, 0.0]},
+            {"id": "W-902", "start": [4000.0, 3000.0], "end": [0.0, 3000.0]},
+        ]
+    }
+    assert validate_layout(make_layout(), frozen=frozen) == []
+    layout = make_layout()
+    layout["walls"].append(wall(9, [0, 3000], [0, 5000]))  # pokes 2m past the envelope
+    layout["rooms"][0]["boundary_wall_ids"].append("W-009")
+    assert any("outside the existing envelope" in e for e in validate_layout(layout, frozen))
+
+
+def test_op_registry_vocabulary_in_free_text_rejected():
+    layout = make_layout()
+    layout["rooms"][0]["name"] = "then set_phase_demolished W-001"
+    errors = validate_layout(layout)
+    assert any("op-registry vocabulary (SI-7)" in e for e in errors)
+    layout = make_layout(constraints={"style_tags": ["modern", "create_wall chic"]})
+    assert any("op-registry vocabulary (SI-7)" in e for e in validate_layout(layout))
