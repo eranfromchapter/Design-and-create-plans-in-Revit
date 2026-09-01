@@ -1,0 +1,14 @@
+{
+  "_note": "SYNTHETIC recorded extraction for fixtures/transcripts/session2_4br.txt (SI-11).",
+  "extraction": {
+    "rooms_required": [
+      { "program": "bedroom", "count": 4, "notes": "mother moving in; fourth bedroom", "confidence": 1.0 },
+      { "program": "laundry", "count": 1, "notes": "proper laundry closet", "confidence": 1.0 }
+    ],
+    "adjacency_rules": [
+      { "a": "laundry", "b": "bathroom", "relation": "near", "hard": false, "confidence": 0.9 }
+    ],
+    "style_tags": [],
+    "finish_tier": "standard"
+  }
+}

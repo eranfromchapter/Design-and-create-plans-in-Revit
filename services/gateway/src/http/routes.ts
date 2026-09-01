@@ -9,6 +9,7 @@ import { requireActor, requireService, resolveActor } from "./auth.js";
 import { renderReviewsPage } from "../ui/reviews.js";
 import { convertScanBundle, type ReviewPayload } from "../scan/converter-client.js";
 import { opsFromScanLayout } from "../scan/ops.js";
+import { extractBrief } from "../brief/extractor-client.js";
 
 const createProjectBody = z.object({ name: z.string().min(1).max(200) });
 const enrollBody = z.object({
@@ -38,6 +39,13 @@ const scanBundleBody = z.object({
   level_name: z.string().min(1).max(80).optional(),
   ceiling_default_mm: z.number().min(2100).max(6000).optional(),
   unit_override: z.enum(["mm", "inch", "ft", "cm", "m"]).optional(),
+});
+const transcriptsBody = z.object({
+  sessions: z
+    .array(z.object({ session_id: z.string().min(1).max(120), text: z.string().min(1) }))
+    .min(1)
+    .max(20),
+  client_names: z.array(z.string().min(1).max(120)).max(10).optional(),
 });
 
 export function registerRoutes(
@@ -214,6 +222,71 @@ export function registerRoutes(
       commitLabel: "Commit #0",
       approvalRef: { review_id: review.id, content_hash: review.content_hash },
     });
+  });
+
+  // ---- Phase 3 brief flow: transcripts -> versioned brief -> client confirmation ----
+
+  app.post(
+    "/projects/:id/transcripts",
+    // multiple long session transcripts can overflow Fastify's 1MB default
+    { preHandler: serviceAuth, bodyLimit: 8 * 1024 * 1024 },
+    async (req, reply) => {
+      const projectId = (req.params as { id: string }).id;
+      if (!(await repos.getProject(projectId))) {
+        return reply.code(404).send({ error: "unknown_project" });
+      }
+      if (!config.briefExtractorUrl) {
+        return reply.code(503).send({ error: "brief_extractor_unavailable" });
+      }
+
+      const body = transcriptsBody.parse(req.body);
+      const prior = await repos.latestBrief(projectId);
+      const outcome = await extractBrief(config.briefExtractorUrl, {
+        project_id: projectId,
+        brief_version: (prior?.brief_version ?? 0) + 1,
+        sessions: body.sessions,
+        client_names: body.client_names,
+        prior_brief: prior?.content,
+      });
+      if (!outcome.ok) {
+        // hard fail: the extractor's raw outputs are stored in the event log
+        await repos.logEventDirect(projectId, "gateway", "brief_extraction_failed", {
+          error: outcome.error,
+          message: outcome.message,
+          raw_outputs: outcome.rawOutputs,
+        });
+        return reply.code(422).send({ error: outcome.error, message: outcome.message });
+      }
+
+      // pipeline gate: honors AUTO_APPROVE (CI-only); the human path is the
+      // client_brief review card, whose approval marks the brief confirmed
+      const { brief, review } = await repos.createBriefWithReview(
+        projectId, outcome.brief, outcome.diagnostics, config.autoApprove,
+      );
+      return reply.code(201).send({
+        brief_id: brief.id,
+        brief_version: brief.brief_version,
+        review_id: review.id,
+        status: review.status,
+        contradiction_count: outcome.diagnostics.contradiction_count,
+      });
+    },
+  );
+
+  app.get("/projects/:id/brief", { preHandler: actorOrService(config) }, async (req, reply) => {
+    const projectId = (req.params as { id: string }).id;
+    if (!(await repos.getProject(projectId))) {
+      return reply.code(404).send({ error: "unknown_project" });
+    }
+    const brief = await repos.latestBrief(projectId);
+    if (!brief) return reply.code(404).send({ error: "no_brief" });
+    return {
+      brief_id: brief.id,
+      brief_version: brief.brief_version,
+      confirmed_by_client: brief.confirmed_by_client,
+      brief: brief.content,
+      created_at: brief.created_at.toISOString(),
+    };
   });
 
   app.get("/projects/:id/state", { preHandler: serviceAuth }, async (req, reply) => {

@@ -1,0 +1,26 @@
+{
+  "_note": "SYNTHETIC recorded extraction for fixtures/transcripts/session1_3br.txt (SI-11: hand-authored, no live-call recording; the ScriptedLLM/FixtureLLM replays this in CI).",
+  "extraction": {
+    "rooms_required": [
+      { "program": "bedroom", "count": 3, "notes": "third bedroom for the baby due in March", "confidence": 1.0 },
+      { "program": "kitchen", "count": 1, "notes": "open to dining, non-negotiable", "confidence": 1.0 },
+      { "program": "bathroom", "count": 2, "notes": "two full baths if it fits", "confidence": 0.8 },
+      { "program": "living", "count": 1, "notes": "no railroad feel", "confidence": 0.9 },
+      { "program": "dining", "count": 1, "confidence": 0.9 }
+    ],
+    "adjacency_rules": [
+      { "a": "kitchen", "b": "dining", "relation": "open_to", "hard": true, "confidence": 1.0 }
+    ],
+    "style_tags": ["modern", "warm minimalism", "light wood"],
+    "finish_tier": "premium",
+    "keep_items": ["original cast-iron radiators"],
+    "special_constraints": [
+      {
+        "text": "co-op board: no wet rooms over neighbors' bedrooms; bathrooms stay near the existing stack",
+        "kind": "building_rule",
+        "confidence": 1.0
+      }
+    ],
+    "open_questions": ["washer-dryer undecided (maybe in the second bath?)"]
+  }
+}

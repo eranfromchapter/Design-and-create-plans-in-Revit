@@ -140,6 +140,22 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run pytest -q
 
+  brief-extractor:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/brief-extractor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+
   e2e:
     runs-on: ubuntu-latest
     services:
@@ -173,6 +189,8 @@ jobs:
         working-directory: tools/revit-sim
       - run: uv sync --locked
         working-directory: services/scan-converter
+      - run: uv sync --locked
+        working-directory: services/brief-extractor
       - run: pnpm --filter @chapter/e2e lint
       - run: pnpm --filter @chapter/e2e typecheck
       - name: full-stack suite (converter + gateway + sim child processes)

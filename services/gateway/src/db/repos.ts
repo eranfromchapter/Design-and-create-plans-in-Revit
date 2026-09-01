@@ -36,6 +36,17 @@ const reviewRow = z.object({
 });
 export type ReviewRow = z.infer<typeof reviewRow>;
 
+const briefRow = z.object({
+  id: z.string(),
+  project_id: z.string(),
+  brief_version: z.number(),
+  content: z.unknown(),
+  confirmed_by_client: z.boolean(),
+  review_id: z.string().nullable(),
+  created_at: z.date(),
+});
+export type BriefRow = z.infer<typeof briefRow>;
+
 const envelopeRow = z.object({
   envelope_id: z.string(),
   project_id: z.string(),
@@ -355,6 +366,86 @@ export class Repos {
     return res.rowCount ? reviewRow.parse(res.rows[0]) : null;
   }
 
+  /** Phase 3: store the next brief version AND its client_brief review atomically
+   *  (an orphan review or an unreviewed brief must be unobservable). Returns the
+   *  brief row + the review. Auto-approved (CI) reviews confirm immediately. */
+  async createBriefWithReview(
+    projectId: string,
+    content: unknown,
+    reviewContent: unknown,
+    autoApprove: boolean,
+  ): Promise<{ brief: BriefRow; review: ReviewRow }> {
+    const briefId = randomUUID();
+    const reviewId = randomUUID();
+    const doc = canonicalize(reviewContent);
+    if (doc === undefined) throw new Error("uncanonicalizable review content");
+    const client = await this.db.connect();
+    try {
+      await client.query("BEGIN");
+      const version = await client.query(
+        "SELECT COALESCE(MAX(brief_version), 0) + 1 AS v FROM briefs WHERE project_id = $1",
+        [projectId],
+      );
+      const briefVersion = Number(version.rows[0].v);
+      const reviewRes = await client.query(
+        `INSERT INTO reviews (id, project_id, kind, content, content_hash, status, decided_at, decided_by)
+         VALUES ($1, $2, 'client_brief', $3, $4, $5, $6, $7) RETURNING *`,
+        [
+          reviewId, projectId, JSON.stringify(reviewContent), sha256hex(doc),
+          autoApprove ? "approved" : "pending",
+          autoApprove ? new Date() : null,
+          autoApprove ? "auto:ci" : null,
+        ],
+      );
+      const briefRes = await client.query(
+        `INSERT INTO briefs (id, project_id, brief_version, content, confirmed_by_client, review_id)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [briefId, projectId, briefVersion, JSON.stringify(content), false, reviewId],
+      );
+      if (autoApprove) {
+        await this.confirmBrief(client, reviewId);
+      }
+      await this.logEvent(client, projectId, autoApprove ? "auto:ci" : "gateway", "brief_created", {
+        brief_id: briefId,
+        brief_version: briefVersion,
+        review_id: reviewId,
+        auto_approved: autoApprove,
+      });
+      await client.query("COMMIT");
+      const brief = briefRow.parse(
+        autoApprove
+          ? (await this.db.query("SELECT * FROM briefs WHERE id = $1", [briefId])).rows[0]
+          : briefRes.rows[0],
+      );
+      return { brief, review: reviewRow.parse(reviewRes.rows[0]) };
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  /** Confirmation = the human approved the client_brief review: flip the row flag
+   *  AND stamp meta.confirmed_by_client inside the stored content — the
+   *  layout-compiler reads the content and refuses unconfirmed briefs (Phase 4). */
+  private async confirmBrief(client: pg.PoolClient, reviewId: string): Promise<void> {
+    await client.query(
+      `UPDATE briefs SET confirmed_by_client = true,
+         content = jsonb_set(content, '{meta,confirmed_by_client}', 'true'::jsonb)
+       WHERE review_id = $1`,
+      [reviewId],
+    );
+  }
+
+  async latestBrief(projectId: string): Promise<BriefRow | null> {
+    const res = await this.db.query(
+      "SELECT * FROM briefs WHERE project_id = $1 ORDER BY brief_version DESC LIMIT 1",
+      [projectId],
+    );
+    return res.rowCount ? briefRow.parse(res.rows[0]) : null;
+  }
+
   /** Most recent review of a kind — a newer pending upload supersedes a stale approval. */
   async latestReviewOfKind(projectId: string, kind: string): Promise<ReviewRow | null> {
     const res = await this.db.query(
@@ -395,6 +486,10 @@ export class Repos {
         await client.query("UPDATE projects SET drift_state = 'clean' WHERE id = $1", [
           review.project_id,
         ]);
+      }
+      // Approving a client_brief review = the client confirmed the brief (Phase 3).
+      if (review.kind === "client_brief" && approved) {
+        await this.confirmBrief(client, review.id);
       }
       await this.logEvent(client, review.project_id, `human:${decidedBy}`, "review_decided", {
         review_id: id,

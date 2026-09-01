@@ -9,6 +9,7 @@ PY_DIR := packages/contracts/python
 TS_DIR := packages/contracts/ts
 SIM_DIR := tools/revit-sim
 SCAN_DIR := services/scan-converter
+BRIEF_DIR := services/brief-extractor
 DATABASE_URL ?= postgres://chapter:chapter@127.0.0.1:5432/revit_agent
 
 .PHONY: verify lint typecheck test codegen codegen-check dev-up dev-down test-ts test-py test-cs e2e demo-phase1 demo-phase2
@@ -21,6 +22,7 @@ lint:
 	cd $(PY_DIR) && uv run ruff check . && uv run ruff format --check .
 	cd $(SIM_DIR) && uv run ruff check . && uv run ruff format --check .
 	cd $(SCAN_DIR) && uv run ruff check . && uv run ruff format --check .
+	cd $(BRIEF_DIR) && uv run ruff check . && uv run ruff format --check .
 
 typecheck:
 	pnpm -r --if-present typecheck
@@ -36,6 +38,7 @@ test-py:
 	cd $(PY_DIR) && uv run pytest -q
 	cd $(SIM_DIR) && uv run pytest -q
 	cd $(SCAN_DIR) && uv run pytest -q
+	cd $(BRIEF_DIR) && uv run pytest -q
 
 test-cs:
 	$(DOTNET) build plugin/ChapterHub.sln --nologo -v q
@@ -53,10 +56,12 @@ codegen-check: codegen
 	git add -N $(TS_DIR)/src/generated $(PY_DIR)/src/chapter_contracts/generated packages/contracts/fixtures/conformance packages/contracts/fixtures/idmap
 	git diff --exit-code -- $(TS_DIR)/src/generated $(PY_DIR)/src/chapter_contracts/generated packages/contracts/fixtures/conformance packages/contracts/fixtures/idmap
 
-# Full-stack suite: real converter + gateway + sim as child processes (needs Postgres).
+# Full-stack suite: real converter + extractor + gateway + sim as child processes
+# (needs Postgres).
 e2e:
 	cd $(SIM_DIR) && uv sync --quiet
 	cd $(SCAN_DIR) && uv sync --quiet
+	cd $(BRIEF_DIR) && uv sync --quiet
 	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run
 
 # Phase 1 demo (Part E): runs the golden 4-wall pipeline and names the plan artifact.
@@ -73,6 +78,14 @@ demo-phase2:
 	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run phase2
 	cd $(SCAN_DIR) && uv run python -m scan_converter ../../fixtures/scans/2br_uws.dxf --review
 	@echo "demo-phase2: plan SVG at fixtures/goldens/phase2_2br.svg"
+
+# Phase 3 demo (Part E): full brief pipeline on the fixture transcripts, then the
+# brief JSON + contradiction diff from the two sessions.
+demo-phase3:
+	cd $(BRIEF_DIR) && uv sync --quiet
+	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run phase3
+	cd $(BRIEF_DIR) && uv run python -m brief_extractor \
+	  ../../fixtures/transcripts/session1_3br.txt ../../fixtures/transcripts/session2_4br.txt
 
 dev-up:
 	docker compose up -d

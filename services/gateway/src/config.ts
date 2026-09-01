@@ -14,6 +14,8 @@ const envSchema = z.object({
   ENVELOPE_TTL_DEFAULT_S: z.coerce.number().int().min(10).max(3600).default(600),
   // Lane A converter base URL (Phase 2); scan routes 503 when unset.
   SCAN_CONVERTER_URL: z.url().optional(),
+  // Brief extractor base URL (Phase 3); transcript routes 503 when unset.
+  BRIEF_EXTRACTOR_URL: z.url().optional(),
 });
 
 export interface Config {
@@ -25,6 +27,7 @@ export interface Config {
   autoApprove: boolean;
   envelopeTtlDefaultS: number;
   scanConverterUrl: string | null;
+  briefExtractorUrl: string | null;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -53,5 +56,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     autoApprove,
     envelopeTtlDefaultS: parsed.ENVELOPE_TTL_DEFAULT_S,
     scanConverterUrl: parsed.SCAN_CONVERTER_URL ?? null,
+    briefExtractorUrl: parsed.BRIEF_EXTRACTOR_URL ?? null,
   };
 }

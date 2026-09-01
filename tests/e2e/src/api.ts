@@ -111,6 +111,35 @@ export class GatewayApi {
     return this.request("POST", `/projects/${projectId}/issue-commit0`, SERVICE_TOKEN, {});
   }
 
+  async postTranscripts(projectId: string, sessions: { session_id: string; text: string }[]) {
+    const res = await this.request("POST", `/projects/${projectId}/transcripts`, SERVICE_TOKEN, {
+      sessions,
+    });
+    if (res.status !== 201) throw new Error(`transcripts ${res.status}: ${JSON.stringify(res.json)}`);
+    return z
+      .object({
+        brief_id: z.string(),
+        brief_version: z.number(),
+        review_id: z.string(),
+        status: z.string(),
+        contradiction_count: z.number(),
+      })
+      .parse(res.json);
+  }
+
+  async getBrief(projectId: string) {
+    const res = await this.request("GET", `/projects/${projectId}/brief`, SERVICE_TOKEN);
+    if (res.status !== 200) throw new Error(`brief ${res.status}`);
+    return z
+      .object({
+        brief_version: z.number(),
+        confirmed_by_client: z.boolean(),
+        brief: z.record(z.string(), z.unknown()),
+      })
+      .loose()
+      .parse(res.json);
+  }
+
   raw(method: string, path: string, token: string | null, body?: unknown) {
     return this.request(method, path, token, body);
   }
