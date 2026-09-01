@@ -14,6 +14,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from layout_compiler.compile import CompileError, CompileOptions, compile_layout
+from layout_compiler.furnish import FurnishError, FurnishOptions, furnish_layout
+from layout_compiler.interior_llm import InteriorLLM
 from layout_compiler.llm import CompilerLLM
 
 app = FastAPI(title="layout-compiler", docs_url=None, redoc_url=None)
@@ -33,6 +35,20 @@ def _llm() -> CompilerLLM:
     raise RuntimeError(f"unknown LLM_MODE {mode!r} (expected 'fixture' or 'live')")
 
 
+@cache
+def _interior_llm() -> InteriorLLM:
+    mode = os.environ.get("LLM_MODE", "fixture")
+    if mode == "live":
+        from layout_compiler.interior_llm import AnthropicInteriorLLM
+
+        return AnthropicInteriorLLM()
+    if mode == "fixture":
+        from layout_compiler.interior_fixtures import InteriorFixtureLLM
+
+        return InteriorFixtureLLM()
+    raise RuntimeError(f"unknown LLM_MODE {mode!r} (expected 'fixture' or 'live')")
+
+
 class CompileRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     project_id: str = Field(
@@ -47,6 +63,17 @@ def healthz() -> dict:
     return {"ok": True, "llm_mode": os.environ.get("LLM_MODE", "fixture")}
 
 
+class FurnishRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    project_id: str = Field(
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    )
+    brief: dict[str, Any]
+    commit0_layout: dict[str, Any]
+    commit1_layout: dict[str, Any]
+    commit1_ops: list[dict[str, Any]]
+
+
 @app.post("/compile")
 def compile_endpoint(req: CompileRequest):
     try:
@@ -55,6 +82,24 @@ def compile_endpoint(req: CompileRequest):
         )
     except CompileError as err:
         # hard fail: the raw outputs ride in the 422 so the caller can store them
+        return JSONResponse(
+            status_code=422,
+            content={"error": err.code, "message": err.message, "raw_outputs": err.raw_outputs},
+        )
+
+
+@app.post("/furnish")
+def furnish_endpoint(req: FurnishRequest):
+    try:
+        return furnish_layout(
+            req.brief,
+            req.commit0_layout,
+            req.commit1_layout,
+            req.commit1_ops,
+            FurnishOptions(project_id=req.project_id),
+            _interior_llm(),
+        )
+    except FurnishError as err:
         return JSONResponse(
             status_code=422,
             content={"error": err.code, "message": err.message, "raw_outputs": err.raw_outputs},

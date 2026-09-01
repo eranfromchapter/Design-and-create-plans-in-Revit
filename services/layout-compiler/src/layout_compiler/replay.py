@@ -87,3 +87,23 @@ def render_review_svgs(
     for op in ops:
         new.apply(op["op"], op["args"], _catalogs())
     return {"existing": render_plan(existing), "new": render_plan(new)}
+
+
+def render_furnish_svgs(
+    commit0_layout: dict[str, Any],
+    commit1_ops: list[dict[str, Any]],
+    place_ops: list[dict[str, Any]],
+) -> dict[str, str]:
+    """{"commit1": svg, "furnished": svg} for the interior review card: the
+    Commit #0 replay plus the approved Commit #1 ops (demolished elements
+    dashed) is post-Commit-#1 reality; the furnished view adds the place ops.
+    Same canonical renderer, so the furnished card equals what the sim will
+    show after Commit #2's interior half — modulo the MEP layers Phase 6 adds.
+    Raises revit_sim.model.OpError when the sim would reject an op (preflight)."""
+    model = sim_model_from_layout(commit0_layout)
+    for op in commit1_ops:
+        model.apply(op["op"], op["args"], _catalogs())
+    furnished = model.clone()
+    for op in place_ops:
+        furnished.apply(op["op"], op["args"], _catalogs())
+    return {"commit1": render_plan(model), "furnished": render_plan(furnished)}
