@@ -13,7 +13,7 @@ BRIEF_DIR := services/brief-extractor
 LAYOUT_DIR := services/layout-compiler
 DATABASE_URL ?= postgres://chapter:chapter@127.0.0.1:5432/revit_agent
 
-.PHONY: verify lint typecheck test codegen codegen-check dev-up dev-down test-ts test-py test-cs e2e demo-phase1 demo-phase2 demo-phase3 demo-phase4
+.PHONY: verify lint typecheck test codegen codegen-check dev-up dev-down test-ts test-py test-cs e2e demo-phase1 demo-phase2 demo-phase3 demo-phase4 demo-phase5
 
 verify: lint typecheck test codegen-check
 	@echo "verify: all green"
@@ -101,6 +101,17 @@ demo-phase4:
 	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run phase4
 	cd $(LAYOUT_DIR) && uv run python scripts/demo_phase4.py
 	@echo "demo-phase4: golden plan SVG at fixtures/goldens/phase4_2br.svg"
+
+# Phase 5 demo (Part E): the interior chain e2e, then the furnish CLI on the
+# recorded fixture — furnished plan SVG + the ops + the REVIEW list.
+demo-phase5:
+	cd $(SIM_DIR) && uv sync --quiet
+	cd $(SCAN_DIR) && uv sync --quiet
+	cd $(BRIEF_DIR) && uv sync --quiet
+	cd $(LAYOUT_DIR) && uv sync --quiet
+	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run phase5
+	cd $(LAYOUT_DIR) && uv run python scripts/demo_phase5.py
+	@echo "demo-phase5: furnished plan SVG at fixtures/goldens/phase5_2br_furnished.svg"
 
 dev-up:
 	docker compose up -d
