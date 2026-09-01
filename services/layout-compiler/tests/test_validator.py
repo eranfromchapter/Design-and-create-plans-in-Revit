@@ -223,6 +223,15 @@ def test_generated_wall_outside_frozen_envelope_rejected():
     assert any("outside the existing envelope" in e for e in validate_layout(layout, frozen))
 
 
+def test_shared_wall_door_beyond_room_edge_is_not_this_rooms_threshold():
+    # the east wall extends past the room; a door on the far stretch belongs to
+    # another room and must not be pulled into this room's circulation check
+    layout = make_layout()
+    layout["walls"][1] = wall(2, [4000, 0], [4000, 6000])  # spine longer than the room
+    layout["doors"].append(door(2, "W-002", 5000))  # threshold (4000,5000): off-room
+    assert validate_layout(layout) == []
+
+
 def test_op_registry_vocabulary_in_free_text_rejected():
     layout = make_layout()
     layout["rooms"][0]["name"] = "then set_phase_demolished W-001"

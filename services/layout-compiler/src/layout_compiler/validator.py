@@ -315,11 +315,16 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
                 free = free.difference(rect.buffer(clearance))
 
         eroded = free.buffer(-circulation_min / 2)
-        thresholds = [
-            _pt_on_wall(walls[door["host_wall_id"]], door["offset"])
-            for door in layout["doors"]
-            if door["host_wall_id"] in room["boundary_wall_ids"]
-        ]
+        # a room's thresholds are the doors ON ITS OWN boundary: a shared wall
+        # (e.g. a full-height spine) hosts doors for several rooms, and a door
+        # beyond this room's edge extent is another room's door
+        thresholds = []
+        for door in layout["doors"]:
+            if door["host_wall_id"] not in room["boundary_wall_ids"]:
+                continue
+            pt = _pt_on_wall(walls[door["host_wall_id"]], door["offset"])
+            if polygon.exterior.distance(Point(pt)) <= BOUNDARY_EDGE_TOLERANCE_MM:
+                thresholds.append(pt)
         if thresholds and eroded.is_empty:
             errors.append(
                 f"rooms.{room['id']}: free space vanishes under circulation erosion "
