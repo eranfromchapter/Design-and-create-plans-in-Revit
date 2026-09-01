@@ -29,12 +29,16 @@ from layout_compiler.catalogs import (
     CONTRACTS_DIR,
     asbuilt_wall_types,
     door_types,
+    family_types,
+    new_families,
     new_wall_types,
     window_types,
 )
 from layout_compiler.geometry import (
     BOUNDARY_EDGE_TOLERANCE_MM,
+    OVERLAP_EPS_MM2,
     circulation_errors,
+    furniture_rect,
     room_free_space,
     room_thresholds,
     wall_len,
@@ -149,6 +153,34 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
             errors.append(
                 f"windows.{window['id']}: revit_type {window['revit_type']!r} not in any catalog"
             )
+    # furniture vocabulary is closed too (Phase 5): family + type from the
+    # catalog, kind consistent, footprint EXACTLY the catalog's — the LLM
+    # proposes what goes where, never geometry
+    for entry in layout["furniture"]:
+        for item in entry["items"]:
+            if item["revit_family"] not in new_families():
+                errors.append(
+                    f"furniture.{item['id']}: revit_family {item['revit_family']!r} not in "
+                    "new_construction_types.json families (closed vocabulary)"
+                )
+                continue
+            spec = family_types().get((item["revit_family"], item["revit_type"]))
+            if spec is None:
+                errors.append(
+                    f"furniture.{item['id']}: revit_type {item['revit_type']!r} is not a "
+                    f"catalog type of {item['revit_family']!r}"
+                )
+                continue
+            if item["kind"] not in spec["kinds"]:
+                errors.append(
+                    f"furniture.{item['id']}: kind {item['kind']!r} not offered by "
+                    f"{item['revit_family']!r}"
+                )
+            if [float(v) for v in item["footprint"]] != spec["footprint_mm"]:
+                errors.append(
+                    f"furniture.{item['id']}: footprint must match the catalog "
+                    f"{spec['footprint_mm']} for {item['revit_type']!r}"
+                )
 
     # generated walls must bound at least one room (a wall bounding nothing is
     # floating or outside the plan — also the cheap envelope-closure rule)
@@ -291,15 +323,33 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
                 f"rooms.{room['id']}: {program} min clear width {min_width:.0f}mm not met"
             )
 
-        # free space = room minus furniture footprints (inflated by clearances),
-        # then the Part G circulation check — both shared with the interior
-        # placer via geometry.py (one implementation, validator-stable strings)
+        # Phase 5 furniture geometry: every footprint inside the room (centerline
+        # bound, `covers` so boundary-touching is legal) and pairwise POSITIVE-AREA
+        # disjoint (touching is legal — a flush kitchen run shares edges)
         room_items = [
             item
             for entry in layout["furniture"]
             if entry["room_id"] == room["id"]
             for item in entry["items"]
         ]
+        rects = [(item["id"], furniture_rect(item)) for item in room_items]
+        room_cover = polygon.buffer(0.01)
+        for item_id, rect in rects:
+            if not room_cover.covers(rect):
+                errors.append(
+                    f"rooms.{room['id']}: furniture {item_id} footprint outside the room boundary"
+                )
+        for i, (id_a, rect_a) in enumerate(rects):
+            for id_b, rect_b in rects[i + 1 :]:
+                overlap = rect_a.intersection(rect_b).area
+                if overlap > OVERLAP_EPS_MM2:
+                    errors.append(
+                        f"furniture.{id_a}~{id_b}: footprints overlap ({overlap:.0f} mm²)"
+                    )
+
+        # free space = room minus furniture footprints (inflated by clearances),
+        # then the Part G circulation check — both shared with the interior
+        # placer via geometry.py (one implementation, validator-stable strings)
         free = room_free_space(polygon, room_items)
         thresholds = room_thresholds(room, polygon, layout["doors"], walls)
         errors.extend(circulation_errors(room["id"], free, thresholds, circulation_min))

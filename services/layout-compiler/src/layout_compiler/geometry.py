@@ -19,6 +19,9 @@ from shapely.geometry.base import BaseGeometry
 from layout_compiler.catalogs import wall_thickness_mm
 
 BOUNDARY_EDGE_TOLERANCE_MM = 1.0  # edge-to-centerline slack on top of t/2
+# Overlap = POSITIVE-AREA intersection; touching footprints are legal (a flush
+# kitchen run shares edges, and the sim's interference check is strict-<).
+OVERLAP_EPS_MM2 = 1e-3
 
 
 def pt_on_wall(wall: dict[str, Any], offset: float) -> tuple[float, float]:

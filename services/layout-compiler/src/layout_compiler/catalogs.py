@@ -65,5 +65,46 @@ def window_types() -> frozenset[str]:
 
 @cache
 def new_vocabulary_block() -> str:
-    """The closed vocabulary injected verbatim into the compiler prompt (D1)."""
+    """The closed vocabulary injected verbatim into the compiler prompt (D1).
+    Deliberately the whole catalog file (families included) — documented at the
+    Phase 5 gate."""
     return json.dumps(_load("new_construction_types.json"), indent=2)
+
+
+@cache
+def new_families() -> dict[str, dict]:
+    """revit_family -> catalog entry (Phase 5 furniture vocabulary, D1)."""
+    return {f["revit_family"]: f for f in _load("new_construction_types.json")["families"]}
+
+
+@cache
+def family_types() -> dict[tuple[str, str], dict]:
+    """(revit_family, revit_type) -> {footprint_mm, clearance_front_mm, kinds,
+    wall_seeking_default}. The placer stamps these onto every item — the LLM
+    proposes WHAT goes where, never geometry."""
+    out: dict[tuple[str, str], dict] = {}
+    for family in _load("new_construction_types.json")["families"]:
+        for entry in family["types"]:
+            out[(family["revit_family"], entry["revit_type"])] = {
+                "footprint_mm": [float(v) for v in entry["footprint_mm"]],
+                "clearance_front_mm": float(entry.get("clearance_front_mm", 0)),
+                "kinds": tuple(family["kinds"]),
+                "wall_seeking_default": bool(family.get("wall_seeking_default", True)),
+            }
+    return out
+
+
+@cache
+def pocket_door_types() -> frozenset[str]:
+    """Pocket doors have no swing leaf — they emit no swing arc (Phase 5 pin)."""
+    return frozenset(
+        d["revit_type"]
+        for d in _load("new_construction_types.json")["doors"]
+        if "pocket" in d["revit_type"].lower()
+    )
+
+
+@cache
+def families_vocabulary_block() -> str:
+    """The closed furniture vocabulary injected verbatim into the furnish prompt."""
+    return json.dumps(_load("new_construction_types.json")["families"], indent=2)
