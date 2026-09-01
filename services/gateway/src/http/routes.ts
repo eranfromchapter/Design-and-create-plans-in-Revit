@@ -10,6 +10,8 @@ import { renderReviewsPage } from "../ui/reviews.js";
 import { convertScanBundle, type ReviewPayload } from "../scan/converter-client.js";
 import { opsFromScanLayout } from "../scan/ops.js";
 import { extractBrief } from "../brief/extractor-client.js";
+import { compileLayout } from "../layout/compiler-client.js";
+import { commit0LayoutFromReview } from "../layout/snapshot.js";
 
 const createProjectBody = z.object({ name: z.string().min(1).max(200) });
 const enrollBody = z.object({
@@ -207,12 +209,9 @@ export function registerRoutes(
     }
 
     const content = review.content as ReviewPayload;
-    const decision = (review.decision_payload ?? {}) as {
-      confirmations?: { ceiling_height_mm?: number };
-    };
-    // auto-approved (CI) reviews carry no confirmations -> converter defaults apply
-    const ceilingMm =
-      decision.confirmations?.ceiling_height_mm ?? content.height_assumption_mm;
+    // shared derivation with the frozen snapshot recordCommitResult writes, so
+    // the snapshot always matches what was committed (heights = confirmed ceiling)
+    const { ceilingMm } = commit0LayoutFromReview(review);
     const ops = opsFromScanLayout(content.layout, {
       ceilingMm,
       cloudRef: content.layout.meta.scan?.cloud_ref,
@@ -220,6 +219,106 @@ export function registerRoutes(
     return issueEnvelope(reply, projectId, {
       ops,
       commitLabel: "Commit #0",
+      approvalRef: { review_id: review.id, content_hash: review.content_hash },
+    });
+  });
+
+  // ---- Phase 4 layout flow: compile -> layout_commit1 review -> Commit #1 ----
+
+  app.post("/projects/:id/compile-layout", { preHandler: serviceAuth }, async (req, reply) => {
+    const projectId = (req.params as { id: string }).id;
+    if (!(await repos.getProject(projectId))) {
+      return reply.code(404).send({ error: "unknown_project" });
+    }
+    if (!config.layoutCompilerUrl) {
+      return reply.code(503).send({ error: "layout_compiler_unavailable" });
+    }
+    // the frozen Commit #0 snapshot is the diff baseline — no snapshot, no compile
+    const snapshot = await repos.getSnapshot(projectId, "commit0");
+    if (!snapshot) return reply.code(409).send({ error: "commit0_not_done" });
+    if (await repos.hasSnapshot(projectId, "commit1")) {
+      return reply.code(409).send({ error: "commit1_already_done" });
+    }
+    const brief = await repos.latestBrief(projectId);
+    if (!brief) return reply.code(409).send({ error: "no_brief" });
+    if (!brief.confirmed_by_client) {
+      return reply.code(409).send({ error: "brief_not_confirmed" });
+    }
+
+    const outcome = await compileLayout(config.layoutCompilerUrl, {
+      project_id: projectId,
+      brief: brief.content,
+      existing_layout: snapshot.layout,
+    });
+    if (!outcome.ok) {
+      // REVIEW on failure (PLAN.md Phase 4): informational card, never
+      // auto-approved — AUTO_APPROVE must not wave a failed compile through
+      await repos.createReview(
+        projectId,
+        "layout_failure",
+        { error: outcome.error, message: outcome.message, brief_version: brief.brief_version },
+        false,
+      );
+      await repos.logEventDirect(projectId, "gateway", "layout_compile_failed", {
+        error: outcome.error,
+        message: outcome.message,
+        raw_outputs: outcome.rawOutputs,
+      });
+      return reply.code(422).send({ error: outcome.error, message: outcome.message });
+    }
+
+    const { result } = outcome;
+    // everything the human approves rides in the review content: approval_ref's
+    // content_hash then covers the exact ops issue-commit1 will send verbatim
+    const review = await repos.createReview(
+      projectId,
+      "layout_commit1",
+      {
+        layout: result.layout,
+        ops: result.ops,
+        demolition_list: result.demolition,
+        svgs: result.svgs,
+        diagnostics: result.diagnostics,
+        brief_version: brief.brief_version,
+        counts: {
+          walls: result.layout.walls.length,
+          doors: result.layout.doors.length,
+          windows: result.layout.windows.length,
+          rooms: result.layout.rooms?.length ?? 0,
+          demolished: result.demolition.length,
+        },
+      },
+      config.autoApprove,
+    );
+    return reply.code(201).send({
+      review_id: review.id,
+      content_hash: review.content_hash,
+      status: review.status,
+      counts: (review.content as { counts: unknown }).counts,
+    });
+  });
+
+  app.post("/projects/:id/issue-commit1", { preHandler: serviceAuth }, async (req, reply) => {
+    const projectId = (req.params as { id: string }).id;
+    const project = await repos.getProject(projectId);
+    if (!project) return reply.code(404).send({ error: "unknown_project" });
+    if (!project.commit0_done) return reply.code(409).send({ error: "commit0_not_done" });
+    if (await repos.hasSnapshot(projectId, "commit1")) {
+      return reply.code(409).send({ error: "commit1_already_done" });
+    }
+
+    const review = await repos.latestReviewOfKind(projectId, "layout_commit1");
+    if (!review) return reply.code(409).send({ error: "no_layout_review" });
+    if (review.status !== "approved") {
+      return reply.code(409).send({ error: "layout_review_not_approved", status: review.status });
+    }
+
+    // ops verbatim from the approved review content — the envelope builder
+    // re-validates each against the registry before signing (SI-2)
+    const content = review.content as { ops: OpInput[] };
+    return issueEnvelope(reply, projectId, {
+      ops: content.ops,
+      commitLabel: "Commit #1",
       approvalRef: { review_id: review.id, content_hash: review.content_hash },
     });
   });
@@ -298,6 +397,7 @@ export function registerRoutes(
       name: project.name,
       drift_state: project.drift_state,
       commit0_done: project.commit0_done,
+      commit1_done: await repos.hasSnapshot(projectId, "commit1"),
       executor_connected: core.executorReady(projectId),
       last_committed_seq: await repos.lastCommittedSeq(projectId),
       id_map: await repos.idMapEntries(projectId),

@@ -34,6 +34,39 @@ function confirmationInputs(r: ReviewRow): string {
   return html;
 }
 
+/** layout_commit1 cards show existing vs new plans side by side plus the
+ *  demolition list — the human decision surface for Commit #1. The SVGs are
+ *  gateway-assembled compiler output; they still render via data: URIs so the
+ *  escape-everything discipline holds. */
+function layoutCommit1Card(r: ReviewRow): string {
+  if (r.kind !== "layout_commit1") return "";
+  const content = r.content as {
+    svgs?: { existing?: string; new?: string };
+    demolition_list?: { kind: string; id: string }[];
+    counts?: Record<string, number>;
+  };
+  const svg = (s: string | undefined, caption: string): string => {
+    if (!s) return "";
+    const uri = `data:image/svg+xml;base64,${Buffer.from(s, "utf8").toString("base64")}`;
+    return `<figure style="margin:0;flex:1;min-width:0">
+        <img src="${uri}" alt="${esc(caption)}" style="width:100%;border:1px solid #ddd">
+        <figcaption style="text-align:center">${esc(caption)}</figcaption>
+      </figure>`;
+  };
+  const demolition = (content.demolition_list ?? [])
+    .map((d) => `<li><code>${esc(d.id)}</code> (${esc(d.kind)})</li>`)
+    .join("");
+  const counts = Object.entries(content.counts ?? {})
+    .map(([k, v]) => `${esc(k)}: ${esc(String(v))}`)
+    .join(" · ");
+  return `<div style="display:flex;gap:12px;margin:8px 0">
+      ${svg(content.svgs?.existing, "Existing conditions")}
+      ${svg(content.svgs?.new, "Proposed plan (demolished dashed)")}
+    </div>
+    <p>${counts}</p>
+    ${demolition ? `<details open><summary>Demolition by phasing (${(content.demolition_list ?? []).length})</summary><ul>${demolition}</ul></details>` : "<p>No demolition.</p>"}`;
+}
+
 export function renderReviewsPage(
   projectName: string,
   projectId: string,
@@ -56,6 +89,7 @@ export function renderReviewsPage(
           : `<em>${esc(r.status)} by ${esc(r.decided_by ?? "?")}</em>`;
       return `<section style="border:1px solid #ccc;border-radius:6px;padding:12px;margin:12px 0">
         <strong>${esc(r.kind)}</strong> · <code>${esc(r.id)}</code> · ${esc(r.status)}
+        ${layoutCommit1Card(r)}
         <pre style="background:#f6f6f6;padding:8px;overflow-x:auto">${content}</pre>
         ${actions}
       </section>`;
