@@ -26,9 +26,24 @@ const envelopeBody = z.object({
     .optional(),
   ttl_s: z.number().int().min(10).max(3600).optional(),
 });
+const wallFlagsSchema = z
+  .record(
+    z.string().regex(/^W-\d{3}$/),
+    z
+      .object({
+        is_demising: z.boolean().optional(),
+        is_load_bearing: z.boolean().optional(),
+        is_exterior: z.boolean().optional(),
+      })
+      .strict(),
+  )
+  .refine((flags) => Object.keys(flags).length <= 64, { message: "too many wall flags" });
 const confirmationsSchema = z.object({
   unit: z.enum(["mm", "inch", "ft", "cm", "m"]).optional(),
   ceiling_height_mm: z.number().min(2100).max(6000).optional(), // create_wall bounds
+  // Phase 5 (Q7): the human confirms structural wall flags on the scan card,
+  // making the Part G immutability guard non-vacuous on real scans
+  wall_flags: wallFlagsSchema.optional(),
 });
 const decideBody = z
   .object({
@@ -209,13 +224,13 @@ export function registerRoutes(
       return reply.code(409).send({ error: "scan_review_not_approved", status: review.status });
     }
 
-    const content = review.content as ReviewPayload;
     // shared derivation with the frozen snapshot recordCommitResult writes, so
-    // the snapshot always matches what was committed (heights = confirmed ceiling)
-    const { ceilingMm } = commit0LayoutFromReview(review);
-    const ops = opsFromScanLayout(content.layout, {
+    // the committed model always matches the snapshot (heights = confirmed
+    // ceiling, flags = confirmed wall flags) — the ops read the DERIVED layout
+    const { layout: derived, ceilingMm } = commit0LayoutFromReview(review);
+    const ops = opsFromScanLayout(derived, {
       ceilingMm,
-      cloudRef: content.layout.meta.scan?.cloud_ref,
+      cloudRef: derived.meta.scan?.cloud_ref,
     });
     return issueEnvelope(reply, projectId, {
       ops,
@@ -544,13 +559,22 @@ export function registerRoutes(
 
     // form fields (urlencoded) -> confirmations, validated exactly like the REST path
     const form = (req.body ?? {}) as Record<string, string | undefined>;
-    let confirmations: { unit?: "mm" | "inch" | "ft" | "cm" | "m"; ceiling_height_mm?: number } | undefined;
-    if (form["ceiling_height_mm"] || form["unit"]) {
+    // bounded parsing of wall-flag checkboxes: wall_flag.<W-xxx>.<flag> = "on"
+    const wallFlags: Record<string, Record<string, boolean>> = {};
+    for (const key of Object.keys(form).slice(0, 256)) {
+      const match = /^wall_flag\.(W-\d{3})\.(is_demising|is_load_bearing|is_exterior)$/.exec(key);
+      if (match && form[key] === "on") {
+        (wallFlags[match[1]!] ??= {})[match[2]!] = true;
+      }
+    }
+    let confirmations: z.infer<typeof confirmationsSchema> | undefined;
+    if (form["ceiling_height_mm"] || form["unit"] || Object.keys(wallFlags).length) {
       const parsed = confirmationsSchema.safeParse({
         unit: form["unit"] || undefined,
         ceiling_height_mm: form["ceiling_height_mm"]
           ? Number(form["ceiling_height_mm"])
           : undefined,
+        wall_flags: Object.keys(wallFlags).length ? wallFlags : undefined,
       });
       if (!parsed.success) return reply.code(422).send({ error: "bad_confirmations" });
       confirmations = parsed.data;
@@ -579,9 +603,24 @@ export function registerRoutes(
  *  gateway-side rescale (reject, then re-POST /scan-bundles with unit_override). */
 function confirmationProblem(
   review: ReviewRow,
-  confirmations?: { unit?: string; ceiling_height_mm?: number },
+  confirmations?: {
+    unit?: string;
+    ceiling_height_mm?: number;
+    wall_flags?: Record<string, unknown>;
+  },
 ): { error: string; message: string } | null {
   if (review.kind !== "scan_commit0") return null;
+  const layoutWalls = new Set(
+    (review.content as ReviewPayload).layout.walls.map((w) => w.id),
+  );
+  for (const wallId of Object.keys(confirmations?.wall_flags ?? {})) {
+    if (!layoutWalls.has(wallId)) {
+      return {
+        error: "unknown_wall_flag",
+        message: `wall_flags names ${wallId}, which is not a wall in the reviewed scan`,
+      };
+    }
+  }
   const unit = (review.content as ReviewPayload).unit;
   if (confirmations?.ceiling_height_mm === undefined) {
     return {

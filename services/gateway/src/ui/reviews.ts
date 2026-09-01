@@ -31,6 +31,26 @@ function confirmationInputs(r: ReviewRow): string {
       .join("");
     html += `<label>Unit (heuristic — confirm) <select name="unit">${options}</select></label> `;
   }
+  // Phase 5 (Q7): confirm structural flags per wall so Part G immutability
+  // stops being vacuous on real scans (Lane A never sets these)
+  const walls = (r.content as { layout?: { walls?: { id: string }[] } }).layout?.walls ?? [];
+  const rows = walls
+    .slice(0, 64)
+    .map((w) => {
+      const boxes = ["is_demising", "is_load_bearing", "is_exterior"]
+        .map(
+          (flag) =>
+            `<label style="margin-right:8px"><input type="checkbox" ` +
+            `name="wall_flag.${esc(w.id)}.${flag}"> ${flag.slice(3)}</label>`,
+        )
+        .join("");
+      return `<tr><td><code>${esc(w.id)}</code></td><td>${boxes}</td></tr>`;
+    })
+    .join("");
+  if (rows) {
+    html += `<details><summary>Confirm structural wall flags (demising / load-bearing / exterior)</summary>
+      <table cellpadding="2">${rows}</table></details>`;
+  }
   return html;
 }
 
