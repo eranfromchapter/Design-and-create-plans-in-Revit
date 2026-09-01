@@ -7,12 +7,15 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from revit_sim.model import Catalogs
+
 from layout_compiler.compile import CompileOptions, compile_layout
 from layout_compiler.fixtures import FixtureLLM
 from layout_compiler.furnish import FurnishOptions, furnish_layout
 from layout_compiler.golden_4br import REPO_ROOT, frozen_layout
 from layout_compiler.golden_furniture import EXPECTED_UNPLACED
 from layout_compiler.interior_fixtures import InteriorFixtureLLM
+from layout_compiler.replay import sim_model_from_layout
 
 GOLDEN_SVG = (REPO_ROOT / "fixtures" / "goldens" / "phase5_2br_furnished.svg").read_text()
 PHASE4_SVG = (REPO_ROOT / "fixtures" / "goldens" / "phase4_2br.svg").read_text()
@@ -67,6 +70,34 @@ def test_golden_furnished_svg_bytes():
     assert result["svgs"]["commit1"] == PHASE4_SVG  # the card's left pane IS Commit #1 reality
     assert result["svgs"]["furnished"] == GOLDEN_SVG  # byte golden (eyeballed)
     assert result["svgs"]["furnished"].count('class="family"') == 18
+
+
+def test_golden_placements_survive_the_real_sim_interference_check():
+    """The executor's own overlap law, not our reimplementation of it: replay
+    Commit #0 + the Commit #1 ops + all 18 place ops into the REAL sim, then run
+    run_interference_check {"scope": "last_commit"} — any AABB overlap the placer
+    let through raises OpError and would roll back the whole envelope on-site."""
+    brief = confirmed_brief()
+    compiled = compile_layout(
+        brief,
+        frozen_layout(),
+        CompileOptions(project_id=brief["meta"]["project_id"]),
+        FixtureLLM(),
+    )
+    result = furnish_layout(
+        brief,
+        frozen_layout(),
+        compiled["layout"],
+        compiled["ops"],
+        FurnishOptions(project_id=brief["meta"]["project_id"]),
+        InteriorFixtureLLM(),
+    )
+    catalogs = Catalogs.load()
+    model = sim_model_from_layout(frozen_layout())
+    for op in [*compiled["ops"], *result["ops"]]:
+        model.apply(op["op"], op["args"], catalogs)
+    assert len(model.families) == 18
+    model.apply("run_interference_check", {"scope": "last_commit"}, catalogs)  # raises on clash
 
 
 def test_injection_laundered_brief_changes_nothing():

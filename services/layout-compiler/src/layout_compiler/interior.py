@@ -26,14 +26,16 @@ Exhausted → the item is UNPLACED (REVIEW), never force-placed."""
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 from shapely.geometry import LineString, Point, Polygon
 from shapely.geometry.base import BaseGeometry
 
-from layout_compiler.catalogs import family_types
+from layout_compiler.catalogs import family_types, plumbing_fixtures
 from layout_compiler.geometry import (
+    COVER_TOLERANCE_MM,
     OVERLAP_EPS_MM2,
     circulation_errors,
     clearance_blob,
@@ -187,13 +189,30 @@ def _candidate_ok(
     )
 
 
-def _anchor(proposal: dict[str, Any], polygon: Polygon) -> tuple[float, float]:
-    """The proposed center, clamped to the room centroid when it lies outside."""
+def _anchor(proposal: dict[str, Any]) -> tuple[float, float]:
+    """The proposed center, VERBATIM (Part G: the spiral runs 'around the
+    proposed center' and walls order 'nearest-first' to it). An out-of-room
+    center is never clamped: its candidates fail the covers predicate, the
+    bounded search exhausts, and the item lands in REVIEW — the pinned
+    outcome, never a silently relocated intent."""
     cx, cy = proposal["center"]
-    if polygon.covers(Point(cx, cy)):
-        return (float(cx), float(cy))
-    centroid = polygon.centroid
-    return (centroid.x, centroid.y)
+    return (float(cx), float(cy))
+
+
+def spiral_positions(anchor: tuple[float, float]) -> list[tuple[float, float]]:
+    """The pinned spiral geometry: the anchor itself, then rings every 50mm out
+    to 500mm, 8 angles per ring at 45° increments starting from +x, ring-major
+    order — 81 positions (× 4 rotations = SPIRAL_CAP)."""
+    positions = [anchor]
+    rings = int(SPIRAL_MAX_OFFSET_MM / SPIRAL_RING_STEP_MM)
+    for ring in range(1, rings + 1):
+        radius = ring * SPIRAL_RING_STEP_MM
+        for k in range(SPIRAL_ANGLES_PER_RING):
+            theta = 2 * math.pi * k / SPIRAL_ANGLES_PER_RING
+            positions.append(
+                (anchor[0] + radius * math.cos(theta), anchor[1] + radius * math.sin(theta))
+            )
+    return positions
 
 
 def _wall_angle_deg(wall: dict[str, Any]) -> float:
@@ -229,14 +248,17 @@ def _place_wall_seeking(
     base_free: BaseGeometry,
     all_aabbs: list[tuple[float, float, float, float]],
     diag: ItemDiag,
+    deadline_check: Callable[[], None] | None = None,
 ) -> dict[str, Any] | None:
-    anchor = _anchor(proposal, ctx.polygon)
+    anchor = _anchor(proposal)
     width, depth = proposal["footprint"]
     walls = sorted(
         (walls_by_id[wid] for wid in ctx.room["boundary_wall_ids"]),
         key=lambda w: (LineString([w["start"], w["end"]]).distance(Point(anchor)), w["id"]),
     )
     for wall in walls:
+        if deadline_check is not None:
+            deadline_check()  # SI-6: the caller's time limit interrupts the solver
         diag.walls_tried += 1
         thickness = wall_thickness_of(wall)
         if thickness is None:
@@ -278,22 +300,18 @@ def _place_free_standing(
     base_free: BaseGeometry,
     all_aabbs: list[tuple[float, float, float, float]],
     diag: ItemDiag,
+    deadline_check: Callable[[], None] | None = None,
 ) -> dict[str, Any] | None:
-    anchor = _anchor(proposal, ctx.polygon)
-    positions = [anchor]
-    rings = int(SPIRAL_MAX_OFFSET_MM / SPIRAL_RING_STEP_MM)
-    for ring in range(1, rings + 1):
-        radius = ring * SPIRAL_RING_STEP_MM
-        for k in range(SPIRAL_ANGLES_PER_RING):
-            theta = 2 * math.pi * k / SPIRAL_ANGLES_PER_RING
-            positions.append(
-                (anchor[0] + radius * math.cos(theta), anchor[1] + radius * math.sin(theta))
-            )
-    for position in positions:
+    # rotations are PROPOSAL-RELATIVE (pinned): candidate #1 is the exact
+    # proposed pose, and the sweep stays aligned with skewed geometry
+    base_rotation = _normalize_rotation(float(proposal["rotation_deg"]))
+    for position in spiral_positions(_anchor(proposal)):
+        if deadline_check is not None:
+            deadline_check()  # SI-6: the caller's time limit interrupts the solver
         for rotation in SPIRAL_ROTATIONS:
             diag.spiral_tried += 1
             assert diag.spiral_tried <= SPIRAL_CAP  # SI-6 counter assertion
-            candidate = _stamp(proposal, position, rotation)
+            candidate = _stamp(proposal, position, base_rotation + rotation)
             if _candidate_ok(candidate, ctx, base_free, all_aabbs):
                 diag.placed, diag.method = True, "spiral"
                 return candidate
@@ -301,9 +319,40 @@ def _place_free_standing(
     return None
 
 
-def legalize_furniture(proposals: list[dict[str, Any]], layout: dict[str, Any]) -> FurnishOutcome:
-    """proposals: normalized furniture proposals, each carrying room_id. Rooms
-    are processed by room_id asc; items within a room by (area desc, id asc)."""
+def _normalize_proposal(proposal: dict[str, Any], spec: dict[str, Any]) -> dict[str, Any]:
+    """Catalog closure: geometry (footprint, clearance) and the MEP seed
+    (fixture_units, hookups for kinds in catalogs/plumbing.json) are catalog-
+    owned — the LLM proposes what goes where, never shapes or plumbing data.
+    Electrical/gas hookups are ADDITIVE on top of the plumbing table (the
+    washer stack's 240V dryer half; dry kinds keep their proposed hookups)."""
+    normalized = {
+        **proposal,
+        "footprint": list(spec["footprint_mm"]),
+        "clearance_front": spec["clearance_front_mm"],
+        "wall_seeking": bool(proposal.get("wall_seeking", spec["wall_seeking_default"])),
+    }
+    plumbing = plumbing_fixtures().get(proposal["kind"])
+    if plumbing is not None:
+        normalized["fixture_units"] = plumbing["fixture_units"]
+        extras = sorted(
+            h
+            for h in set(proposal.get("hookups", []))
+            if h in ("electrical_120", "electrical_240", "gas") and h not in plumbing["hookups"]
+        )
+        normalized["hookups"] = [*plumbing["hookups"], *extras]
+    return normalized
+
+
+def legalize_furniture(
+    proposals: list[dict[str, Any]],
+    layout: dict[str, Any],
+    deadline_check: Callable[[], None] | None = None,
+) -> FurnishOutcome:
+    """proposals: furniture proposals, each carrying room_id. Items are placed
+    in ONE global (footprint area desc, id asc) order per Part G — the
+    model-wide AABB predicate couples rooms, so ordering is global, not
+    per-room. `deadline_check` (optional) is called throughout the search and
+    may raise to abort the whole run (SI-6 time limit; never partial output)."""
     walls_by_id = {w["id"]: w for w in layout["walls"]}
     rooms_by_id = {r["id"]: r for r in layout["rooms"]}
     circulation_min = float(
@@ -314,26 +363,25 @@ def legalize_furniture(proposals: list[dict[str, Any]], layout: dict[str, Any]) 
     for proposal in proposals:
         by_room.setdefault(proposal["room_id"], []).append(proposal)
 
-    furniture: list[dict[str, Any]] = []
     unplaced: list[dict[str, Any]] = []
     diags: list[ItemDiag] = []
     all_aabbs: list[tuple[float, float, float, float]] = []
 
+    # one context per room, then normalize every proposal (catalog closure)
+    ctxs: dict[str, _RoomCtx] = {}
+    normalized_all: list[dict[str, Any]] = []
     for room_id in sorted(by_room):
         room = rooms_by_id[room_id]
         polygon = Polygon(room["boundary"])
-        ctx = _RoomCtx(
+        ctxs[room_id] = _RoomCtx(
             room=room,
             polygon=polygon,
-            room_cover=polygon.buffer(0.01),
+            room_cover=polygon.buffer(COVER_TOLERANCE_MM),
             arcs=[arc for _d, arc in room_swing_arcs(room, polygon, layout["doors"], walls_by_id)],
             thresholds=room_thresholds(room, polygon, layout["doors"], walls_by_id),
             circulation_min=circulation_min,
             placed=[],
         )
-        # normalize BEFORE sorting: geometry comes from the catalog, never the
-        # proposal (the LLM proposes what goes where, not shapes)
-        normalized: list[dict[str, Any]] = []
         for proposal in by_room[room_id]:
             spec = family_types().get((proposal["revit_family"], proposal["revit_type"]))
             if spec is None:  # defensive: proposal validation runs upstream
@@ -341,42 +389,43 @@ def legalize_furniture(proposals: list[dict[str, Any]], layout: dict[str, Any]) 
                 diags.append(ItemDiag(item_id=proposal["id"], room_id=room_id, reason=reason))
                 unplaced.append({"item": proposal, "room_id": room_id, "reason": reason})
                 continue
-            normalized.append(
-                {
-                    **proposal,
-                    "footprint": list(spec["footprint_mm"]),
-                    "clearance_front": spec["clearance_front_mm"],
-                    "wall_seeking": bool(
-                        proposal.get("wall_seeking", spec["wall_seeking_default"])
-                    ),
-                }
+            normalized_all.append(_normalize_proposal(proposal, spec))
+
+    # Part G: items sorted by footprint area desc (global), tie-break id asc
+    ordered = sorted(
+        normalized_all,
+        key=lambda p: (-(p["footprint"][0] * p["footprint"][1]), p["id"]),
+    )
+    for proposal in ordered:
+        if deadline_check is not None:
+            deadline_check()
+        room_id = proposal["room_id"]
+        ctx = ctxs[room_id]
+        diag = ItemDiag(item_id=proposal["id"], room_id=room_id)
+        diags.append(diag)
+        base_free = room_free_space(ctx.polygon, [item for item, _r, _b in ctx.placed])
+        if proposal["wall_seeking"]:
+            placed = _place_wall_seeking(
+                proposal, ctx, walls_by_id, base_free, all_aabbs, diag, deadline_check
             )
-        ordered = sorted(
-            normalized,
-            key=lambda p: (-(p["footprint"][0] * p["footprint"][1]), p["id"]),
+        else:
+            placed = _place_free_standing(proposal, ctx, base_free, all_aabbs, diag, deadline_check)
+        if placed is None:
+            unplaced.append({"item": proposal, "room_id": room_id, "reason": diag.reason})
+            continue
+        ctx.placed.append((placed, furniture_rect(placed), clearance_blob(placed)))
+        all_aabbs.append(
+            aabb_of(tuple(placed["center"]), placed["rotation_deg"], placed["footprint"])
         )
-        for proposal in ordered:
-            diag = ItemDiag(item_id=proposal["id"], room_id=room_id)
-            diags.append(diag)
-            base_free = room_free_space(polygon, [item for item, _r, _b in ctx.placed])
-            if proposal["wall_seeking"]:
-                placed = _place_wall_seeking(proposal, ctx, walls_by_id, base_free, all_aabbs, diag)
-            else:
-                placed = _place_free_standing(proposal, ctx, base_free, all_aabbs, diag)
-            if placed is None:
-                unplaced.append({"item": proposal, "room_id": room_id, "reason": diag.reason})
-                continue
-            ctx.placed.append((placed, furniture_rect(placed), clearance_blob(placed)))
-            all_aabbs.append(
-                aabb_of(tuple(placed["center"]), placed["rotation_deg"], placed["footprint"])
-            )
-        if ctx.placed:
-            furniture.append(
-                {
-                    "room_id": room_id,
-                    "items": sorted((item for item, _r, _b in ctx.placed), key=lambda i: i["id"]),
-                }
-            )
+
+    furniture = [
+        {
+            "room_id": room_id,
+            "items": sorted((item for item, _r, _b in ctxs[room_id].placed), key=lambda i: i["id"]),
+        }
+        for room_id in sorted(ctxs)
+        if ctxs[room_id].placed
+    ]
 
     return FurnishOutcome(
         furniture=furniture,

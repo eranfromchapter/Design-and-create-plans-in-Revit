@@ -220,7 +220,9 @@ PROPOSALS: list[tuple[str, str, str, str, str, list[float], float | None, list[s
     ),
 ]
 
-EXPECTED_UNPLACED = ["F-013", "F-020"]
+# unplaced order = the placer's GLOBAL attempt order, (-area, id): the washer
+# stack (0.36 m2) is tried — and exhausts — before the smaller lav (0.225 m2)
+EXPECTED_UNPLACED = ["F-020", "F-013"]
 
 
 def emission() -> dict[str, Any]:

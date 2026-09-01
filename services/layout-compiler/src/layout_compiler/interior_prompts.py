@@ -5,6 +5,8 @@ are the enforcement."""
 
 from __future__ import annotations
 
+import re
+
 from layout_compiler.catalogs import families_vocabulary_block
 
 FURNISH_SYSTEM_PROMPT = (
@@ -47,6 +49,9 @@ leave corridors empty. Fewer well-placed items beat crowding."""
 def furnish_block(
     brief_json: str, layout_json: str, capacity_hints_json: str, sessions: str
 ) -> str:
+    # SI-7 defense in depth: the sessions attribute is STRUCTURAL markup — only
+    # a safe charset may enter it (the gateway also enforces this at ingest)
+    sessions = re.sub(r"[^A-Za-z0-9_,-]", "", sessions)
     attr = f' sessions="{sessions}"' if sessions else ""
     return (
         f"<brief{attr}>\n{brief_json}\n</brief>\n\n"

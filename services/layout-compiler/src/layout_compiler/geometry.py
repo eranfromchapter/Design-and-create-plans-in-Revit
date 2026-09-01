@@ -22,6 +22,10 @@ BOUNDARY_EDGE_TOLERANCE_MM = 1.0  # edge-to-centerline slack on top of t/2
 # Overlap = POSITIVE-AREA intersection; touching footprints are legal (a flush
 # kitchen run shares edges, and the sim's interference check is strict-<).
 OVERLAP_EPS_MM2 = 1e-3
+# inside-room cover slack: emitted centers are rounded to 0.1mm, which can
+# shift a flush rect up to ~0.071mm — the tolerance must absorb that on
+# non-axis walls (0.1mm is far below any physical meaning)
+COVER_TOLERANCE_MM = 0.1
 
 
 def pt_on_wall(wall: dict[str, Any], offset: float) -> tuple[float, float]:

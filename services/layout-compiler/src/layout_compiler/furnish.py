@@ -11,9 +11,13 @@ expiry is a hard 422, never a partial or machine-dependent result.
 
 PHASE 6 HANDOFF CONTRACT (the merge gate consumes this run's gateway review):
 - the LATEST review of kind "interior_plan" must be status=approved, else 409;
+- its content.brief_version must equal the project's latest CONFIRMED brief
+  version, else 409 stale_interior_plan (the gateway's interior_plan_ready
+  state flag already encodes both conditions);
 - content.ops verbatim is the interior half of Commit #2, under
   {review_id, content_hash} as the interior approval reference;
-- content.layout.furniture seeds the MEP agent (kind/fixture_units/hookups);
+- content.layout.furniture seeds the MEP agent (kind/fixture_units/hookups —
+  catalog-owned via plumbing.json, electrical/gas extras additive);
 - content.unplaced items (full proposals, hookups included) are EXCLUDED from
   Commit #2 and do NOT seed MEP."""
 
@@ -73,9 +77,18 @@ def _proposal_errors(emitted: dict[str, Any], layout: dict[str, Any]) -> list[st
         e["id"] for group in ("walls", "doors", "windows", "rooms") for e in layout[group]
     }
     seen: set[str] = set()
+    seen_rooms: set[str] = set()
     for entry in emitted["furniture"]:
         if entry["room_id"] not in room_ids:
             errors.append(f"furniture.{entry['room_id']}: unknown room")
+        if entry["room_id"] in seen_rooms:
+            # duplicate groups would merge past the contract's 40-items-per-room
+            # cap and surface as a false internal error — repairable instead
+            errors.append(
+                f"furniture.{entry['room_id']}: duplicate room group — emit at most one "
+                "furniture group per room"
+            )
+        seen_rooms.add(entry["room_id"])
         for item in entry["items"]:
             if item["id"] in seen or item["id"] in element_ids:
                 errors.append(f"furniture.{item['id']}: duplicate element id")
@@ -112,6 +125,19 @@ def furnish_layout(
     """Returns {"layout", "ops", "svgs": {commit1, furnished}, "unplaced",
     "diagnostics"}. Raises FurnishError on every failure path."""
     started = time.monotonic()
+    deadline = started + FURNISH_TIME_LIMIT_S
+    raw_outputs: list[dict[str, Any]] = []
+
+    def deadline_check() -> None:
+        """SI-6: the request-boundary time limit interrupts even the solver —
+        a hard abort (422), never a partial or machine-dependent result."""
+        if time.monotonic() > deadline:
+            raise FurnishError(
+                "furnish_timeout",
+                f"furnish exceeded {FURNISH_TIME_LIMIT_S:.0f}s at the request boundary",
+                raw_outputs,
+            )
+
     if brief.get("meta", {}).get("confirmed_by_client") is not True:
         raise FurnishError(
             "brief_not_confirmed",
@@ -132,7 +158,6 @@ def furnish_layout(
         sessions,
     )
 
-    raw_outputs: list[dict[str, Any]] = []
     attempts = 0
     errors: list[str] = []
     emitted: dict[str, Any] = {}
@@ -145,12 +170,7 @@ def furnish_layout(
         emitted = llm.furnish(FURNISH_SYSTEM_PROMPT, prompt, furnish_tool_schema())
         raw_outputs.append(emitted)
         attempts += 1
-        if time.monotonic() - started > FURNISH_TIME_LIMIT_S:
-            raise FurnishError(
-                "furnish_timeout",
-                f"furnish exceeded {FURNISH_TIME_LIMIT_S:.0f}s at the request boundary",
-                raw_outputs,
-            )
+        deadline_check()
         errors = _proposal_errors(emitted, commit1_layout)
         if not errors:
             break
@@ -167,13 +187,9 @@ def furnish_layout(
         for entry in emitted["furniture"]
         for item in entry["items"]
     ]
-    outcome = legalize_furniture(proposals, commit1_layout)
-    if time.monotonic() - started > FURNISH_TIME_LIMIT_S:
-        raise FurnishError(
-            "furnish_timeout",
-            f"furnish exceeded {FURNISH_TIME_LIMIT_S:.0f}s at the request boundary",
-            raw_outputs,
-        )
+    # the deadline interrupts the solver itself (per item / wall / spiral ring),
+    # not just the stage boundaries — SI-6's "bounded AND time-limited"
+    outcome = legalize_furniture(proposals, commit1_layout, deadline_check)
 
     furnished = copy.deepcopy(commit1_layout)
     furnished["furniture"] = outcome.furniture

@@ -238,6 +238,20 @@ describe.skipIf(!DATABASE_URL)("gateway interior flow (DB-backed)", () => {
     expect(furnishRequests).toHaveLength(0);
   });
 
+  it("a newer unconfirmed brief blocks furnish: 409, compiler never called", async () => {
+    const projectId = await createProject();
+    await commit0(projectId);
+    await confirmedBrief(projectId);
+    await commit1(projectId);
+    // brief v2 arrives after Commit #1 but the client never confirms it — the
+    // interior agent must not furnish against a superseded brief
+    await gw.repos.createBriefWithReview(projectId, { meta: { note: "v2 draft" } }, {}, false);
+    const res = await furnish(projectId);
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error).toBe("brief_not_confirmed");
+    expect(furnishRequests).toHaveLength(0);
+  });
+
   it("furnish creates a pending interior_plan review carrying the branch delta", async () => {
     const projectId = await createProject();
     await commit0(projectId);
@@ -318,6 +332,27 @@ describe.skipIf(!DATABASE_URL)("gateway interior flow (DB-backed)", () => {
       method: "GET", url: `/projects/${projectId}/state`, headers: svc,
     })).json();
     expect(state3.interior_plan_ready).toBe(false);
+  });
+
+  it("a newer CONFIRMED brief supersedes an approved plan (staleness gate)", async () => {
+    const projectId = await createProject();
+    await commit0(projectId);
+    await confirmedBrief(projectId);
+    await commit1(projectId);
+    const reviewId = (await furnish(projectId)).json().review_id as string;
+    await inject({ method: "POST", url: `/reviews/${reviewId}/approve`, headers: actor, payload: {} });
+    const ready = (await inject({
+      method: "GET", url: `/projects/${projectId}/state`, headers: svc,
+    })).json();
+    expect(ready.interior_plan_ready).toBe(true);
+
+    // brief v2 confirmed AFTER the plan was approved: the plan was built from
+    // v1, so Phase 6's merge gate must see it as stale (handoff contract)
+    await confirmedBrief(projectId);
+    const stale = (await inject({
+      method: "GET", url: `/projects/${projectId}/state`, headers: svc,
+    })).json();
+    expect(stale.interior_plan_ready).toBe(false);
   });
 
   it("UI review page renders the interior card with the unplaced table", async () => {

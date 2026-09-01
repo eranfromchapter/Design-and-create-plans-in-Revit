@@ -2,10 +2,16 @@
 (seeded PRNG — deterministic run to run), random catalog furniture of BOTH
 classes; every placed pair must be positive-area disjoint AND sim-AABB
 disjoint, no placed item may touch a swing arc, and the assembled furnished
-layout must pass the full validator (the independent oracle)."""
+layout must pass the full validator (the independent oracle).
+
+Odd seeds rotate the whole case rigidly by a seeded non-axis angle (walls,
+boundary, proposal centers together) — the invariants are frame-independent,
+so an axis-aligned-only corpus would let trig chirality/rounding bugs
+through (adversarial review finding)."""
 
 from __future__ import annotations
 
+import math
 import random
 from typing import Any
 
@@ -17,6 +23,17 @@ from layout_compiler.geometry import OVERLAP_EPS_MM2, furniture_rect
 from layout_compiler.interior import aabb_of, aabbs_overlap, legalize_furniture
 from layout_compiler.swing import room_swing_arcs
 from layout_compiler.validator import validate_layout
+
+# rigid-rotation corpus for odd seeds: deliberately non-axis angles (45 is the
+# AABB worst case; 30/22.5/11.25 exercise irrational trig)
+ROTATION_CORPUS = [11.25, 22.5, 30.0, 45.0]
+
+
+def rot(pt: list[float] | tuple[float, float], deg: float) -> list[float]:
+    rad = math.radians(deg)
+    x, y = pt
+    return [x * math.cos(rad) - y * math.sin(rad), x * math.sin(rad) + y * math.cos(rad)]
+
 
 # (family, type, kind, wall_seeking pool entry) — real catalog vocabulary only
 POOL: list[tuple[str, str, str]] = [
@@ -116,6 +133,15 @@ def seeded_case(seed: int) -> tuple[dict[str, Any], list[dict[str, Any]]]:
                 "footprint": [1.0, 1.0],  # overwritten from the catalog, always
             }
         )
+    if seed % 2:  # odd seeds: rotate the whole case rigidly off-axis
+        angle = rng.choice(ROTATION_CORPUS)
+        for wall in layout["walls"]:
+            wall["start"] = rot(wall["start"], angle)
+            wall["end"] = rot(wall["end"], angle)
+        room = layout["rooms"][0]
+        room["boundary"] = [rot(pt, angle) for pt in room["boundary"]]
+        for proposal in proposals:
+            proposal["center"] = rot(proposal["center"], angle)
     return layout, proposals
 
 

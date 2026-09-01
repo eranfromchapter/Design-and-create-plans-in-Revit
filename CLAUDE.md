@@ -129,10 +129,23 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   geometric verdicts, the acceptance demos), generator gen_golden_furniture.py is the sole
   source of truth (validator oracle + eroded-area floors); phase5_2br_furnished.svg byte
   golden (eyeballed). 200-seeded-room property suite (zero overlaps both classes, arcs
-  clear, validator oracle). phase5 e2e (5 children, chain through furnish, card bytes ==
-  goldens, seq stays 2) green; make demo-phase5. Catalog gains 15 _PLACEHOLDER furniture
-  families/types (human input); contracts README clearance defaults amended (per-type,
-  absent=0, all-side inflation).
+  clear, validator oracle; odd seeds rigidly rotated by 11.25/22.5/30/45°). phase5 e2e
+  (5 children, chain through furnish, card bytes == goldens, seq stays 2) green;
+  make demo-phase5. Catalog gains 15 _PLACEHOLDER furniture families/types (human input);
+  contracts README clearance defaults amended (per-type, absent=0, all-side inflation).
+  ADVERSARIAL REVIEW (22 agents): 17 confirmed findings, all fixed on this branch —
+  flip_facing now rides in create_door ops (committed ops = arc geometry), spiral anchor
+  is the proposed center VERBATIM (out-of-room → REVIEW, never clamped), spiral rotations
+  are proposal-relative, item ordering is GLOBAL (-area, id) across rooms (unplaced order
+  pinned to attempt order: F-020 before F-013), pocket-door exemption unions both
+  catalogs, plumbing closure via catalogs/plumbing.json (fixture_units overwritten,
+  hookups = plumbing ∪ additive electrical/gas), the furnish deadline interrupts the
+  solver itself (callback; interior.py stays clock-free by AST test), duplicate room
+  groups are a repairable proposal error, session ids clamped to a safe charset at every
+  boundary (gateway zod, extractor pattern, prompt builders), interior_plan_ready
+  requires content.brief_version == latest CONFIRMED brief (staleness),
+  COVER_TOLERANCE_MM=0.1 absorbs rotated-wall center rounding; sim interference check
+  replayed for real in the golden test.
   GATE ITEMS FOR ERAN: (1) clearance semantics — the field is named clearance_FRONT but
   the validator/Part G inflate all sides; front-only would be a validator/Part G change
   (bed clearance set to 0 for now: all-around 760 makes <2650mm bedrooms bed-less).
@@ -145,4 +158,10 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   entries; the washer/dryer stack is ONE kind=washer item (Phase 6 never sees 'dryer').
   (5) Fixture chain stays flag-free by design — confirming wall flags on a real scan
   obliges the Phase 4 compiler to echo them (live behavior; immutability then bites).
+  (6) brief.v1.json source_sessions has no charset pattern — runtime boundaries clamp to
+  ^[A-Za-z0-9_-]{1,120}$ everywhere, but pinning it in the SCHEMA is a contract change
+  needing approval. (7) PLAN Part H says "hypothesis" for the placer property suite; what
+  shipped is a 200-case seeded-PRNG corpus + hypothesis on validator totality — reconcile
+  or bless. (8) Catalog has no leafless/pocket door flag; the swing exemption is
+  name-based ("pocket") — a real flag needs catalog vocabulary from Eran.
   Standing asks unchanged (catalogs, ANTHROPIC_API_KEY, MANUAL_REVIT_TEST Phases 1–2).

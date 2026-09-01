@@ -141,6 +141,22 @@ def test_duplicate_fid_is_a_repairable_error():
     assert "duplicate element id" in llm.calls[1].user_text
 
 
+def test_duplicate_room_group_is_a_repairable_error():
+    """Two furniture groups for the same room would merge past the contract's
+    40-items-per-room cap and surface as a false internal error — the seam
+    treats it as a repairable proposal problem instead."""
+    split = {
+        "furniture": [
+            {"room_id": "R-001", "items": [nightstand(1, [500.0, 400.0])]},
+            {"room_id": "R-001", "items": [nightstand(2, [3500.0, 400.0])]},
+        ]
+    }
+    llm = ScriptedInteriorLLM(script=[split, emission()])
+    result = run(llm)
+    assert result["diagnostics"]["repair_retried"] is True
+    assert "duplicate room group" in llm.calls[1].user_text
+
+
 def test_footprint_and_clearance_overwritten_from_catalog():
     lying = emission([nightstand(1, [3500.0, 400.0], footprint=[1.0, 1.0], clearance_front=5000.0)])
     llm = ScriptedInteriorLLM(script=[lying])

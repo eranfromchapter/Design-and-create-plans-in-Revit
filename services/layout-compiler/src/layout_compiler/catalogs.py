@@ -96,12 +96,34 @@ def family_types() -> dict[tuple[str, str], dict]:
 
 @cache
 def pocket_door_types() -> frozenset[str]:
-    """Pocket doors have no swing leaf — they emit no swing arc (Phase 5 pin)."""
+    """Pocket doors have no swing leaf — they emit no swing arc (Phase 5 pin).
+    Union over BOTH catalogs: kept source="scan" doors resolve via the as-built
+    vocabulary, and an as-built pocket door must never grow a phantom arc.
+    (Name-based detection is a stopgap — an explicit leafless flag on catalog
+    door entries is a flagged gate ask, since catalogs are human-owned.)"""
     return frozenset(
         d["revit_type"]
-        for d in _load("new_construction_types.json")["doors"]
+        for d in [
+            *_load("new_construction_types.json")["doors"],
+            *_load("asbuilt_types.json")["doors"],
+        ]
         if "pocket" in d["revit_type"].lower()
     )
+
+
+@cache
+def plumbing_fixtures() -> dict[str, dict]:
+    """kind -> {fixture_units, hookups} from catalogs/plumbing.json — the
+    authoritative MEP table (Part G P-1..P-4). Phase 5 overwrites LLM-proposed
+    fixture_units/hookups from here so the Phase 6 seed is catalog-owned."""
+    fixtures = _load("plumbing.json")["fixtures"]
+    return {
+        kind: {
+            "fixture_units": float(entry["fixture_units"]),
+            "hookups": list(entry["hookups"]),
+        }
+        for kind, entry in fixtures.items()
+    }
 
 
 @cache

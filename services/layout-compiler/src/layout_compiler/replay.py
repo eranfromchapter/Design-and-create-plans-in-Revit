@@ -57,6 +57,7 @@ def sim_model_from_layout(layout: dict[str, Any]) -> SimModel:
                 "width": door["width"],
                 "height": door["height"],
                 "swing": door.get("swing", "L"),
+                "flip_facing": bool(door.get("flip_facing", False)),
             },
             catalogs,
         )

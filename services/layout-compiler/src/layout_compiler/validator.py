@@ -36,6 +36,7 @@ from layout_compiler.catalogs import (
 )
 from layout_compiler.geometry import (
     BOUNDARY_EDGE_TOLERANCE_MM,
+    COVER_TOLERANCE_MM,
     OVERLAP_EPS_MM2,
     circulation_errors,
     furniture_rect,
@@ -334,7 +335,7 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
             for item in entry["items"]
         ]
         rects = [(item["id"], furniture_rect(item)) for item in room_items]
-        room_cover = polygon.buffer(0.01)
+        room_cover = polygon.buffer(COVER_TOLERANCE_MM)
         for item_id, rect in rects:
             if not room_cover.covers(rect):
                 errors.append(

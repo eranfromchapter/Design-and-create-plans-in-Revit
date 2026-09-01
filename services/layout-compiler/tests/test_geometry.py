@@ -46,6 +46,22 @@ def test_furniture_rect_rotation_semantics():
     assert rect.centroid.coords[0] == (1000.0, 1000.0)
 
 
+def test_furniture_rect_chirality_pinned_at_30_degrees():
+    """Hand-computed corners at a NON-axis angle: a rotation-sign flip (mirror)
+    produces a different corner set, so this pins CCW chirality exactly."""
+    rect = furniture_rect(
+        {"center": [0.0, 0.0], "rotation_deg": 30.0, "footprint": [2000.0, 600.0]}
+    )
+    corners = {(round(x, 2), round(y, 2)) for x, y in rect.exterior.coords[:4]}
+    # local (±1000, ±300) rotated +30° CCW: (x·cos30 − y·sin30, x·sin30 + y·cos30)
+    assert corners == {
+        (-716.03, -759.81),
+        (1016.03, 240.19),
+        (716.03, 759.81),
+        (-1016.03, -240.19),
+    }
+
+
 def test_clearance_blob_inflates_all_sides():
     item = {"center": [0.0, 0.0], "rotation_deg": 0.0, "footprint": [1000.0, 1000.0]}
     blob = clearance_blob({**item, "clearance_front": 500.0})

@@ -92,7 +92,8 @@ it("chain to Commit #1, then furnish -> interior_plan branch delta + golden card
   expect(ops).toHaveLength(18);
   expect(new Set(ops.map((o) => o.op))).toEqual(new Set(["place_family"]));
   const unplaced = content["unplaced"] as { item: { id: string }; reason: string }[];
-  expect(unplaced.map((u) => u.item.id)).toEqual(["F-013", "F-020"]); // the REVIEW demos
+  // the REVIEW demos, in the placer's global (-area, id) attempt order
+  expect(unplaced.map((u) => u.item.id)).toEqual(["F-020", "F-013"]);
   for (const entry of unplaced) expect(entry.reason).toBeTruthy();
   const diagnostics = content["diagnostics"] as {
     items: { candidates_per_wall: Record<string, number>; spiral_tried: number }[];

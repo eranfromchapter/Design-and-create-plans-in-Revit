@@ -6,7 +6,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from helpers import make_layout
+from helpers import door, make_layout, room, wall
 from shapely.geometry import Polygon
 
 from layout_compiler.interior import (
@@ -156,6 +156,126 @@ def test_legalize_is_deterministic_and_order_insensitive():
     shuffled = legalize_furniture(list(reversed(proposals)), layout)
     assert first.furniture == second.furniture == shuffled.furniture
     assert first.unplaced == second.unplaced == shuffled.unplaced
+
+
+def test_spiral_positions_geometry_pinned():
+    from layout_compiler.interior import spiral_positions
+
+    positions = spiral_positions((1000.0, 2000.0))
+    assert len(positions) == 81  # anchor + 10 rings x 8 angles
+    assert positions[0] == (1000.0, 2000.0)
+    assert len(set(positions)) == 81  # all distinct
+    import math as m
+
+    for ring in range(1, 11):
+        for k in range(8):
+            x, y = positions[1 + (ring - 1) * 8 + k]  # ring-major order
+            assert m.isclose(m.hypot(x - 1000.0, y - 2000.0), ring * 50.0, abs_tol=1e-9)
+        # first angle of each ring points along +x
+        assert m.isclose(positions[1 + (ring - 1) * 8][0], 1000.0 + ring * 50.0, abs_tol=1e-9)
+
+
+def test_spiral_places_at_a_ring_beyond_the_anchor():
+    """Two identical free-standing nightstands proposed at the same center:
+    the second must walk the spiral to the first ring where the rects merely
+    touch (450mm out, angle 0) — pinning ring geometry beyond candidate #1."""
+    a = nightstand(1, [2000.0, 1500.0], wall_seeking=False)
+    b = nightstand(2, [2000.0, 1500.0], wall_seeking=False)
+    outcome = legalize_furniture([a, b], layout_4x3())
+    assert outcome.unplaced == []
+    items = {i["id"]: i for e in outcome.furniture for i in e["items"]}
+    assert items["F-001"]["center"] == [2000.0, 1500.0]
+    assert items["F-002"]["center"] == [2450.0, 1500.0]  # ring 9 (450mm), angle 0: touching
+    diag = next(d for d in outcome.diagnostics["items"] if d["item_id"] == "F-002")
+    # anchor (4 rotations) + rings 1..8 all overlap (64 positions x 4) -> 261st candidate
+    assert diag["spiral_tried"] == 261
+
+
+def test_out_of_room_proposal_is_review_not_relocated():
+    """Part G pin: the spiral runs around the PROPOSED center, never a clamped
+    substitute — an out-of-room hint exhausts the bounded search and lands in
+    REVIEW rather than being silently moved."""
+    table = {
+        "id": "F-001",
+        "room_id": "R-001",
+        "kind": "table",
+        "revit_family": "CHPT_DiningTable_PLACEHOLDER",
+        "revit_type": "Dining_900x1800_PLACEHOLDER",
+        "center": [9000.0, 9000.0],  # nowhere near the 4000x3000 room
+        "rotation_deg": 0.0,
+        "footprint": [900.0, 1800.0],
+    }
+    outcome = legalize_furniture([table], layout_4x3())
+    assert [u["item"]["id"] for u in outcome.unplaced] == ["F-001"]
+    assert outcome.diagnostics["items"][0]["spiral_tried"] == 324  # full bounded exhaustion
+
+
+def test_plumbing_closure_overwrites_fixture_units_and_wet_hookups():
+    wc = {
+        "id": "F-001",
+        "room_id": "R-001",
+        "kind": "wc",
+        "revit_family": "CHPT_WC_PLACEHOLDER",
+        "revit_type": "WC_400x700_PLACEHOLDER",
+        "center": [3200.0, 400.0],
+        "rotation_deg": 0.0,
+        "footprint": [400.0, 700.0],
+        "fixture_units": 99.0,  # lie
+        "hookups": ["gas"],  # wet hookups dropped entirely
+    }
+    outcome = legalize_furniture([wc], layout_4x3())
+    item = outcome.furniture[0]["items"][0]
+    assert item["fixture_units"] == 4.0  # catalogs/plumbing.json owns this
+    # plumbing hookups restored; the proposed dry extra stays additive
+    assert item["hookups"] == ["sanitary", "supply_c", "vent", "gas"]
+
+
+def test_deadline_check_interrupts_the_solver():
+    calls = {"n": 0}
+
+    def tripwire() -> None:
+        calls["n"] += 1
+        if calls["n"] > 2:
+            raise RuntimeError("deadline")
+
+    import pytest
+
+    with pytest.raises(RuntimeError, match="deadline"):
+        legalize_furniture(
+            [nightstand(1, [3500.0, 400.0]), nightstand(2, [500.0, 400.0])],
+            layout_4x3(),
+            deadline_check=tripwire,
+        )
+
+
+def test_rotated_room_placement_is_exact():
+    """A room rigidly rotated 30°: the stamped rotation equals the wall angle
+    and the center equals the rotated back-to-wall point — kills any axis-only
+    degeneracy in the trig (mutation-hardening)."""
+    import math as m
+
+    def rot(x: float, y: float) -> list[float]:
+        c, s = m.cos(m.radians(30.0)), m.sin(m.radians(30.0))
+        return [x * c - y * s, x * s + y * c]
+
+    corners = [rot(0, 0), rot(4000, 0), rot(4000, 3000), rot(0, 3000)]
+    walls = [
+        wall(1, corners[0], corners[1]),
+        wall(2, corners[1], corners[2]),
+        wall(3, corners[2], corners[3]),
+        wall(4, corners[3], corners[0]),
+    ]
+    layout = make_layout(
+        walls=walls,
+        doors=[door(1, "W-001", 2000)],
+        rooms=[room(1, corners, [w["id"] for w in walls])],
+    )
+    outcome = legalize_furniture([nightstand(1, rot(3500, 400))], layout)
+    assert outcome.unplaced == []
+    item = outcome.furniture[0]["items"][0]
+    assert item["rotation_deg"] == 30.0  # the wall angle, not an axis snap
+    expected = rot(3500, 271)  # foot (3500,0) + n̂·(46+225) in room frame
+    assert item["center"] == [round(expected[0], 1), round(expected[1], 1)]
 
 
 def test_production_placer_has_no_rng_and_no_clock():

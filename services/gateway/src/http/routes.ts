@@ -60,7 +60,14 @@ const scanBundleBody = z.object({
 });
 const transcriptsBody = z.object({
   sessions: z
-    .array(z.object({ session_id: z.string().min(1).max(120), text: z.string().min(1) }))
+    .array(
+      z.object({
+        // safe charset: session ids become STRUCTURAL prompt markup downstream
+        // (the <brief sessions="..."> attribute) — SI-7 at the ingest boundary
+        session_id: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
+        text: z.string().min(1),
+      }),
+    )
     .min(1)
     .max(20),
   client_names: z.array(z.string().min(1).max(120)).max(10).optional(),
@@ -492,8 +499,15 @@ export function registerRoutes(
       commit0_done: project.commit0_done,
       commit1_done: await repos.hasSnapshot(projectId, "commit1"),
       interior_plan_ready: await (async () => {
+        // approved AND built from the latest CONFIRMED brief — a newer
+        // confirmed brief supersedes the plan (Phase 6 handoff contract)
         const plan = await repos.latestReviewOfKind(projectId, "interior_plan");
-        return plan !== null && plan.status === "approved";
+        if (plan === null || plan.status !== "approved") return false;
+        const confirmed = await repos.latestConfirmedBrief(projectId);
+        return (
+          confirmed !== null &&
+          (plan.content as { brief_version?: number }).brief_version === confirmed.brief_version
+        );
       })(),
       executor_connected: core.executorReady(projectId),
       last_committed_seq: await repos.lastCommittedSeq(projectId),
