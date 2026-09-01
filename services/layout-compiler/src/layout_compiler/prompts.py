@@ -39,9 +39,12 @@ the envelope allows; where impossible, prefer fewer rooms over invalid geometry.
 )
 
 
-def compile_block(brief_json: str, existing_json: str) -> str:
+def compile_block(brief_json: str, existing_json: str, sessions: str = "") -> str:
+    # the sessions attribute keys FixtureLLM replays (same pattern as the
+    # brief-extractor's <transcript session="..."> fixture keying)
+    attr = f' sessions="{sessions}"' if sessions else ""
     return (
-        f"<brief>\n{brief_json}\n</brief>\n\n"
+        f"<brief{attr}>\n{brief_json}\n</brief>\n\n"
         f"<existing_layout>\n{existing_json}\n</existing_layout>\n\n"
         "Produce the new plan with the emit_layout tool."
     )

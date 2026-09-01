@@ -118,7 +118,8 @@ def validate_layout(layout: dict[str, Any]) -> list[str]:
         elif source == "scan":
             if wall["revit_type"] not in asbuilt_wall_types():
                 errors.append(
-                    f"walls.{wall['id']}: revit_type {wall['revit_type']!r} not in asbuilt_types.json"
+                    f"walls.{wall['id']}: revit_type {wall['revit_type']!r} not in "
+                    "asbuilt_types.json"
                 )
         else:
             errors.append(f"walls.{wall['id']}: compiler output must set source scan|generated")

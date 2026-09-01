@@ -1,7 +1,9 @@
 """Compile orchestration: refuse unconfirmed briefs -> forced emit_layout call
 (brief + existing layout as delimited data blocks) -> meta stamping -> the
-deterministic validator with a repair loop of AT MOST 2 -> hard fail preserving
-the raw outputs -> REVIEW path (the caller stores the failure)."""
+deterministic validator with a repair loop of AT MOST 2 -> Part G identity diff
+(PRE-repair: a mutated frozen element is a hard rejection, never a repair
+prompt) -> sim-replay preflight + review-card SVGs -> hard fail preserving the
+raw outputs -> REVIEW path (the caller stores the failure)."""
 
 from __future__ import annotations
 
@@ -10,9 +12,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from chapter_contracts.generated.chapter_layout import ChapterLayout
+from revit_sim.model import OpError
 
+from layout_compiler.architectural import DiffError, DiffResult, diff_layouts
 from layout_compiler.llm import CompilerLLM
 from layout_compiler.prompts import SYSTEM_PROMPT, compile_block, repair_block
+from layout_compiler.replay import render_review_svgs
 from layout_compiler.schema import emit_tool_schema
 from layout_compiler.validator import validate_layout
 
@@ -39,7 +44,7 @@ def compile_layout(
     opts: CompileOptions,
     llm: CompilerLLM,
 ) -> dict[str, Any]:
-    """Returns {"layout": <valid ChapterLayout dict>, "diagnostics": {...}}."""
+    """Returns {"layout", "ops", "demolition", "svgs", "diagnostics"}."""
     if brief.get("meta", {}).get("confirmed_by_client") is not True:
         raise CompileError(
             "brief_not_confirmed",
@@ -53,11 +58,14 @@ def compile_layout(
             "existing_layout_invalid", f"frozen snapshot failed the contract: {err}"
         ) from err
 
-    user_text = compile_block(json.dumps(brief, indent=2), json.dumps(existing_layout, indent=2))
+    sessions = ",".join(brief["meta"].get("source_sessions", []))
+    user_text = compile_block(
+        json.dumps(brief, indent=2), json.dumps(existing_layout, indent=2), sessions
+    )
     raw_outputs: list[dict[str, Any]] = []
     attempts = 0
     errors: list[str] = []
-    candidate: dict[str, Any] = {}
+    diff: DiffResult | None = None
 
     while attempts <= MAX_REPAIRS:
         prompt = (
@@ -79,9 +87,30 @@ def compile_layout(
         }
         errors = validate_layout(candidate)
         attempts += 1
+
+        # Part G identity diff on every schema-valid attempt, BEFORE any repair:
+        # a moved/renumbered/mutated frozen element is never a repair prompt.
+        if not (errors and errors[0].startswith("schema:")):
+            try:
+                diff = diff_layouts(existing_layout, candidate)
+            except DiffError as err:
+                raise CompileError(
+                    "identity_violation",
+                    "Part G identity: " + "; ".join(err.violations[:5]),
+                    raw_outputs,
+                ) from err
+
         if not errors:
+            assert diff is not None
+            try:
+                svgs = render_review_svgs(existing_layout, diff.ops)
+            except OpError as err:  # defensive: the validator should catch all of these
+                raise CompileError("sim_preflight_failed", str(err), raw_outputs) from err
             return {
                 "layout": candidate,
+                "ops": diff.ops,
+                "demolition": diff.demolition,
+                "svgs": svgs,
                 "diagnostics": {
                     "attempts": attempts,
                     "repair_retried": attempts > 1,
