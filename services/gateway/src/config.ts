@@ -16,6 +16,8 @@ const envSchema = z.object({
   SCAN_CONVERTER_URL: z.url().optional(),
   // Brief extractor base URL (Phase 3); transcript routes 503 when unset.
   BRIEF_EXTRACTOR_URL: z.url().optional(),
+  // Layout compiler base URL (Phase 4); compile-layout routes 503 when unset.
+  LAYOUT_COMPILER_URL: z.url().optional(),
 });
 
 export interface Config {
@@ -28,6 +30,7 @@ export interface Config {
   envelopeTtlDefaultS: number;
   scanConverterUrl: string | null;
   briefExtractorUrl: string | null;
+  layoutCompilerUrl: string | null;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -57,5 +60,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     envelopeTtlDefaultS: parsed.ENVELOPE_TTL_DEFAULT_S,
     scanConverterUrl: parsed.SCAN_CONVERTER_URL ?? null,
     briefExtractorUrl: parsed.BRIEF_EXTRACTOR_URL ?? null,
+    layoutCompilerUrl: parsed.LAYOUT_COMPILER_URL ?? null,
   };
 }

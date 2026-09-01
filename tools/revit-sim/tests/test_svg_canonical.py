@@ -49,6 +49,26 @@ def test_insertion_order_does_not_change_bytes():
     assert render_plan(build([1, 2, 3, 4])) == render_plan(build([4, 2, 1, 3]))
 
 
+def test_demolished_elements_render_dashed_standing_bytes_unchanged():
+    baseline = render_plan(build([1, 2, 3, 4]))
+    model = build([1, 2, 3, 4])
+    model.apply("set_phase_demolished", {"target_id": "W-002"}, CATALOGS)
+    model.apply("set_phase_demolished", {"target_id": "D-001"}, CATALOGS)
+    svg = render_plan(model)
+
+    def line_for(element_id: str) -> str:
+        return next(ln for ln in svg.splitlines() if f'data-id="{element_id}"' in ln)
+
+    assert 'class="wall demolished"' in line_for("W-002")
+    assert "stroke-dasharray" in line_for("W-002")
+    assert 'class="door demolished"' in line_for("D-001")
+    assert "stroke-dasharray" in line_for("D-001")
+    # standing elements keep their exact pre-demolition bytes (goldens stay valid)
+    for element_id in ("W-001", "W-003", "W-004"):
+        assert line_for(element_id) in baseline
+    assert "stroke-dasharray" not in baseline
+
+
 def test_svg_is_stable_and_parseable():
     import xml.etree.ElementTree as ET
 

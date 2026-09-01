@@ -96,7 +96,7 @@ describe.skipIf(!DATABASE_URL)("gateway briefs flow (DB-backed)", () => {
     cannedQueue.length = 0;
     seenRequests.length = 0;
     await gw.pool.query(
-      "TRUNCATE briefs, reviews, id_map, event_log, envelopes, workstations, projects",
+      "TRUNCATE layout_snapshots, briefs, reviews, id_map, event_log, envelopes, workstations, projects",
     );
   });
 

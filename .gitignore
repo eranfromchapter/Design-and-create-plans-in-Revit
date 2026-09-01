@@ -21,3 +21,4 @@ obj/
 
 # OS
 .DS_Store
+out/

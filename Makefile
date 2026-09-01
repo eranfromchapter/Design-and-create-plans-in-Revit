@@ -10,9 +10,10 @@ TS_DIR := packages/contracts/ts
 SIM_DIR := tools/revit-sim
 SCAN_DIR := services/scan-converter
 BRIEF_DIR := services/brief-extractor
+LAYOUT_DIR := services/layout-compiler
 DATABASE_URL ?= postgres://chapter:chapter@127.0.0.1:5432/revit_agent
 
-.PHONY: verify lint typecheck test codegen codegen-check dev-up dev-down test-ts test-py test-cs e2e demo-phase1 demo-phase2
+.PHONY: verify lint typecheck test codegen codegen-check dev-up dev-down test-ts test-py test-cs e2e demo-phase1 demo-phase2 demo-phase3 demo-phase4
 
 verify: lint typecheck test codegen-check
 	@echo "verify: all green"
@@ -23,6 +24,7 @@ lint:
 	cd $(SIM_DIR) && uv run ruff check . && uv run ruff format --check .
 	cd $(SCAN_DIR) && uv run ruff check . && uv run ruff format --check .
 	cd $(BRIEF_DIR) && uv run ruff check . && uv run ruff format --check .
+	cd $(LAYOUT_DIR) && uv run ruff check . && uv run ruff format --check .
 
 typecheck:
 	pnpm -r --if-present typecheck
@@ -39,6 +41,7 @@ test-py:
 	cd $(SIM_DIR) && uv run pytest -q
 	cd $(SCAN_DIR) && uv run pytest -q
 	cd $(BRIEF_DIR) && uv run pytest -q
+	cd $(LAYOUT_DIR) && uv run pytest -q
 
 test-cs:
 	$(DOTNET) build plugin/ChapterHub.sln --nologo -v q
@@ -62,6 +65,7 @@ e2e:
 	cd $(SIM_DIR) && uv sync --quiet
 	cd $(SCAN_DIR) && uv sync --quiet
 	cd $(BRIEF_DIR) && uv sync --quiet
+	cd $(LAYOUT_DIR) && uv sync --quiet
 	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run
 
 # Phase 1 demo (Part E): runs the golden 4-wall pipeline and names the plan artifact.
@@ -86,6 +90,17 @@ demo-phase3:
 	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run phase3
 	cd $(BRIEF_DIR) && uv run python -m brief_extractor \
 	  ../../fixtures/transcripts/session1_3br.txt ../../fixtures/transcripts/session2_4br.txt
+
+# Phase 4 demo (Part E): the full chain e2e, then the compiler CLI on the
+# recorded fixture — writes the side-by-side card SVGs + ops for eyeballing.
+demo-phase4:
+	cd $(SIM_DIR) && uv sync --quiet
+	cd $(SCAN_DIR) && uv sync --quiet
+	cd $(BRIEF_DIR) && uv sync --quiet
+	cd $(LAYOUT_DIR) && uv sync --quiet
+	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run phase4
+	cd $(LAYOUT_DIR) && uv run python scripts/demo_phase4.py
+	@echo "demo-phase4: golden plan SVG at fixtures/goldens/phase4_2br.svg"
 
 dev-up:
 	docker compose up -d

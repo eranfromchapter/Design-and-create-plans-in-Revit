@@ -5,6 +5,7 @@ import type pg from "pg";
 import { z } from "zod";
 import canonicalize from "canonicalize";
 import { idMapHash } from "@chapter/contracts";
+import { commit0LayoutFromReview } from "../layout/snapshot.js";
 import type { Db } from "./pool.js";
 
 export const sha256hex = (s: string | Buffer): string =>
@@ -46,6 +47,19 @@ const briefRow = z.object({
   created_at: z.date(),
 });
 export type BriefRow = z.infer<typeof briefRow>;
+
+const snapshotRow = z.object({
+  id: z.string(),
+  project_id: z.string(),
+  commit_label: z.enum(["commit0", "commit1", "commit2"]),
+  seq: z.number(),
+  envelope_id: z.string(),
+  review_id: z.string(),
+  layout: z.unknown(),
+  layout_hash: z.string(),
+  created_at: z.date(),
+});
+export type SnapshotRow = z.infer<typeof snapshotRow>;
 
 const envelopeRow = z.object({
   envelope_id: z.string(),
@@ -246,19 +260,48 @@ export class Repos {
           );
         }
         // Commit #0 completion: a committed envelope whose approval_ref points at a
-        // scan_commit0 review flips the project flag, atomically with the result.
+        // scan_commit0 review flips the project flag, atomically with the result —
+        // and freezes the commit0 layout snapshot (Phase 4 diffs against it).
         const commit0 = await client.query(
           `UPDATE projects p SET commit0_done = true
            FROM envelopes e JOIN reviews rv ON rv.id = (e.approval_ref->>'review_id')::uuid
            WHERE e.envelope_id = $1 AND rv.kind = 'scan_commit0'
              AND p.id = e.project_id AND p.commit0_done = false
-           RETURNING p.id`,
+           RETURNING p.id, rv.id AS review_id, rv.content, rv.decision_payload`,
           [r.envelopeId],
         );
         if (commit0.rowCount) {
+          const { layout } = commit0LayoutFromReview(commit0.rows[0]);
+          await this.insertSnapshot(client, {
+            projectId,
+            commitLabel: "commit0",
+            seq: Number(seq),
+            envelopeId: r.envelopeId,
+            reviewId: commit0.rows[0].review_id,
+            layout,
+          });
           await this.logEvent(client, projectId, "gateway", "commit0_done", {
             envelope_id: r.envelopeId,
             seq: Number(seq),
+          });
+        }
+        // Commit #1 completion: freeze the approved phase="new" layout. The
+        // snapshot row IS the commit1_done marker (no separate flag).
+        const commit1 = await client.query(
+          `SELECT rv.id AS review_id, rv.content
+           FROM envelopes e JOIN reviews rv ON rv.id = (e.approval_ref->>'review_id')::uuid
+           WHERE e.envelope_id = $1 AND rv.kind = 'layout_commit1'`,
+          [r.envelopeId],
+        );
+        if (commit1.rowCount) {
+          const content = commit1.rows[0].content as { layout: unknown };
+          await this.insertSnapshot(client, {
+            projectId,
+            commitLabel: "commit1",
+            seq: Number(seq),
+            envelopeId: r.envelopeId,
+            reviewId: commit1.rows[0].review_id,
+            layout: content.layout,
           });
         }
       }
@@ -276,6 +319,56 @@ export class Repos {
     } finally {
       client.release();
     }
+  }
+
+  /** Freeze a layout snapshot (same transaction as the commit result). Frozen by
+   *  construction: ON CONFLICT DO NOTHING — an existing label is never replaced. */
+  private async insertSnapshot(
+    client: pg.PoolClient,
+    s: {
+      projectId: string;
+      commitLabel: "commit0" | "commit1" | "commit2";
+      seq: number;
+      envelopeId: string;
+      reviewId: string;
+      layout: unknown;
+    },
+  ): Promise<void> {
+    const doc = canonicalize(s.layout);
+    if (doc === undefined) throw new Error("uncanonicalizable layout snapshot");
+    const res = await client.query(
+      `INSERT INTO layout_snapshots
+         (id, project_id, commit_label, seq, envelope_id, review_id, layout, layout_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (project_id, commit_label) DO NOTHING RETURNING id`,
+      [
+        randomUUID(), s.projectId, s.commitLabel, s.seq, s.envelopeId, s.reviewId,
+        JSON.stringify(s.layout), sha256hex(doc),
+      ],
+    );
+    if (res.rowCount) {
+      await this.logEvent(client, s.projectId, "gateway", "layout_snapshot_frozen", {
+        commit_label: s.commitLabel,
+        seq: s.seq,
+        layout_hash: sha256hex(doc),
+      });
+    }
+  }
+
+  async getSnapshot(projectId: string, commitLabel: string): Promise<SnapshotRow | null> {
+    const res = await this.db.query(
+      "SELECT * FROM layout_snapshots WHERE project_id = $1 AND commit_label = $2",
+      [projectId, commitLabel],
+    );
+    return res.rowCount ? snapshotRow.parse(res.rows[0]) : null;
+  }
+
+  async hasSnapshot(projectId: string, commitLabel: string): Promise<boolean> {
+    const res = await this.db.query(
+      "SELECT 1 FROM layout_snapshots WHERE project_id = $1 AND commit_label = $2",
+      [projectId, commitLabel],
+    );
+    return (res.rowCount ?? 0) > 0;
   }
 
   async expireStaleEnvelopes(): Promise<number> {

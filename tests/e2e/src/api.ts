@@ -8,6 +8,7 @@ const issued = z.object({ envelope_id: z.string(), seq: z.number() });
 const stateSchema = z.object({
   drift_state: z.enum(["clean", "dirty"]),
   commit0_done: z.boolean(),
+  commit1_done: z.boolean(),
   executor_connected: z.boolean(),
   last_committed_seq: z.number(),
   id_map: z.record(z.string(), z.number()),
@@ -109,6 +110,24 @@ export class GatewayApi {
 
   async issueCommit0(projectId: string) {
     return this.request("POST", `/projects/${projectId}/issue-commit0`, SERVICE_TOKEN, {});
+  }
+
+  async compileLayout(projectId: string) {
+    return this.request("POST", `/projects/${projectId}/compile-layout`, SERVICE_TOKEN, {});
+  }
+
+  async issueCommit1(projectId: string) {
+    return this.request("POST", `/projects/${projectId}/issue-commit1`, SERVICE_TOKEN, {});
+  }
+
+  /** Full review rows (content included) — the phase4 suite reads the card's SVGs. */
+  async reviewContent(projectId: string, reviewId: string): Promise<Record<string, unknown>> {
+    const res = await this.request("GET", `/projects/${projectId}/reviews`, ACTOR_TOKEN);
+    if (res.status !== 200) throw new Error(`reviews ${res.status}`);
+    const rows = (res.json as { reviews: { id: string; content: unknown }[] }).reviews;
+    const row = rows.find((r) => r.id === reviewId);
+    if (!row) throw new Error(`review ${reviewId} not found`);
+    return row.content as Record<string, unknown>;
   }
 
   async postTranscripts(projectId: string, sessions: { session_id: string; text: string }[]) {

@@ -34,29 +34,39 @@ def render_plan(model: SimModel) -> str:
         f'{_f(max_x - min_x)} {_f(max_y - min_y)}">'
     )
 
+    # demolished elements render dashed (Phase 4 review cards / phase-new plans);
+    # standing elements keep their exact pre-Phase-4 bytes — goldens stay valid
     for wall_id in sorted(model.walls):
         wall = model.walls[wall_id]
-        demolished = "demolished" if wall_id in model.demolished else "standing"
+        demolished = wall_id in model.demolished
+        state = "demolished" if demolished else "standing"
+        dash = ' stroke-dasharray="240.0 120.0"' if demolished else ""
         parts.append(
-            f'<line class="wall {demolished}" data-id="{wall_id}" '
+            f'<line class="wall {state}" data-id="{wall_id}" '
             f'x1="{_f(wall["start"][0])}" y1="{_f(wall["start"][1])}" '
             f'x2="{_f(wall["end"][0])}" y2="{_f(wall["end"][1])}" '
-            f'stroke="black" stroke-width="100.0"/>'
+            f'stroke="black" stroke-width="100.0"{dash}/>'
         )
     for door_id in sorted(model.doors):
         x, y, _ = model.doors[door_id]["point"]
         width = model.doors[door_id]["width"]
+        demolished = door_id in model.demolished
+        cls = "door demolished" if demolished else "door"
+        dash = ' stroke-dasharray="80.0 40.0"' if demolished else ""
         parts.append(
-            f'<circle class="door" data-id="{door_id}" cx="{_f(x)}" cy="{_f(y)}" '
-            f'r="{_f(width / 2)}" fill="white" stroke="black" stroke-width="20.0"/>'
+            f'<circle class="{cls}" data-id="{door_id}" cx="{_f(x)}" cy="{_f(y)}" '
+            f'r="{_f(width / 2)}" fill="white" stroke="black" stroke-width="20.0"{dash}/>'
         )
     for window_id in sorted(model.windows):
         x, y, _ = model.windows[window_id]["point"]
         width = model.windows[window_id]["width"]
+        demolished = window_id in model.demolished
+        cls = "window demolished" if demolished else "window"
+        dash = ' stroke-dasharray="80.0 40.0"' if demolished else ""
         parts.append(
-            f'<rect class="window" data-id="{window_id}" x="{_f(x - width / 2)}" '
+            f'<rect class="{cls}" data-id="{window_id}" x="{_f(x - width / 2)}" '
             f'y="{_f(y - 50)}" width="{_f(width)}" height="100.0" '
-            f'fill="white" stroke="black" stroke-width="20.0"/>'
+            f'fill="white" stroke="black" stroke-width="20.0"{dash}/>'
         )
     for family_id in sorted(model.families):
         fam = model.families[family_id]

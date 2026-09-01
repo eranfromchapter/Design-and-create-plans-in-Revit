@@ -52,7 +52,7 @@ describe.skipIf(!DATABASE_URL)("gateway (DB-backed)", () => {
 
   beforeEach(async () => {
     await gw.pool.query(
-      "TRUNCATE briefs, reviews, id_map, event_log, envelopes, workstations, projects",
+      "TRUNCATE layout_snapshots, briefs, reviews, id_map, event_log, envelopes, workstations, projects",
     );
   });
 
