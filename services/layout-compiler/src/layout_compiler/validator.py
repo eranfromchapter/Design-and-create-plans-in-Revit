@@ -44,6 +44,7 @@ from layout_compiler.geometry import (
     wall_len,
     wall_thickness_of,
 )
+from layout_compiler.swing import room_swing_arcs
 
 DEFAULT_CIRCULATION_MIN_MM = 915.0  # packages/contracts/README.md defaults table
 EDGE_SAMPLE_STEP_MM = 100.0  # boundary edges sampled per-point: collinear walls may share one edge
@@ -346,6 +347,15 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
                     errors.append(
                         f"furniture.{id_a}~{id_b}: footprints overlap ({overlap:.0f} mm²)"
                     )
+        if rects:
+            for door_id, arc in room_swing_arcs(room, polygon, layout["doors"], walls):
+                for item_id, rect in rects:
+                    swept = rect.intersection(arc).area
+                    if swept > OVERLAP_EPS_MM2:
+                        errors.append(
+                            f"rooms.{room['id']}: furniture {item_id} intersects door "
+                            f"{door_id} swing arc ({swept:.0f} mm²)"
+                        )
 
         # free space = room minus furniture footprints (inflated by clearances),
         # then the Part G circulation check — both shared with the interior
