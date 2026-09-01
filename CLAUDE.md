@@ -65,5 +65,17 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   DXF + real as-built catalog names (profile calibration is the first checklist item).
   Gate question for Eran: add `skewed: boolean` to the wall schema? (Skews currently ride in
   review-payload flags + confidence only — no schema change without approval.)
+- Phase 3: code complete on this branch. services/brief-extractor (normalize + PII scrub
+  SI-11 → tool-enforced extraction vs brief.v1.json with 1 repair retry → deterministic
+  latest-wins reconciliation + contradictions[] → injection guard SI-7; LLM behind
+  ExtractorLLM — AnthropicLLM pinned via LLM_MODEL_EXTRACTOR, FixtureLLM replays the
+  synthetic recordings in fixtures/llm; 40 tests + live smoke behind RUN_LIVE_LLM=1).
+  Gateway briefs flow (POST /projects/:id/transcripts → versioned briefs table 0003 +
+  client_brief review; approve → confirmed_by_client on row + content.meta — the flag the
+  Phase 4 layout-compiler enforces; 40 gateway tests). Fixture transcripts + golden brief
+  (2 contradictions: bedroom 3→4, tier premium→standard); phase3 e2e (extractor + gateway
+  children) green; make demo-phase3.
+  No human gate item this phase; live-LLM smoke awaits ANTHROPIC_API_KEY.
   Open items for Eran: catalog contents (as-built wall types incl. door/window placeholders
-  now in asbuilt_types.json, new-construction vocabulary, 30 SKUs).
+  now in asbuilt_types.json, new-construction vocabulary, 30 SKUs); ANTHROPIC_API_KEY for
+  the Phase 3 live smoke.

@@ -14,6 +14,7 @@ export const REPO_ROOT = join(here, "..", "..", "..");
 const TSX_BIN = join(REPO_ROOT, "services", "gateway", "node_modules", ".bin", "tsx");
 const SIM_PYTHON = join(REPO_ROOT, "tools", "revit-sim", ".venv", "bin", "python");
 const CONVERTER_PYTHON = join(REPO_ROOT, "services", "scan-converter", ".venv", "bin", "python");
+const BRIEF_PYTHON = join(REPO_ROOT, "services", "brief-extractor", ".venv", "bin", "python");
 
 export const SERVICE_TOKEN = "service-token-0123456789";
 export const ACTOR_TOKEN = "actor-token-eran";
@@ -127,6 +128,24 @@ export async function startConverter(): Promise<ConverterProc> {
   const proc = spawn(CONVERTER_PYTHON, ["-m", "scan_converter", "--serve", "--port", "0"], {
     cwd: join(REPO_ROOT, "services", "scan-converter"),
     env: { ...process.env, PYTHONPATH: join(REPO_ROOT, "services", "scan-converter", "src") },
+    stdio: ["ignore", "pipe", "inherit"],
+  });
+  const output = new Output(proc);
+  const line = await output.waitForLine("LISTENING ", proc);
+  const port = Number(line.split(" ")[1]);
+  return { port, url: `http://127.0.0.1:${port}`, proc };
+}
+
+/** Phase 3 child process: the real brief-extractor service replaying the
+ *  synthetic recorded LLM fixtures (LLM_MODE=fixture — CI never calls a live API). */
+export async function startBriefExtractor(): Promise<ConverterProc> {
+  const proc = spawn(BRIEF_PYTHON, ["-m", "brief_extractor", "--serve", "--port", "0"], {
+    cwd: join(REPO_ROOT, "services", "brief-extractor"),
+    env: {
+      ...process.env,
+      PYTHONPATH: join(REPO_ROOT, "services", "brief-extractor", "src"),
+      LLM_MODE: "fixture",
+    },
     stdio: ["ignore", "pipe", "inherit"],
   });
   const output = new Output(proc);
