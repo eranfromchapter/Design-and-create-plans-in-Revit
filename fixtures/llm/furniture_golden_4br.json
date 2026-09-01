@@ -1,0 +1,404 @@
+{
+  "emission": {
+    "furniture": [
+      {
+        "room_id": "R-001",
+        "items": [
+          {
+            "id": "F-001",
+            "kind": "bed",
+            "revit_family": "CHPT_Bed_PLACEHOLDER",
+            "revit_type": "Queen_1524x2032_PLACEHOLDER",
+            "center": [
+              1800.0,
+              1166.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              1524.0,
+              2032.0
+            ]
+          },
+          {
+            "id": "F-002",
+            "kind": "wardrobe",
+            "revit_family": "CHPT_Wardrobe_PLACEHOLDER",
+            "revit_type": "Wardrobe_1200x600_PLACEHOLDER",
+            "center": [
+              1800.0,
+              3479.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              1200.0,
+              600.0
+            ]
+          },
+          {
+            "id": "F-003",
+            "kind": "desk",
+            "revit_family": "CHPT_Desk_PLACEHOLDER",
+            "revit_type": "Desk_1200x600_PLACEHOLDER",
+            "center": [
+              425.0,
+              1900.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              1200.0,
+              600.0
+            ]
+          }
+        ]
+      },
+      {
+        "room_id": "R-002",
+        "items": [
+          {
+            "id": "F-004",
+            "kind": "bed",
+            "revit_family": "CHPT_Bed_PLACEHOLDER",
+            "revit_type": "Double_1372x1905_PLACEHOLDER",
+            "center": [
+              2836.0,
+              6900.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              1372.0,
+              1905.0
+            ]
+          },
+          {
+            "id": "F-005",
+            "kind": "wardrobe",
+            "revit_family": "CHPT_Wardrobe_PLACEHOLDER",
+            "revit_type": "Wardrobe_1000x600_PLACEHOLDER",
+            "center": [
+              1500.0,
+              6300.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              1000.0,
+              600.0
+            ]
+          }
+        ]
+      },
+      {
+        "room_id": "R-003",
+        "items": [
+          {
+            "id": "F-006",
+            "kind": "wc",
+            "revit_family": "CHPT_WC_PLACEHOLDER",
+            "revit_type": "WC_400x700_PLACEHOLDER",
+            "center": [
+              600.0,
+              4225.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              400.0,
+              700.0
+            ],
+            "fixture_units": 4.0,
+            "hookups": [
+              "sanitary",
+              "supply_c",
+              "vent"
+            ]
+          },
+          {
+            "id": "F-007",
+            "kind": "lav",
+            "revit_family": "CHPT_Lav_PLACEHOLDER",
+            "revit_type": "Lav_500x450_PLACEHOLDER",
+            "center": [
+              600.0,
+              6700.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              500.0,
+              450.0
+            ],
+            "fixture_units": 1.0,
+            "hookups": [
+              "sanitary",
+              "supply_h",
+              "supply_c",
+              "vent"
+            ]
+          }
+        ]
+      },
+      {
+        "room_id": "R-004",
+        "items": [
+          {
+            "id": "F-008",
+            "kind": "bed",
+            "revit_family": "CHPT_Bed_PLACEHOLDER",
+            "revit_type": "Twin_991x1905_PLACEHOLDER",
+            "center": [
+              5204.5,
+              6900.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              991.0,
+              1905.0
+            ]
+          },
+          {
+            "id": "F-009",
+            "kind": "table",
+            "revit_family": "CHPT_Nightstand_PLACEHOLDER",
+            "revit_type": "Nightstand_450x450_PLACEHOLDER",
+            "center": [
+              3875.0,
+              6750.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              450.0,
+              450.0
+            ]
+          }
+        ]
+      },
+      {
+        "room_id": "R-005",
+        "items": [
+          {
+            "id": "F-010",
+            "kind": "bed",
+            "revit_family": "CHPT_Bed_PLACEHOLDER",
+            "revit_type": "Twin_991x1905_PLACEHOLDER",
+            "center": [
+              6241.5,
+              6000.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              991.0,
+              1905.0
+            ]
+          },
+          {
+            "id": "F-011",
+            "kind": "table",
+            "revit_family": "CHPT_Nightstand_PLACEHOLDER",
+            "revit_type": "Nightstand_450x450_PLACEHOLDER",
+            "center": [
+              7850.0,
+              6700.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              450.0,
+              450.0
+            ]
+          }
+        ]
+      },
+      {
+        "room_id": "R-007",
+        "items": [
+          {
+            "id": "F-012",
+            "kind": "wc",
+            "revit_family": "CHPT_WC_PLACEHOLDER",
+            "revit_type": "WC_400x700_PLACEHOLDER",
+            "center": [
+              10800.0,
+              5026.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              400.0,
+              700.0
+            ],
+            "fixture_units": 4.0,
+            "hookups": [
+              "sanitary",
+              "supply_c",
+              "vent"
+            ]
+          },
+          {
+            "id": "F-013",
+            "kind": "lav",
+            "revit_family": "CHPT_Lav_PLACEHOLDER",
+            "revit_type": "Lav_500x450_PLACEHOLDER",
+            "center": [
+              10800.0,
+              6700.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              500.0,
+              450.0
+            ],
+            "fixture_units": 1.0,
+            "hookups": [
+              "sanitary",
+              "supply_h",
+              "supply_c",
+              "vent"
+            ]
+          }
+        ]
+      },
+      {
+        "room_id": "R-008",
+        "items": [
+          {
+            "id": "F-014",
+            "kind": "sofa",
+            "revit_family": "CHPT_Sofa_PLACEHOLDER",
+            "revit_type": "Sofa_2100x900_PLACEHOLDER",
+            "center": [
+              10800.0,
+              2250.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              2100.0,
+              900.0
+            ]
+          },
+          {
+            "id": "F-015",
+            "kind": "table",
+            "revit_family": "CHPT_DiningTable_PLACEHOLDER",
+            "revit_type": "Dining_900x1800_PLACEHOLDER",
+            "center": [
+              9425.0,
+              1900.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              900.0,
+              1800.0
+            ]
+          }
+        ]
+      },
+      {
+        "room_id": "R-009",
+        "items": [
+          {
+            "id": "F-016",
+            "kind": "refrigerator",
+            "revit_family": "CHPT_Refrigerator_PLACEHOLDER",
+            "revit_type": "Fridge_750x750_PLACEHOLDER",
+            "center": [
+              3750.0,
+              1800.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              750.0,
+              750.0
+            ],
+            "hookups": [
+              "electrical_120"
+            ]
+          },
+          {
+            "id": "F-017",
+            "kind": "kitchen_sink",
+            "revit_family": "CHPT_KitchenSink_PLACEHOLDER",
+            "revit_type": "Sink_900x600_PLACEHOLDER",
+            "center": [
+              6110.0,
+              450.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              900.0,
+              600.0
+            ],
+            "fixture_units": 2.0,
+            "hookups": [
+              "sanitary",
+              "supply_h",
+              "supply_c",
+              "vent"
+            ]
+          },
+          {
+            "id": "F-018",
+            "kind": "dishwasher",
+            "revit_family": "CHPT_Dishwasher_PLACEHOLDER",
+            "revit_type": "DW_600x600_PLACEHOLDER",
+            "center": [
+              6860.0,
+              450.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              600.0,
+              600.0
+            ],
+            "fixture_units": 2.0,
+            "hookups": [
+              "sanitary",
+              "supply_h",
+              "electrical_120"
+            ]
+          },
+          {
+            "id": "F-019",
+            "kind": "range",
+            "revit_family": "CHPT_Range_PLACEHOLDER",
+            "revit_type": "Range_762x660_PLACEHOLDER",
+            "center": [
+              7541.0,
+              480.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              762.0,
+              660.0
+            ],
+            "hookups": [
+              "electrical_240"
+            ]
+          }
+        ]
+      },
+      {
+        "room_id": "R-011",
+        "items": [
+          {
+            "id": "F-020",
+            "kind": "washer",
+            "revit_family": "CHPT_WasherDryerStack_PLACEHOLDER",
+            "revit_type": "Stack_600x600_PLACEHOLDER",
+            "center": [
+              4200.0,
+              600.0
+            ],
+            "rotation_deg": 0.0,
+            "footprint": [
+              600.0,
+              600.0
+            ],
+            "fixture_units": 2.0,
+            "hookups": [
+              "sanitary",
+              "supply_h",
+              "supply_c",
+              "electrical_120",
+              "electrical_240"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
