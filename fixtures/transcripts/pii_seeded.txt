@@ -1,0 +1,6 @@
+[00:00:05] CLIENT: Hi, this is Jane Placeholder — best email for the drawings is
+jane.placeholder@example.com, or call me at 212-555-0187.
+[00:00:40] CLIENT: The apartment is 245 West 98th Street, Apt 12B. My husband
+Michael Placeholder will join the next call.
+[00:01:10] CLIENT: We want three bedrooms and an open kitchen, modern style.
+[00:01:45] DESIGNER: Great — three bedrooms, open kitchen, modern.

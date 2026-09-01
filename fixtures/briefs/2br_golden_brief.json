@@ -1,0 +1,96 @@
+{
+  "meta": {
+    "project_id": "1f6b3c58-7a2d-4e90-9c41-2b8f5d6a7e01",
+    "brief_version": 1,
+    "source_sessions": [
+      "session1_3br",
+      "session2_4br"
+    ]
+  },
+  "rooms_required": [
+    {
+      "program": "bedroom",
+      "count": 4,
+      "notes": "mother moving in; fourth bedroom",
+      "confidence": 1.0
+    },
+    {
+      "program": "kitchen",
+      "count": 1,
+      "notes": "open to dining, non-negotiable",
+      "confidence": 1.0
+    },
+    {
+      "program": "bathroom",
+      "count": 2,
+      "notes": "two full baths if it fits",
+      "confidence": 0.8
+    },
+    {
+      "program": "living",
+      "count": 1,
+      "notes": "no railroad feel",
+      "confidence": 0.9
+    },
+    {
+      "program": "dining",
+      "count": 1,
+      "confidence": 0.9
+    },
+    {
+      "program": "laundry",
+      "count": 1,
+      "notes": "proper laundry closet",
+      "confidence": 1.0
+    }
+  ],
+  "adjacency_rules": [
+    {
+      "a": "kitchen",
+      "b": "dining",
+      "relation": "open_to",
+      "hard": true,
+      "confidence": 1.0
+    },
+    {
+      "a": "laundry",
+      "b": "bathroom",
+      "relation": "near",
+      "hard": false,
+      "confidence": 0.9
+    }
+  ],
+  "finish_tier": "standard",
+  "style_tags": [
+    "modern",
+    "warm minimalism",
+    "light wood"
+  ],
+  "keep_items": [
+    "original cast-iron radiators"
+  ],
+  "open_questions": [
+    "washer-dryer undecided (maybe in the second bath?)"
+  ],
+  "special_constraints": [
+    {
+      "text": "co-op board: no wet rooms over neighbors' bedrooms; bathrooms stay near the existing stack",
+      "kind": "building_rule",
+      "confidence": 1.0
+    }
+  ],
+  "contradictions": [
+    {
+      "field": "rooms_required.bedroom",
+      "earlier": "count=3",
+      "later": "count=4",
+      "resolution": "latest_wins"
+    },
+    {
+      "field": "finish_tier",
+      "earlier": "premium",
+      "later": "standard",
+      "resolution": "latest_wins"
+    }
+  ]
+}
