@@ -2,6 +2,7 @@ using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using ChapterHub.Revit.Addin.Execution;
 using ChapterHub.Revit.Addin.IdMap;
+using ChapterHub.Revit.Addin.Ops;
 using ChapterHub.Revit.Addin.Transport;
 
 namespace ChapterHub.Revit.Addin;
@@ -30,7 +31,9 @@ public sealed class App : IExternalApplication
             return Result.Succeeded;
         }
 
-        _handler = new EnvelopeHandler(message => _client?.Send(message));
+        // MEP vocabulary + clash table enrolled beside the config (docs/MANUAL_REVIT_TEST.md)
+        var catalogs = AddinCatalogs.Load(Path.Combine(configDir, "catalogs"));
+        _handler = new EnvelopeHandler(message => _client?.Send(message), catalogs);
         _handler.Attach(ExternalEvent.Create(_handler));
 
         _client = new WssClient(new WssClientOptions

@@ -32,9 +32,37 @@ plugin version, and outcome for each run.
 ## Pre-Phase-6 spike (before the MEP agent is built)
 - [ ] One `create_pipe` envelope (two segments + one 90° elbow) executes; tee case emits REVIEW.
 - [ ] One `create_door` + `place_device` envelope: door lands at offset-centerline convention;
-      receptacle is face-hosted at 380 mm AFF.
+      receptacle is face-hosted at 380 mm AFF on the ROOM-side face named by `args.face`
+      (left = +90° CCW of start→end); record any wall whose `face` the executor got wrong.
+- [ ] `create_door` `swing` L|R + `flip_facing`: leaf sweeps LEFT of start→end when
+      `flip_facing` is falsy (Phase 5 swing.py convention); confirm or invert the
+      `flipHand()`/`flipFacing()` mapping in `CreateDoorHandler`.
 - [ ] Template prerequisite: routing preferences loaded (runbook); missing-fitting failure mode
       recorded.
+
+## Phase 6 gate (MEP + Commit #2)
+Prerequisite: the enrollment catalog directory `%AppData%\ChapterHub\catalogs\` holds
+`mep_types.json` and `clash_prisms.json` copied from `packages/contracts/catalogs/` (the
+add-in fails MEP ops with `catalog_missing` otherwise) — with the REAL template names, not
+the `_PLACEHOLDER` rows.
+- [ ] Pre-Phase-6 spike rows ticked (create_pipe two segments + elbow; create_door +
+      place_device face-hosted 380 AFF; routing preferences loaded); walls needing `face`
+      corrections recorded.
+- [ ] Golden Commit #2 envelope (`fixtures/goldens/phase6_2br_mep.json` ops after the
+      Phase 5 interior ops) on the post-Commit-#1 model: 18 families at mm centres/rotations,
+      2 stacks + branch tree with slopes (`HUB P-00x` groups), 45 devices at 380/1150/1220
+      AFF on the named faces, raceway tree at 2600 with drops; `commit_result committed`;
+      id-map grows by the op count (one logical id per op; extra segments/fittings grouped).
+- [ ] Wye/tee fittings completed manually per `wye_manual` / `conduit_fittings_manual`
+      review items; time recorded; template routing-preference gaps noted.
+- [ ] Interference: place a test family overlapping a committed conduit drop, re-issue →
+      `commit_result rolled_back {interference "A~B", op_index}` followed by `clash_delta`
+      with logical ids (`revit:<ElementId>` for the manual family); TransactionGroup rolled
+      back (no partial MEP); the gateway's `commit2` state shows the pair; `merge-commit2`
+      produces the iteration k+1 card; the re-planned envelope commits under a fresh seq.
+- [ ] Fire-rated wall in the template → conduit route detours (compare
+      `home_runs[].penetrations` against the card).
+- [ ] Ctrl+Z after Commit #2 → `state_divergence`.
 
 ## Per release
 - [ ] Re-run the Phase 1 gate list plus any op handlers added in the release.
