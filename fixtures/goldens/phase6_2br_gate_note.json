@@ -1,0 +1,206 @@
+{
+  "catalog_asks": [
+    "mep_types.json: real pipe/conduit/device families replace the _PLACEHOLDER rows",
+    "clash_prisms.json: kind heights and the device box are engineering defaults",
+    "a counter casework family (is_counter) \u2014 E-2 counter walls are derived from sink/DW today"
+  ],
+  "extensions": {
+    "appliance": 3
+  },
+  "merge": {
+    "ops": 155,
+    "prisms": {
+      "conduit": 84,
+      "device": 45,
+      "furniture": 18,
+      "pipe": 10
+    },
+    "status": "clean"
+  },
+  "pin_08_p4_length": {
+    "alternative": {
+      "review_items": {
+        "p3_snapped": 1,
+        "p4_prune": 1,
+        "supply_manual": 1,
+        "vent_manual": 1,
+        "wye_manual": 3
+      },
+      "stacks": [
+        {
+          "diameter": 76.0,
+          "fixtures": [
+            "F-006",
+            "F-007"
+          ],
+          "id": "P-001",
+          "snapped": false,
+          "wall_id": "W-004",
+          "xy": [
+            600.0,
+            7000.0
+          ]
+        },
+        {
+          "diameter": 76.0,
+          "fixtures": [
+            "F-012"
+          ],
+          "id": "P-002",
+          "snapped": false,
+          "wall_id": "W-023",
+          "xy": [
+            10200.0,
+            4996.0
+          ]
+        },
+        {
+          "diameter": 51.0,
+          "fixtures": [
+            "F-017",
+            "F-018"
+          ],
+          "id": "P-003",
+          "snapped": true,
+          "wall_id": "W-026",
+          "xy": [
+            4800.0,
+            169.0
+          ]
+        }
+      ],
+      "switch": "P4_L_INCLUDES_DRAIN_LEG=True (L = leg + along)"
+    },
+    "default": {
+      "review_items": {
+        "branch_plenum_marginal": 3,
+        "p3_snapped": 1,
+        "supply_manual": 1,
+        "vent_manual": 1,
+        "wye_manual": 2
+      },
+      "stacks": [
+        {
+          "diameter": 76.0,
+          "fixtures": [
+            "F-006",
+            "F-007",
+            "F-012"
+          ],
+          "id": "P-001",
+          "snapped": false,
+          "wall_id": "W-004",
+          "xy": [
+            5133.3,
+            7000.0
+          ]
+        },
+        {
+          "diameter": 51.0,
+          "fixtures": [
+            "F-017",
+            "F-018"
+          ],
+          "id": "P-002",
+          "snapped": true,
+          "wall_id": "W-026",
+          "xy": [
+            4800.0,
+            169.0
+          ]
+        }
+      ],
+      "switch": "P4_L_INCLUDES_DRAIN_LEG=False (L = along, spec-literal; Eran Q3)"
+    }
+  },
+  "pin_13_stack_zones": {
+    "alternative": {
+      "conduits": 81,
+      "devices": 45,
+      "kinds": {
+        "gfci": 4,
+        "receptacle": 29,
+        "receptacle_240": 1,
+        "switch": 11
+      },
+      "review_items": {
+        "appliance_receptacle_shifted": 1,
+        "conduit_fittings_manual": 1,
+        "device_backtoback_shifted": 3,
+        "electrical_240": 1,
+        "room_without_receptacle": 2,
+        "room_without_switch": 2,
+        "switch_corner_fallback": 1,
+        "switch_hinge_side": 1
+      },
+      "switch": "ZONES_BREAK_DEVICE_RUNS=True"
+    },
+    "default": {
+      "conduits": 81,
+      "devices": 45,
+      "kinds": {
+        "gfci": 4,
+        "receptacle": 29,
+        "receptacle_240": 1,
+        "switch": 11
+      },
+      "review_items": {
+        "appliance_receptacle_shifted": 1,
+        "conduit_fittings_manual": 1,
+        "device_backtoback_shifted": 3,
+        "electrical_240": 1,
+        "room_without_receptacle": 2,
+        "room_without_switch": 2,
+        "switch_corner_fallback": 1,
+        "switch_hinge_side": 1
+      },
+      "switch": "ZONES_BREAK_DEVICE_RUNS=False"
+    }
+  },
+  "pins_open": [
+    "PIN-08",
+    "PIN-12",
+    "PIN-13",
+    "PIN-16",
+    "PIN-17",
+    "PIN-20",
+    "PIN-29",
+    "PIN-30",
+    "PIN-37"
+  ],
+  "review_item_codes": {
+    "appliance_receptacle_shifted": 1,
+    "branch_plenum_marginal": 3,
+    "conduit_fittings_manual": 1,
+    "counter_walls_derived": 1,
+    "device_backtoback_shifted": 3,
+    "electrical_240": 1,
+    "p3_snapped": 1,
+    "room_without_receptacle": 2,
+    "room_without_switch": 2,
+    "supply_manual": 1,
+    "switch_corner_fallback": 1,
+    "switch_hinge_side": 1,
+    "vent_manual": 1,
+    "wye_manual": 2
+  },
+  "right_face_devices": [
+    "E-001",
+    "E-004",
+    "E-005",
+    "E-006",
+    "E-009",
+    "E-010",
+    "E-013",
+    "E-014",
+    "E-017",
+    "E-018",
+    "E-022",
+    "E-023",
+    "E-025",
+    "E-026",
+    "E-031",
+    "E-032",
+    "E-035"
+  ]
+}

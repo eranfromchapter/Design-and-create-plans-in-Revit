@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-250.0 -592.6 11900.0 7842.6">
+<line class="wall standing" data-id="W-001" x1="0.0" y1="0.0" x2="0.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-002" x1="0.0" y1="0.0" x2="8000.0" y2="0.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-003" x1="0.0" y1="3825.0" x2="3600.0" y2="3825.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-004" x1="0.0" y1="7000.0" x2="11400.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-005" x1="3600.0" y1="0.0" x2="3600.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-006" x1="3600.0" y1="4600.0" x2="7000.0" y2="4600.0" stroke="black" stroke-width="100.0"/>
+<line class="wall demolished" data-id="W-007" x1="5300.0" y1="4600.0" x2="5300.0" y2="7000.0" stroke="black" stroke-width="100.0" stroke-dasharray="240.0 120.0"/>
+<line class="wall demolished" data-id="W-008" x1="7000.0" y1="4600.0" x2="7150.0" y2="7000.0" stroke="black" stroke-width="100.0" stroke-dasharray="240.0 120.0"/>
+<line class="wall standing" data-id="W-009" x1="8000.0" y1="0.0" x2="8258.1" y2="-168.1" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-010" x1="8258.1" y1="-168.1" x2="8543.6" y2="-283.7" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-011" x1="8543.6" y1="-283.7" x2="8846.0" y2="-342.6" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-012" x1="8846.0" y1="-342.6" x2="9154.0" y2="-342.6" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-013" x1="9154.0" y1="-342.6" x2="9456.4" y2="-283.7" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-014" x1="9456.4" y1="-283.7" x2="9741.9" y2="-168.1" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-015" x1="9741.9" y1="-168.1" x2="10000.0" y2="0.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-016" x1="10000.0" y1="0.0" x2="11400.0" y2="0.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-017" x1="11400.0" y1="0.0" x2="11400.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-018" x1="5700.0" y1="4600.0" x2="5700.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-019" x1="8000.0" y1="4600.0" x2="8000.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-020" x1="7000.0" y1="4600.0" x2="8000.0" y2="4600.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-021" x1="8000.0" y1="4600.0" x2="11400.0" y2="4600.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-022" x1="8000.0" y1="0.0" x2="8000.0" y2="4600.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-023" x1="10200.0" y1="4600.0" x2="10200.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-024" x1="3600.0" y1="2800.0" x2="8000.0" y2="2800.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-025" x1="1200.0" y1="3825.0" x2="1200.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-026" x1="4800.0" y1="0.0" x2="4800.0" y2="1200.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-027" x1="3600.0" y1="1200.0" x2="4800.0" y2="1200.0" stroke="black" stroke-width="100.0"/>
+<circle class="door" data-id="D-001" cx="8600.0" cy="7000.0" r="457.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door demolished" data-id="D-002" cx="3600.0" cy="2000.0" r="381.0" fill="white" stroke="black" stroke-width="20.0" stroke-dasharray="80.0 40.0"/>
+<circle class="door" data-id="D-003" cx="3600.0" cy="4212.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-004" cx="4450.0" cy="4600.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door demolished" data-id="D-005" cx="6150.0" cy="4600.0" r="457.5" fill="white" stroke="black" stroke-width="20.0" stroke-dasharray="80.0 40.0"/>
+<circle class="door" data-id="D-006" cx="6800.0" cy="2800.0" r="850.0" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-007" cx="9500.0" cy="4600.0" r="457.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-008" cx="8000.0" cy="1200.0" r="850.0" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-009" cx="1200.0" cy="5425.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-010" cx="10200.0" cy="5800.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-011" cx="4800.0" cy="600.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-012" cx="3600.0" cy="3300.0" r="381.0" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-013" cx="7500.0" cy="4600.0" r="381.0" fill="white" stroke="black" stroke-width="20.0"/>
+<rect class="window" data-id="N-001" x="1266.5" y="-50.0" width="1067.0" height="100.0" fill="white" stroke="black" stroke-width="20.0"/>
+<rect class="window" data-id="N-002" x="6266.5" y="-50.0" width="1067.0" height="100.0" fill="white" stroke="black" stroke-width="20.0"/>
+<rect class="window" data-id="N-003" x="10242.5" y="-50.0" width="915.0" height="100.0" fill="white" stroke="black" stroke-width="20.0"/>
+<rect class="family" data-id="F-001" x="1038.0" y="150.0" width="1524.0" height="2032.0" transform="rotate(0.0 1800.0 1166.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-002" x="1200.0" y="3175.0" width="1200.0" height="600.0" transform="rotate(0.0 1800.0 3475.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-003" x="-175.0" y="1600.0" width="1200.0" height="600.0" transform="rotate(90.0 425.0 1900.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-004" x="2150.0" y="4995.0" width="1372.0" height="1905.0" transform="rotate(0.0 2836.0 5947.5)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-005" x="1076.0" y="6000.0" width="1000.0" height="600.0" transform="rotate(90.0 1576.0 6300.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-006" x="400.0" y="3875.0" width="400.0" height="700.0" transform="rotate(0.0 600.0 4225.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-007" x="350.0" y="6450.0" width="500.0" height="450.0" transform="rotate(0.0 600.0 6675.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-008" x="4159.0" y="5452.0" width="991.0" height="1905.0" transform="rotate(90.0 4654.5 6404.5)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-009" x="3650.0" y="5425.0" width="450.0" height="450.0" transform="rotate(90.0 3875.0 5650.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-010" x="6203.0" y="5047.5" width="991.0" height="1905.0" transform="rotate(90.0 6698.5 6000.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-011" x="5746.0" y="5025.0" width="450.0" height="450.0" transform="rotate(90.0 5971.0 5250.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-012" x="10600.0" y="4646.0" width="400.0" height="700.0" transform="rotate(0.0 10800.0 4996.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-014" x="9775.0" y="1800.0" width="2100.0" height="900.0" transform="rotate(90.0 10825.0 2250.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-015" x="8975.0" y="1000.0" width="900.0" height="1800.0" transform="rotate(0.0 9425.0 1900.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-016" x="3650.0" y="1425.0" width="750.0" height="750.0" transform="rotate(90.0 4025.0 1800.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-017" x="5660.0" y="150.0" width="900.0" height="600.0" transform="rotate(0.0 6110.0 450.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-018" x="6560.0" y="150.0" width="600.0" height="600.0" transform="rotate(0.0 6860.0 450.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-019" x="7192.0" y="150.0" width="762.0" height="660.0" transform="rotate(180.0 7573.0 480.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<g class="device receptacle" data-id="E-001"><circle cx="125.0" cy="1612.5" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="65.0" y1="1612.5" x2="185.0" y2="1612.5" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-002"><circle cx="1800.0" cy="150.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="1740.0" y1="150.0" x2="1860.0" y2="150.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-003"><circle cx="3550.0" cy="1459.5" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="3490.0" y1="1459.5" x2="3610.0" y2="1459.5" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-004"><circle cx="1800.0" cy="3775.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="1740.0" y1="3775.0" x2="1860.0" y2="3775.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-005"><circle cx="1276.0" cy="4447.2" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="1216.0" y1="4447.2" x2="1336.0" y2="4447.2" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-006"><circle cx="1276.0" cy="6390.2" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="1216.0" y1="6390.2" x2="1336.0" y2="6390.2" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-007"><circle cx="2400.0" cy="3875.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="2340.0" y1="3875.0" x2="2460.0" y2="3875.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-008"><circle cx="3550.0" cy="5783.8" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="3490.0" y1="5783.8" x2="3610.0" y2="5783.8" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-009"><circle cx="2400.0" cy="6900.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="2340.0" y1="6900.0" x2="2460.0" y2="6900.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-010"><circle cx="3650.0" cy="5950.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="3590.0" y1="5950.0" x2="3710.0" y2="5950.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-011"><circle cx="5252.8" cy="4650.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="5192.8" y1="4650.0" x2="5312.8" y2="4650.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-012"><circle cx="5654.0" cy="5800.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="5594.0" y1="5800.0" x2="5714.0" y2="5800.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-013"><circle cx="4650.0" cy="6900.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="4590.0" y1="6900.0" x2="4710.0" y2="6900.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-014"><circle cx="5746.0" cy="5950.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="5686.0" y1="5950.0" x2="5806.0" y2="5950.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-015"><circle cx="6350.0" cy="4650.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="6290.0" y1="4650.0" x2="6410.0" y2="4650.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-016"><circle cx="7954.0" cy="5800.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="7894.0" y1="5800.0" x2="8014.0" y2="5800.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-017"><circle cx="6850.0" cy="6900.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="6790.0" y1="6900.0" x2="6910.0" y2="6900.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-018"><circle cx="8046.0" cy="3325.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="7986.0" y1="3325.0" x2="8106.0" y2="3325.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-019"><circle cx="10700.0" cy="150.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="10640.0" y1="150.0" x2="10760.0" y2="150.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-020"><circle cx="11275.0" cy="1830.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="11215.0" y1="1830.0" x2="11335.0" y2="1830.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-021"><circle cx="11275.0" cy="2770.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="11215.0" y1="2770.0" x2="11335.0" y2="2770.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-022"><circle cx="8521.2" cy="4554.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="8461.2" y1="4554.0" x2="8581.2" y2="4554.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-023"><circle cx="10678.8" cy="4554.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="10618.8" y1="4554.0" x2="10738.8" y2="4554.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-024"><circle cx="7954.0" cy="2425.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="7894.0" y1="2425.0" x2="8014.0" y2="2425.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-025"><circle cx="4775.0" cy="2754.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="4715.0" y1="2754.0" x2="4835.0" y2="2754.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-026"><circle cx="3650.0" cy="2000.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="3590.0" y1="2000.0" x2="3710.0" y2="2000.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-027"><circle cx="4200.0" cy="1276.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="4140.0" y1="1276.0" x2="4260.0" y2="1276.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device receptacle" data-id="E-028"><circle cx="4925.0" cy="2846.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="4865.0" y1="2846.0" x2="4985.0" y2="2846.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device gfci" data-id="E-029"><circle cx="4200.0" cy="150.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><rect x="4175.0" y="125.0" width="50.0" height="50.0" fill="black"/></g>
+<g class="device gfci" data-id="E-030"><circle cx="5663.2" cy="150.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><rect x="5638.2" y="125.0" width="50.0" height="50.0" fill="black"/></g>
+<g class="device gfci" data-id="E-031"><circle cx="900.0" cy="6900.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><rect x="875.0" y="6875.0" width="50.0" height="50.0" fill="black"/></g>
+<g class="device receptacle" data-id="E-032"><circle cx="3650.0" cy="1800.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="3590.0" y1="1800.0" x2="3710.0" y2="1800.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device gfci" data-id="E-033"><circle cx="6860.0" cy="150.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><rect x="6835.0" y="125.0" width="50.0" height="50.0" fill="black"/></g>
+<g class="device receptacle_240" data-id="E-034"><circle cx="7954.0" cy="280.0" r="60.0" fill="white" stroke="black" stroke-width="15.0"/><circle cx="7954.0" cy="280.0" r="30.0" fill="none" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-035"><rect x="9157.5" y="6850.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="9157.5" y1="6950.0" x2="9257.5" y2="6850.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-036"><rect x="3500.0" y="4667.5" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="3500.0" y1="4767.5" x2="3600.0" y2="4667.5" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-037"><rect x="4905.5" y="4600.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="4905.5" y1="4700.0" x2="5005.5" y2="4600.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-038"><rect x="7750.0" y="2796.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="7750.0" y1="2896.0" x2="7850.0" y2="2796.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-039"><rect x="10057.5" y="4596.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="10057.5" y1="4696.0" x2="10157.5" y2="4596.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-040"><rect x="7904.0" y="2150.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="7904.0" y1="2250.0" x2="8004.0" y2="2150.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-041"><rect x="1074.0" y="5880.5" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="1074.0" y1="5980.5" x2="1174.0" y2="5880.5" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-042"><rect x="10074.0" y="6255.5" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="10074.0" y1="6355.5" x2="10174.0" y2="6255.5" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-043"><rect x="4674.0" y="1055.5" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="4674.0" y1="1155.5" x2="4774.0" y2="1055.5" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-044"><rect x="3500.0" y="2719.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="3500.0" y1="2819.0" x2="3600.0" y2="2719.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-045"><rect x="7904.0" y="4700.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="7904.0" y1="4800.0" x2="8004.0" y2="4700.0" stroke="black" stroke-width="15.0"/></g>
+<g class="stack sanitary" data-id="P-001"><circle cx="5133.3" cy="7000.0" r="78.0" fill="white" stroke="#1f4e9c" stroke-width="15.0"/><line x1="5055.3" y1="7000.0" x2="5211.3" y2="7000.0" stroke="#1f4e9c" stroke-width="15.0"/><line x1="5133.3" y1="6922.0" x2="5133.3" y2="7078.0" stroke="#1f4e9c" stroke-width="15.0"/></g>
+<g class="stack sanitary" data-id="P-002"><circle cx="4800.0" cy="169.0" r="65.5" fill="white" stroke="#1f4e9c" stroke-width="15.0"/><line x1="4734.5" y1="169.0" x2="4865.5" y2="169.0" stroke="#1f4e9c" stroke-width="15.0"/><line x1="4800.0" y1="103.5" x2="4800.0" y2="234.5" stroke="#1f4e9c" stroke-width="15.0"/></g>
+<polyline class="pipe sanitary" data-id="P-003" points="600.0,4225.0 600.0,6675.0" fill="none" stroke="#1f4e9c" stroke-width="76.0" stroke-linejoin="round"/>
+<polyline class="pipe sanitary" data-id="P-004" points="600.0,6675.0 600.0,7000.0" fill="none" stroke="#1f4e9c" stroke-width="76.0" stroke-linejoin="round"/>
+<polyline class="pipe sanitary" data-id="P-005" points="600.0,7000.0 5133.3,7000.0" fill="none" stroke="#1f4e9c" stroke-width="76.0" stroke-linejoin="round"/>
+<polyline class="pipe sanitary" data-id="P-006" points="10800.0,4996.0 10800.0,7000.0" fill="none" stroke="#1f4e9c" stroke-width="76.0" stroke-linejoin="round"/>
+<polyline class="pipe sanitary" data-id="P-007" points="10800.0,7000.0 5133.3,7000.0" fill="none" stroke="#1f4e9c" stroke-width="76.0" stroke-linejoin="round"/>
+<polyline class="pipe sanitary" data-id="P-008" points="6110.0,450.0 4800.0,450.0" fill="none" stroke="#1f4e9c" stroke-width="38.0" stroke-linejoin="round"/>
+<polyline class="pipe sanitary" data-id="P-009" points="4800.0,450.0 4800.0,169.0" fill="none" stroke="#1f4e9c" stroke-width="38.0" stroke-linejoin="round"/>
+<polyline class="pipe sanitary" data-id="P-010" points="6860.0,450.0 6110.0,450.0" fill="none" stroke="#1f4e9c" stroke-width="38.0" stroke-linejoin="round"/>
+<polyline class="conduit" data-id="Q-001" points="0.0,1612.5 0.0,1612.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-002" points="1800.0,0.0 1800.0,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-003" points="3600.0,1459.5 3600.0,1459.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-004" points="1800.0,3825.0 1800.0,3825.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-005" points="1200.0,4447.2 1200.0,4447.2" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-006" points="1200.0,6390.2 1200.0,6390.2" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-007" points="2400.0,3825.0 2400.0,3825.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-008" points="3600.0,5783.8 3600.0,5783.8" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-009" points="2400.0,7000.0 2400.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-010" points="3600.0,5950.0 3600.0,5950.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-011" points="5252.8,4600.0 5252.8,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-012" points="5700.0,5800.0 5700.0,5800.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-013" points="4650.0,7000.0 4650.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-014" points="5700.0,5950.0 5700.0,5950.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-015" points="6350.0,4600.0 6350.0,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-016" points="8000.0,5800.0 8000.0,5800.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-017" points="6850.0,7000.0 6850.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-018" points="8000.0,3325.0 8000.0,3325.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-019" points="10700.0,0.0 10700.0,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-020" points="11400.0,1830.0 11400.0,1830.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-021" points="11400.0,2770.0 11400.0,2770.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-022" points="8521.2,4600.0 8521.2,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-023" points="10678.8,4600.0 10678.8,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-024" points="8000.0,2425.0 8000.0,2425.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-025" points="4775.0,2800.0 4775.0,2800.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-026" points="3600.0,2000.0 3600.0,2000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-027" points="4200.0,1200.0 4200.0,1200.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-028" points="4925.0,2800.0 4925.0,2800.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-029" points="4200.0,0.0 4200.0,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-030" points="5663.2,0.0 5663.2,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-031" points="900.0,7000.0 900.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-032" points="3600.0,1800.0 3600.0,1800.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-033" points="6860.0,0.0 6860.0,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-034" points="8000.0,280.0 8000.0,280.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-035" points="9207.5,7000.0 9207.5,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-036" points="3600.0,4717.5 3600.0,4717.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-037" points="4955.5,4600.0 4955.5,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-038" points="7800.0,2800.0 7800.0,2800.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-039" points="10107.5,4600.0 10107.5,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-040" points="8000.0,2200.0 8000.0,2200.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-041" points="1200.0,5930.5 1200.0,5930.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-042" points="10200.0,6305.5 10200.0,6305.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-043" points="4800.0,1105.5 4800.0,1105.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-044" points="3600.0,2769.0 3600.0,2769.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-045" points="8000.0,4750.0 8000.0,4750.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-046" points="0.0,1612.5 0.0,3825.0 1200.0,3825.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-047" points="900.0,7000.0 1200.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-048" points="1200.0,3825.0 1200.0,5930.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-049" points="1200.0,3825.0 3600.0,3825.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-050" points="1200.0,6390.2 1200.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-051" points="1200.0,7000.0 3600.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-052" points="1800.0,0.0 3600.0,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-053" points="3600.0,0.0 3600.0,1200.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-054" points="3600.0,0.0 4200.0,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-055" points="3600.0,1200.0 3600.0,3825.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-056" points="3600.0,1200.0 4800.0,1200.0 4800.0,1105.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-057" points="3600.0,3825.0 3600.0,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-058" points="3600.0,4600.0 3600.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-059" points="3600.0,4600.0 5700.0,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-060" points="3600.0,7000.0 4650.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-061" points="4775.0,2800.0 8000.0,2800.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-062" points="5663.2,0.0 8000.0,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-063" points="5700.0,4600.0 5700.0,5950.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-064" points="5700.0,4600.0 8000.0,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-065" points="6850.0,7000.0 8000.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-066" points="8000.0,0.0 8000.0,2800.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-067" points="8000.0,0.0 8258.1,-168.1" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-068" points="8258.1,-168.1 8543.6,-283.7" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-069" points="8543.6,-283.7 8846.0,-342.6" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-070" points="8846.0,-342.6 9154.0,-342.6" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-071" points="9154.0,-342.6 9456.4,-283.7" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-072" points="9456.4,-283.7 9741.9,-168.1" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-073" points="9741.9,-168.1 10000.0,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-074" points="10000.0,0.0 10700.0,0.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-075" points="8000.0,2800.0 8000.0,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-076" points="8000.0,4600.0 8000.0,5200.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-077" points="8000.0,4600.0 10200.0,4600.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-078" points="8000.0,5200.0 8000.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-079" points="8000.0,7000.0 9207.5,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-080" points="10200.0,4600.0 10200.0,6305.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-081" points="10200.0,4600.0 11400.0,4600.0 11400.0,1830.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+</svg>
