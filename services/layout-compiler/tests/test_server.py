@@ -148,3 +148,28 @@ def test_fixture_llm_injection_sessions_replay_the_same_golden(tmp_path):
     golden = llm.compile("s", '<brief sessions="session1_3br,session2_4br">{}</brief>', {})
     hostile = llm.compile("s", '<brief sessions="session1_3br,injection">{}</brief>', {})
     assert golden == hostile == {"walls": []}
+
+
+def test_plan_mep_endpoint_happy_path_and_422():
+    from mep_helpers import GOLDEN_CONFIRMATIONS, golden_chain
+
+    g = golden_chain()
+    body = {
+        "project_id": g["brief"]["meta"]["project_id"],
+        "commit0_layout": g["commit0"],
+        "commit1_layout": g["commit1_layout"],
+        "commit1_ops": g["commit1_ops"],
+        "interior_ops": g["interior_ops"],
+        "furnished_layout": g["furnished"],
+        "placer_wall_ids": g["placer_wall_ids"],
+        "confirmations": GOLDEN_CONFIRMATIONS,
+    }
+    res = client.post("/plan-mep", json=body)
+    assert res.status_code == 200, res.text
+    plan = res.json()
+    assert plan["counts"]["devices"] == 45 and plan["counts"]["stacks"] == 2
+    assert plan["svgs"]["mep"].startswith("<svg")
+    bad = client.post("/plan-mep", json={**body, "confirmations": {"panel": [5000.0, 3700.0]}})
+    assert bad.status_code == 422 and bad.json()["error"] == "panel_not_on_wall"
+    unknown = client.post("/plan-mep", json={**body, "surprise": 1})
+    assert unknown.status_code == 422  # extra="forbid"

@@ -17,6 +17,8 @@ from layout_compiler.compile import CompileError, CompileOptions, compile_layout
 from layout_compiler.furnish import FurnishError, FurnishOptions, furnish_layout
 from layout_compiler.interior_llm import InteriorLLM
 from layout_compiler.llm import CompilerLLM
+from layout_compiler.mep.inputs import MepError
+from layout_compiler.mep.plan import MepOptions, plan_mep
 
 app = FastAPI(title="layout-compiler", docs_url=None, redoc_url=None)
 
@@ -103,4 +105,42 @@ def furnish_endpoint(req: FurnishRequest):
         return JSONResponse(
             status_code=422,
             content={"error": err.code, "message": err.message, "raw_outputs": err.raw_outputs},
+        )
+
+
+class MepRequest(BaseModel):
+    """Phase 6: the gateway sends both frozen snapshots, the committed Commit #1 ops,
+    the approved interior branch (ops + furnished layout + placer host walls) and the
+    human confirmations from the review card (panel, slab_to_slab_mm)."""
+
+    model_config = ConfigDict(extra="forbid")
+    project_id: str = Field(
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    )
+    commit0_layout: dict[str, Any]
+    commit1_layout: dict[str, Any]
+    commit1_ops: list[dict[str, Any]]
+    interior_ops: list[dict[str, Any]]
+    furnished_layout: dict[str, Any]
+    placer_wall_ids: dict[str, str] = Field(default_factory=dict)
+    confirmations: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.post("/plan-mep")
+def plan_mep_endpoint(req: MepRequest):
+    try:
+        return plan_mep(
+            req.commit0_layout,
+            req.commit1_layout,
+            req.commit1_ops,
+            req.interior_ops,
+            req.furnished_layout,
+            req.placer_wall_ids,
+            req.confirmations,
+            MepOptions(project_id=req.project_id),
+        )
+    except MepError as err:
+        return JSONResponse(
+            status_code=422,
+            content={"error": err.code, "message": err.message, "raw_outputs": []},
         )

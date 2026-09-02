@@ -226,3 +226,54 @@ def two_rooms_shared_wall(
             )
         )
     return assemble(walls, doors, rooms, [])
+
+
+_GOLDEN_CHAIN: dict[str, Any] = {}
+
+
+def golden_chain() -> dict[str, Any]:
+    """Compile + furnish the golden 2BR through the recorded fixtures once per test
+    session: {brief, commit0, commit1_layout, commit1_ops, furnished, interior_ops,
+    placer_wall_ids}."""
+    if not _GOLDEN_CHAIN:
+        import json
+
+        from layout_compiler.compile import CompileOptions, compile_layout
+        from layout_compiler.fixtures import FixtureLLM
+        from layout_compiler.furnish import FurnishOptions, furnish_layout
+        from layout_compiler.golden_4br import REPO_ROOT, frozen_layout
+        from layout_compiler.interior_fixtures import InteriorFixtureLLM
+
+        brief = json.loads(
+            (REPO_ROOT / "fixtures" / "briefs" / "2br_golden_brief.json").read_text()
+        )
+        brief["meta"]["confirmed_by_client"] = True
+        project = brief["meta"]["project_id"]
+        compiled = compile_layout(
+            brief, frozen_layout(), CompileOptions(project_id=project), FixtureLLM()
+        )
+        furnished = furnish_layout(
+            brief,
+            frozen_layout(),
+            compiled["layout"],
+            compiled["ops"],
+            FurnishOptions(project_id=project),
+            InteriorFixtureLLM(),
+        )
+        _GOLDEN_CHAIN.update(
+            brief=brief,
+            commit0=frozen_layout(),
+            commit1_layout=compiled["layout"],
+            commit1_ops=compiled["ops"],
+            furnished=furnished["layout"],
+            interior_ops=furnished["ops"],
+            placer_wall_ids={
+                d["item_id"]: d["wall_id"]
+                for d in furnished["diagnostics"]["items"]
+                if d.get("wall_id")
+            },
+        )
+    return _GOLDEN_CHAIN
+
+
+GOLDEN_CONFIRMATIONS = {"panel": [8050.0, 5200.0], "slab_to_slab_mm": 3000.0}

@@ -224,8 +224,8 @@ def dijkstra(
         done.add(state)
         states += 1
         assert states <= cap, "E-4 Dijkstra state bound violated"
-        if deadline_check and states % 64 == 0:
-            deadline_check()
+        if deadline_check:
+            deadline_check()  # SI-6: the time limit reaches the relax loop itself
         for other, via, length in graph.edges[node]:
             pen = sum(1 for b in graph.interior_of[node] if b != wall)
             new_cost = cost + length + E4_PENETRATION_PENALTY_MM * pen

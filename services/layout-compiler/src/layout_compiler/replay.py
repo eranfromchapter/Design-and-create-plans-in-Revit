@@ -108,3 +108,41 @@ def render_furnish_svgs(
     for op in place_ops:
         furnished.apply(op["op"], op["args"], _catalogs())
     return {"commit1": render_plan(model), "furnished": render_plan(furnished)}
+
+
+def render_mep_svgs(
+    commit0_layout: dict[str, Any],
+    commit1_ops: list[dict[str, Any]],
+    interior_ops: list[dict[str, Any]],
+    mep_ops: list[dict[str, Any]],
+) -> dict[str, str]:
+    """{"furnished": svg, "mep": svg} for the mep_plan review card: the furnished
+    view is Commit #0 + Commit #1 ops + the approved interior ops (byte-identical to
+    the Phase 5 card when the interior did not change); the mep view adds the MEP
+    ops — device symbols, pipes, conduits, stack markers. Raises OpError on any op
+    the executor would reject (preflight)."""
+    model = sim_model_from_layout(commit0_layout)
+    for op in [*commit1_ops, *interior_ops]:
+        model.apply(op["op"], op["args"], _catalogs())
+    mep = model.clone()
+    for op in mep_ops:
+        mep.apply(op["op"], op["args"], _catalogs())
+    return {"furnished": render_plan(model), "mep": render_plan(mep)}
+
+
+def render_merge_svgs(
+    commit0_layout: dict[str, Any],
+    commit1_ops: list[dict[str, Any]],
+    merged_ops: list[dict[str, Any]],
+) -> dict[str, str]:
+    """{"commit1": svg, "merged": svg} for the commit2_merge review card: post-
+    Commit-#1 reality vs the merged Commit #2 (interior + MEP after re-plans). The
+    trailing run_interference_check is applied too, so a merge that the sim would
+    roll back fails HERE (OpError) before a card exists."""
+    model = sim_model_from_layout(commit0_layout)
+    for op in commit1_ops:
+        model.apply(op["op"], op["args"], _catalogs())
+    merged = model.clone()
+    for op in merged_ops:
+        merged.apply(op["op"], op["args"], _catalogs())
+    return {"commit1": render_plan(model), "merged": render_plan(merged)}
