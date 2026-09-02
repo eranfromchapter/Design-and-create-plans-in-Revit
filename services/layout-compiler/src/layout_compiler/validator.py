@@ -41,6 +41,7 @@ from layout_compiler.geometry import (
     circulation_errors,
     furniture_rect,
     room_free_space,
+    room_inner_polygon,
     room_thresholds,
     wall_len,
     wall_thickness_of,
@@ -325,9 +326,10 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
                 f"rooms.{room['id']}: {program} min clear width {min_width:.0f}mm not met"
             )
 
-        # Phase 5 furniture geometry: every footprint inside the room (centerline
-        # bound, `covers` so boundary-touching is legal) and pairwise POSITIVE-AREA
-        # disjoint (touching is legal — a flush kitchen run shares edges)
+        # Phase 5 furniture geometry: every footprint inside the room's INNER-FACE
+        # polygon (centerline boundary minus each wall's t/2 slab; `covers` so
+        # face-touching is legal, sinking into a wall is not) and pairwise
+        # POSITIVE-AREA disjoint (touching is legal — a flush kitchen run shares edges)
         room_items = [
             item
             for entry in layout["furniture"]
@@ -335,7 +337,7 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
             for item in entry["items"]
         ]
         rects = [(item["id"], furniture_rect(item)) for item in room_items]
-        room_cover = polygon.buffer(COVER_TOLERANCE_MM)
+        room_cover = room_inner_polygon(room, polygon, walls).buffer(COVER_TOLERANCE_MM)
         for item_id, rect in rects:
             if not room_cover.covers(rect):
                 errors.append(

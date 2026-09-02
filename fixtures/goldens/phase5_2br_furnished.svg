@@ -49,15 +49,15 @@
 <rect class="family" data-id="F-005" x="1076.0" y="6000.0" width="1000.0" height="600.0" transform="rotate(90.0 1576.0 6300.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 <rect class="family" data-id="F-006" x="400.0" y="3875.0" width="400.0" height="700.0" transform="rotate(0.0 600.0 4225.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 <rect class="family" data-id="F-007" x="350.0" y="6450.0" width="500.0" height="450.0" transform="rotate(0.0 600.0 6675.0)" fill="none" stroke="grey" stroke-width="20.0"/>
-<rect class="family" data-id="F-008" x="4709.0" y="4995.0" width="991.0" height="1905.0" transform="rotate(0.0 5204.5 5947.5)" fill="none" stroke="grey" stroke-width="20.0"/>
-<rect class="family" data-id="F-009" x="3650.0" y="6450.0" width="450.0" height="450.0" transform="rotate(0.0 3875.0 6675.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-008" x="4159.0" y="5452.0" width="991.0" height="1905.0" transform="rotate(90.0 4654.5 6404.5)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-009" x="3650.0" y="5425.0" width="450.0" height="450.0" transform="rotate(90.0 3875.0 5650.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 <rect class="family" data-id="F-010" x="6203.0" y="5047.5" width="991.0" height="1905.0" transform="rotate(90.0 6698.5 6000.0)" fill="none" stroke="grey" stroke-width="20.0"/>
-<rect class="family" data-id="F-011" x="7504.0" y="6525.0" width="450.0" height="450.0" transform="rotate(90.0 7729.0 6750.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-011" x="5746.0" y="5025.0" width="450.0" height="450.0" transform="rotate(90.0 5971.0 5250.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 <rect class="family" data-id="F-012" x="10600.0" y="4646.0" width="400.0" height="700.0" transform="rotate(0.0 10800.0 4996.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 <rect class="family" data-id="F-014" x="9775.0" y="1800.0" width="2100.0" height="900.0" transform="rotate(90.0 10825.0 2250.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 <rect class="family" data-id="F-015" x="8975.0" y="1000.0" width="900.0" height="1800.0" transform="rotate(0.0 9425.0 1900.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 <rect class="family" data-id="F-016" x="3650.0" y="1425.0" width="750.0" height="750.0" transform="rotate(90.0 4025.0 1800.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 <rect class="family" data-id="F-017" x="5660.0" y="150.0" width="900.0" height="600.0" transform="rotate(0.0 6110.0 450.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 <rect class="family" data-id="F-018" x="6560.0" y="150.0" width="600.0" height="600.0" transform="rotate(0.0 6860.0 450.0)" fill="none" stroke="grey" stroke-width="20.0"/>
-<rect class="family" data-id="F-019" x="7243.0" y="150.0" width="762.0" height="660.0" transform="rotate(90.0 7624.0 480.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-019" x="7192.0" y="150.0" width="762.0" height="660.0" transform="rotate(180.0 7573.0 480.0)" fill="none" stroke="grey" stroke-width="20.0"/>
 </svg>

@@ -10,7 +10,8 @@ bounded spiral around the proposed center: rings every 50mm to 500mm × 8
 angles × 4 rotations = 324 candidates. Both loops are counter-asserted (SI-6).
 
 A candidate is accepted iff (cheap first):
-  (1) inside the room (centerline polygon, `covers`, boundary-touching legal)
+  (1) inside the room's INNER-FACE polygon (centerline boundary minus each
+      wall's t/2 slab; `covers`, face-touching legal)
   (2) footprint-clear vs placed same-room items, SYMMETRIC positive-area test
       (candidate blob ∩ placed rect AND candidate rect ∩ placed blob;
       blob-vs-blob overlap is legal, matching the validator's subtraction)
@@ -42,6 +43,7 @@ from layout_compiler.geometry import (
     furniture_rect,
     pt_on_wall,
     room_free_space,
+    room_inner_polygon,
     room_thresholds,
     wall_len,
     wall_thickness_of,
@@ -376,7 +378,9 @@ def legalize_furniture(
         ctxs[room_id] = _RoomCtx(
             room=room,
             polygon=polygon,
-            room_cover=polygon.buffer(COVER_TOLERANCE_MM),
+            # inside-room = inside the INNER-FACE polygon: touching a wall face is
+            # legal, sinking into a wall's half-thickness is not
+            room_cover=room_inner_polygon(room, polygon, walls_by_id).buffer(COVER_TOLERANCE_MM),
             arcs=[arc for _d, arc in room_swing_arcs(room, polygon, layout["doors"], walls_by_id)],
             thresholds=room_thresholds(room, polygon, layout["doors"], walls_by_id),
             circulation_min=circulation_min,

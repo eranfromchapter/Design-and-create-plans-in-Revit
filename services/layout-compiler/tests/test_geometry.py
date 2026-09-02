@@ -12,6 +12,7 @@ from layout_compiler.geometry import (
     furniture_rect,
     pt_on_wall,
     room_free_space,
+    room_inner_polygon,
     room_thresholds,
     wall_len,
     wall_thickness_of,
@@ -112,3 +113,19 @@ def test_circulation_error_strings_are_validator_stable():
         "rooms.R-003: door threshold (6000,5000) unreachable from the room's circulation space"
     ]
     assert circulation_errors("R-004", tiny, [], 900.0) == []  # no thresholds, no verdicts
+
+
+def test_room_inner_polygon_erodes_each_wall_by_half_thickness():
+    """4000x3000 room bounded by 92mm partitions -> inner faces 46mm inside every
+    edge; a wall of unknown thickness contributes no slab; corners stay clean."""
+    corners = [[0.0, 0.0], [4000.0, 0.0], [4000.0, 3000.0], [0.0, 3000.0]]
+    walls = {
+        f"W-00{i}": {**WALL, "id": f"W-00{i}", "start": corners[i - 1], "end": corners[i % 4]}
+        for i in range(1, 5)
+    }
+    room = {"id": "R-001", "boundary_wall_ids": list(walls), "boundary": corners}
+    inner = room_inner_polygon(room, Polygon(corners), walls)
+    assert [round(v, 3) for v in inner.bounds] == [46.0, 46.0, 3954.0, 2954.0]
+    assert round(inner.area) == round((4000 - 92) * (3000 - 92))  # clean corners, no slivers
+    unknown = {k: {**w, "revit_type": "nope"} for k, w in walls.items()}
+    assert room_inner_polygon(room, Polygon(corners), unknown).equals(Polygon(corners))

@@ -29,13 +29,14 @@ def furnished(items: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def test_valid_catalog_furniture_passes():
-    # sofa on the north wall, away from the D-001 threshold at (2000, 0)
+    # sofa flush to the north wall's inner face (y = 3000 - 46), away from the
+    # D-001 threshold at (2000, 0)
     sofa = {
         "id": "F-001",
         "kind": "sofa",
         "revit_family": "CHPT_Sofa_PLACEHOLDER",
         "revit_type": "Sofa_2100x900_PLACEHOLDER",
-        "center": [2000.0, 2550.0],
+        "center": [2000.0, 2504.0],
         "rotation_deg": 0.0,
         "footprint": [2100.0, 900.0],
         "clearance_front": 450.0,
@@ -74,9 +75,18 @@ def test_footprint_outside_room_rejected():
     assert any("furniture F-001 footprint outside the room boundary" in e for e in errors)
 
 
-def test_boundary_touching_footprint_is_legal():
-    layout = furnished([fitem(1, [3775, 1500])])  # rect x 3550..4000, flush to the east wall
+def test_face_touching_footprint_is_legal():
+    # east wall is a 92mm partition on x=4000: inner face at 3954; rect x 3504..3954 is flush
+    layout = furnished([fitem(1, [3729, 1500])])
     assert validate_layout(layout) == []
+
+
+def test_footprint_inside_a_wall_half_thickness_rejected():
+    """Flush to the CENTERLINE (rect 3550..4000) sinks 46mm into the east wall's
+    slab: inside the D1 boundary polygon, outside the room's inner face."""
+    layout = furnished([fitem(1, [3775, 1500])])
+    errors = validate_layout(layout)
+    assert any("furniture F-001 footprint outside the room boundary" in e for e in errors)
 
 
 def test_pairwise_overlap_rejected_touching_legal():

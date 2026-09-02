@@ -15,6 +15,7 @@ from typing import Any
 from shapely import affinity
 from shapely.geometry import LineString, Point, Polygon
 from shapely.geometry.base import BaseGeometry
+from shapely.ops import unary_union
 
 from layout_compiler.catalogs import wall_thickness_mm
 
@@ -130,3 +131,32 @@ def circulation_errors(
 
 def edge_probe_line(wall: dict[str, Any]) -> LineString:
     return LineString([wall["start"], wall["end"]])
+
+
+def room_inner_polygon(
+    room: dict[str, Any], polygon: Polygon, walls_by_id: dict[str, dict[str, Any]]
+) -> BaseGeometry:
+    """The room's INNER-FACE polygon: the D1 centerline boundary minus every
+    boundary wall's half-thickness slab. Furniture footprints must sit inside
+    this (touching a wall face is legal; intruding into the wall is not) —
+    the centerline polygon alone let items sink up to t/2 into a neighbouring
+    wall (Phase 6 review finding). Walls of unknown thickness contribute no
+    slab (the validator flags the unknown type separately). Slabs use flat
+    caps so two walls meeting at a corner leave a clean inner corner."""
+    slabs = []
+    for wall_id in room["boundary_wall_ids"]:
+        wall = walls_by_id.get(wall_id)
+        if wall is None:
+            continue
+        thickness = wall_thickness_of(wall) or 0.0
+        if thickness <= 0 or wall_len(wall) == 0:
+            continue
+        slabs.append(edge_probe_line(wall).buffer(thickness / 2, cap_style="flat"))
+    if not slabs:
+        return polygon
+    inner = polygon.difference(unary_union(slabs))
+    if inner.geom_type == "MultiPolygon":
+        # a listed wall crossing the interior would split it; the room proper is
+        # the largest piece (slivers along the walls are not floor)
+        inner = max(inner.geoms, key=lambda g: g.area)
+    return inner

@@ -285,3 +285,16 @@ def test_production_placer_has_no_rng_and_no_clock():
         name.name for node in ast.walk(tree) if isinstance(node, ast.Import) for name in node.names
     } | {node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)}
     assert "random" not in imported and "time" not in imported and "datetime" not in imported
+
+
+def test_free_standing_item_never_sinks_into_a_wall_half_thickness():
+    """Proposed centre 240mm from a 92mm wall: the 450 footprint (15..465) is
+    inside the CENTERLINE polygon but 31mm inside the wall slab (face at 46) —
+    the anchor must be rejected and the spiral must land the item with its
+    back at or beyond the inner face."""
+    layout = layout_4x3()
+    proposal = {**nightstand(1, [240.0, 1500.0]), "wall_seeking": False}
+    outcome = legalize_furniture([proposal], layout)
+    (item,) = outcome.furniture[0]["items"]
+    assert item["center"][0] - 225.0 >= 46.0 - 0.1
+    assert outcome.diagnostics["items"][0]["spiral_tried"] > 1  # the anchor itself failed

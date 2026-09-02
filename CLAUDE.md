@@ -145,7 +145,11 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   boundary (gateway zod, extractor pattern, prompt builders), interior_plan_ready
   requires content.brief_version == latest CONFIRMED brief (staleness),
   COVER_TOLERANCE_MM=0.1 absorbs rotated-wall center rounding; sim interference check
-  replayed for real in the golden test.
+  replayed for real in the golden test. Phase 6 design-review spill-over fixed here too:
+  the inside-room predicate (placer + validator) tests the room's INNER-FACE polygon
+  (geometry.room_inner_polygon = D1 boundary minus each wall's t/2 slab) — items may
+  touch a wall face, never sink into a wall; golden re-pinned (F-008/F-009/F-011 moved,
+  F-019 +51mm; still 18 placed / F-020, F-013 REVIEW).
   GATE ITEMS FOR ERAN: (1) clearance semantics — the field is named clearance_FRONT but
   the validator/Part G inflate all sides; front-only would be a validator/Part G change
   (bed clearance set to 0 for now: all-around 760 makes <2650mm bedrooms bed-less).
