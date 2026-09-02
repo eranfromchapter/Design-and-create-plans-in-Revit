@@ -1,0 +1,91 @@
+{
+  "catalog_version": "1.0.0",
+  "requires_human_input": false,
+  "note": "Engineering defaults for the Phase 6 clash law (PLAN.md Part G clash priority). ONE law in three executors: the layout-compiler merge gate (Phase A, oriented shapely prisms), revit-sim run_interference_check (AABB superset of the same prisms, created x all, strict <) and the Revit plugin (ElementIntersectsElementFilter over the created set with the same exemption pairs by category). Walls, doors and windows are NEVER clash elements. Heights are reviewable defaults (mm), not placeholders.",
+  "priorities": {
+    "structure": 0,
+    "sanitary": 1,
+    "vent": 1,
+    "supply_h": 2,
+    "supply_c": 2,
+    "hvac": 3,
+    "electrical": 4,
+    "furniture": 5
+  },
+  "element_classes": {
+    "column": {
+      "class": "structure"
+    },
+    "riser": {
+      "class": "structure",
+      "radius_mm": 150.0
+    },
+    "pipe": {
+      "class": "by_system"
+    },
+    "conduit": {
+      "class": "electrical"
+    },
+    "device": {
+      "class": "electrical",
+      "along_half_mm": 50.0,
+      "z_half_mm": 60.0
+    },
+    "furniture": {
+      "class": "furniture"
+    }
+  },
+  "kind_heights_mm": {
+    "bed": 600,
+    "sofa": 850,
+    "table": 750,
+    "chair": 900,
+    "desk": 750,
+    "wardrobe": 2100,
+    "nightstand": 600,
+    "wc": 800,
+    "lav": 850,
+    "shower": 2100,
+    "tub": 600,
+    "kitchen_sink": 900,
+    "dishwasher": 900,
+    "washer": 1900,
+    "range": 900,
+    "oven": 900,
+    "refrigerator": 1800,
+    "default": 900
+  },
+  "exempt_pairs": [
+    {
+      "a": "pipe",
+      "b": "pipe",
+      "when": "same_system"
+    },
+    {
+      "a": "conduit",
+      "b": "conduit"
+    },
+    {
+      "a": "device",
+      "b": "device"
+    },
+    {
+      "a": "device",
+      "b": "conduit"
+    },
+    {
+      "a": "pipe",
+      "b": "furniture",
+      "when": "pipe_serves_fixture"
+    },
+    {
+      "a": "furniture",
+      "b": "device"
+    },
+    {
+      "a": "furniture",
+      "b": "conduit"
+    }
+  ],
+  "overlap_eps_mm2": 0.001
+}

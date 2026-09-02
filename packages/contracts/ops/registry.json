@@ -109,17 +109,18 @@
       "args_schema": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "kind", "host_wall_id", "offset", "height_afl"],
+        "required": ["id", "kind", "host_wall_id", "offset", "height_afl", "face"],
         "properties": {
           "id": { "type": "string", "pattern": "^E-[0-9]{2,4}$" },
-          "kind": { "enum": ["receptacle", "switch", "gfci"] },
+          "kind": { "enum": ["receptacle", "switch", "gfci", "receptacle_240"] },
           "host_wall_id": { "type": "string", "pattern": "^W-[0-9]{3}$" },
           "offset": { "type": "number", "minimum": 0 },
-          "height_afl": { "type": "number", "exclusiveMinimum": 0 }
+          "height_afl": { "type": "number", "exclusiveMinimum": 0 },
+          "face": { "enum": ["left", "right"] }
         }
       },
-      "revit_mapping": "face-hosted NewFamilyInstance on the host wall face",
-      "sim_behavior": "add device point"
+      "revit_mapping": "face-hosted NewFamilyInstance on the host wall face named by `face` (left|right of the wall's start->end direction); kind receptacle_240 = dedicated 240V appliance receptacle",
+      "sim_behavior": "add device point on the named face (placement face_left|face_right at the host's catalog thickness)"
     },
     "create_pipe": {
       "args_schema": {

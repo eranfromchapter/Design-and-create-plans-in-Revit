@@ -1,0 +1,37 @@
+{
+  "catalog_version": "0.1.0",
+  "requires_human_input": true,
+  "note": "Phase 6 MEP vocabulary. EVERY entry is a PLACEHOLDER until Eran supplies the real names from Chapter's Revit template: pipe types per system, PipingSystemType names, the conduit type, and the electrical device families/types. Placeholders are marked _PLACEHOLDER and are never shipped (Part J). Consumed by the layout-compiler MEP agent (op emission), the sim (catalog membership) and the plugin (symbol lookup).",
+  "pipe_types": {
+    "sanitary": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+    "vent": "CHPT_Pipe_PVC_Vent_PLACEHOLDER",
+    "supply_h": "CHPT_Pipe_Copper_TypeL_PLACEHOLDER",
+    "supply_c": "CHPT_Pipe_Copper_TypeL_PLACEHOLDER"
+  },
+  "system_type_names": {
+    "sanitary": "Sanitary_PLACEHOLDER",
+    "vent": "Vent_PLACEHOLDER",
+    "supply_h": "Domestic Hot Water_PLACEHOLDER",
+    "supply_c": "Domestic Cold Water_PLACEHOLDER"
+  },
+  "conduit_type": "CHPT_Conduit_EMT_PLACEHOLDER",
+  "conduit_diameter_mm": 21,
+  "device_families": {
+    "receptacle": {
+      "revit_family": "CHPT_Receptacle_Duplex_PLACEHOLDER",
+      "revit_type": "Duplex_120V_PLACEHOLDER"
+    },
+    "gfci": {
+      "revit_family": "CHPT_Receptacle_GFCI_PLACEHOLDER",
+      "revit_type": "GFCI_120V_PLACEHOLDER"
+    },
+    "receptacle_240": {
+      "revit_family": "CHPT_Receptacle_240V_PLACEHOLDER",
+      "revit_type": "NEMA_14-50_PLACEHOLDER"
+    },
+    "switch": {
+      "revit_family": "CHPT_Switch_SinglePole_PLACEHOLDER",
+      "revit_type": "SinglePole_PLACEHOLDER"
+    }
+  }
+}
