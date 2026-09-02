@@ -15,7 +15,7 @@ from pathlib import Path
 
 import websockets
 
-from revit_sim.executor import Executor
+from revit_sim.executor import Executor, TestHooks
 from revit_sim.state import SimState
 
 log = logging.getLogger("revit_sim")
@@ -37,6 +37,8 @@ class SimClient:
         self.state_dir = state_dir
         self.blob_dir = blob_dir
         self.control_port = control_port
+        # test hooks exist ONLY when a control port was requested (e2e harness)
+        self.test_hooks: TestHooks | None = TestHooks() if control_port is not None else None
         self.executor: Executor | None = None
         self._ws: websockets.ClientConnection | None = None
 
@@ -67,6 +69,7 @@ class SimClient:
                 project_id=first["project_id"],
                 workstation_id=self.workstation_id,
                 public_key_hex=state.pinned_public_key or first["signing_public_key"],
+                test_hooks=self.test_hooks,
             )
 
             if self.control_port is not None:
@@ -106,6 +109,26 @@ class SimClient:
                 )
             )
             writer.write(b"ok\n")
+        elif line.startswith("inject_clash ") and self.executor and self.executor.test_hooks:
+            # "inject_clash <n> <a_id> <b_id>" arms n forced interferences on that pair;
+            # "inject_clash 0" clears. The Phase-B recovery stimulus (see TestHooks).
+            parts = line.split()
+            hooks = self.executor.test_hooks
+            try:
+                count = int(parts[1])
+            except (IndexError, ValueError):
+                writer.write(b"unknown\n")
+            else:
+                if count <= 0:
+                    hooks.clash_remaining = 0
+                    hooks.clash_pair = None
+                    writer.write(b"ok\n")
+                elif len(parts) == 4:
+                    hooks.clash_remaining = count
+                    hooks.clash_pair = (parts[2], parts[3])
+                    writer.write(b"ok\n")
+                else:
+                    writer.write(b"unknown\n")
         else:
             writer.write(b"unknown\n")
         await writer.drain()

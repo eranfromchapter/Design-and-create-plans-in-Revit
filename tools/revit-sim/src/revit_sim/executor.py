@@ -35,6 +35,19 @@ def utc_now() -> datetime:
 
 
 @dataclass
+class TestHooks:
+    """Test-only knobs. Constructed ONLY by SimClient when --control-port is given
+    (never by default, never from the environment — AST-tested): `inject_clash n a b`
+    makes the next n run_interference_check calls report a~b as a hard interference,
+    the deterministic Phase-B recovery stimulus for the e2e suite."""
+
+    __test__ = False  # not a pytest class despite the name
+
+    clash_remaining: int = 0
+    clash_pair: tuple[str, str] | None = None
+
+
+@dataclass
 class Executor:
     state: SimState
     blob_dir: Path
@@ -44,6 +57,7 @@ class Executor:
     clock: Clock = utc_now
     catalogs: Catalogs = field(default_factory=Catalogs.load)
     model: SimModel = field(default_factory=SimModel)
+    test_hooks: TestHooks | None = None
 
     def hello(self) -> dict[str, Any]:
         return {
@@ -123,6 +137,7 @@ class Executor:
             return messages
 
         # Commit: model swap + seq + id-map persist together (Extensible Storage twin).
+        working.envelope_created = None  # the committed model carries no envelope scope
         self.model = working
         self.state.last_committed_seq = body["seq"]
         delta = [
@@ -187,6 +202,16 @@ class Executor:
             return [
                 {"type": "export_ready", "kind": "model_state", "blob_ref": self._store_blob(doc)}
             ]
+
+        if op == "run_interference_check":
+            # scope the law to THIS envelope's created set (the plugin's created-set filter)
+            working.envelope_created = list(created)
+            hooks = self.test_hooks
+            if hooks is not None and hooks.clash_remaining > 0 and hooks.clash_pair is not None:
+                a_id, b_id = hooks.clash_pair
+                if a_id in working.all_ids() and b_id in working.all_ids():
+                    hooks.clash_remaining -= 1
+                    raise OpError("interference", f"{a_id}~{b_id}")
 
         logical_id = working.apply(op, args, self.catalogs)
         if logical_id is not None:

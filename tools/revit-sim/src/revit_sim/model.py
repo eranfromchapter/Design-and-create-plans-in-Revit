@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from revit_sim import placement
+from revit_sim import clash, placement
 
 CONTRACTS_DIR = Path(__file__).resolve().parents[4] / "packages" / "contracts"
 
@@ -80,6 +80,9 @@ class SimModel:
     pointclouds: list[str] = field(default_factory=list)
     demolished: set[str] = field(default_factory=set)
     parameters: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # ids created by the envelope being executed (set by the executor before the
+    # trailing run_interference_check, cleared after commit); None = all pairs
+    envelope_created: list[str] | None = None
 
     def clone(self) -> SimModel:
         return copy.deepcopy(self)
@@ -276,18 +279,13 @@ class SimModel:
         self.pointclouds.append(args["blob_ref"])
         return None
 
-    def _op_run_interference_check(self, args: dict[str, Any], _c: Catalogs) -> None:
-        boxes: list[tuple[str, float, float, float, float]] = []
-        for fid, fam in self.families.items():
-            cx, cy = fam["center"]
-            w, d = fam["footprint"]
-            rad = math.radians(fam["rotation_deg"])
-            # AABB of the rotated oriented rectangle (D1 footprint semantics)
-            hx = (abs(w * math.cos(rad)) + abs(d * math.sin(rad))) / 2
-            hy = (abs(w * math.sin(rad)) + abs(d * math.cos(rad))) / 2
-            boxes.append((fid, cx - hx, cy - hy, cx + hx, cy + hy))
-        for i, a in enumerate(boxes):
-            for b in boxes[i + 1 :]:
-                if a[1] < b[3] and b[1] < a[3] and a[2] < b[4] and b[2] < a[4]:
-                    raise OpError("interference", f"{a[0]}~{b[0]}")
+    def _op_run_interference_check(self, args: dict[str, Any], catalogs: Catalogs) -> None:
+        """The shared 2.5D clash law (revit_sim.clash): created set x all, strict
+        overlap on x/y/z, catalog exemption pairs; the first pair fails the envelope
+        as OpError("interference", "A~B") -> commit_result rolled_back + clash_delta."""
+        pairs = clash.find_clashes(
+            clash.element_boxes(self, catalogs), self.envelope_created, catalogs.clash_prisms
+        )
+        if pairs:
+            raise OpError("interference", f"{pairs[0][0]}~{pairs[0][1]}")
         return None
