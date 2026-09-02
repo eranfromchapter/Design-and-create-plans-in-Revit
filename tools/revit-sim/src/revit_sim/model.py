@@ -30,12 +30,26 @@ class Catalogs:
     door_types: set[str]
     window_types: set[str]
     param_allowlist: set[str]
+    # Phase 6: wall thickness by type (device face hosting), MEP vocabulary and the
+    # shared clash law inputs (catalogs/clash_prisms.json — ONE law, three executors)
+    wall_thickness_mm: dict[str, float] = field(default_factory=dict)
+    pipe_types: set[str] = field(default_factory=set)
+    conduit_type: str | None = None
+    family_kinds: dict[tuple[str, str], tuple[str, ...]] = field(default_factory=dict)
+    clash_prisms: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def load(cls, contracts_dir: Path = CONTRACTS_DIR) -> Catalogs:
         asbuilt = json.loads((contracts_dir / "catalogs" / "asbuilt_types.json").read_text())
         newc = json.loads((contracts_dir / "catalogs" / "new_construction_types.json").read_text())
         allowlist = json.loads((contracts_dir / "ops" / "param_allowlist.json").read_text())
+        mep = json.loads((contracts_dir / "catalogs" / "mep_types.json").read_text())
+        prisms = json.loads((contracts_dir / "catalogs" / "clash_prisms.json").read_text())
+        family_kinds: dict[tuple[str, str], tuple[str, ...]] = {}
+        for family in newc.get("families", []):
+            for ftype in family["types"]:
+                kinds = ftype.get("kinds", family.get("kinds", []))
+                family_kinds[(family["revit_family"], ftype["revit_type"])] = tuple(kinds)
         return cls(
             wall_types={t["revit_type"] for t in asbuilt["types"]}
             | {t["revit_type"] for t in newc["walls"]},
@@ -44,6 +58,12 @@ class Catalogs:
             window_types={t["revit_type"] for t in asbuilt.get("windows", [])}
             | {t["revit_type"] for t in newc["windows"]},
             param_allowlist={p["name"] for p in allowlist["params"]},
+            wall_thickness_mm={t["revit_type"]: float(t["thickness_mm"]) for t in asbuilt["types"]}
+            | {t["revit_type"]: float(t["thickness_mm"]) for t in newc["walls"]},
+            pipe_types=set(mep["pipe_types"].values()),
+            conduit_type=mep.get("conduit_type"),
+            family_kinds=family_kinds,
+            clash_prisms=prisms,
         )
 
 
@@ -157,30 +177,46 @@ class SimModel:
         self.families[args["id"]] = dict(args)
         return args["id"]
 
-    def _op_place_device(self, args: dict[str, Any], _c: Catalogs) -> str:
+    def _op_place_device(self, args: dict[str, Any], catalogs: Catalogs) -> str:
         self._require_new_id(args["id"])
         wall = self._wall(args["host_wall_id"])
         self._check_hosted_offset(wall, args["offset"], 0)
-        # Devices host on the room-facing face; Phase 1 pins the left face so the sim and
-        # the plugin's pure logic agree (fixture: face_left) until room polygons exist.
+        # Phase 6: the op names the face (left|right of start->end) and the point sits on
+        # that face at the host's CATALOG thickness — the same Placement law the plugin
+        # pins against fixtures/placement (Phase 1 hard-coded face_left @ 100mm).
+        thickness = catalogs.wall_thickness_mm.get(wall["revit_type"])
+        if thickness is None:
+            raise OpError("unknown_revit_type", wall["revit_type"])
         point = placement.place(
-            "face_left",
+            f"face_{args['face']}",
             tuple(wall["start"]),
             tuple(wall["end"]),
-            100.0,
+            thickness,
             args["offset"],
             args["height_afl"],
         )
         self.devices[args["id"]] = {**args, "point": point}
         return args["id"]
 
-    def _op_create_pipe(self, args: dict[str, Any], _c: Catalogs) -> str:
+    @staticmethod
+    def _check_path(path: list[list[float]]) -> None:
+        """Every segment must have positive 3D length: a zero-length Pipe.Create /
+        Conduit.Create throws in Revit, so the sim rejects it the same way."""
+        for a, b in zip(path, path[1:], strict=False):
+            if math.dist(a, b) < 1e-6:
+                raise OpError("invalid_path", f"zero-length segment at {a}")
+
+    def _op_create_pipe(self, args: dict[str, Any], catalogs: Catalogs) -> str:
         self._require_new_id(args["id"])
+        if args["pipe_type"] not in catalogs.pipe_types:
+            raise OpError("unknown_revit_type", args["pipe_type"])
+        self._check_path(args["path"])
         self.pipes[args["id"]] = dict(args)
         return args["id"]
 
     def _op_create_conduit(self, args: dict[str, Any], _c: Catalogs) -> str:
         self._require_new_id(args["id"])
+        self._check_path(args["path"])
         self.conduits[args["id"]] = dict(args)
         return args["id"]
 
@@ -219,6 +255,10 @@ class SimModel:
             del self.windows[target]
         elif target in self.devices:
             del self.devices[target]
+        elif target in self.pipes:
+            del self.pipes[target]
+        elif target in self.conduits:
+            del self.conduits[target]
         else:
             raise OpError("unknown_target", target)
         return None

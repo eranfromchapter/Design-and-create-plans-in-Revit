@@ -10,6 +10,57 @@ from revit_sim.model import SimModel
 MARGIN = 250.0
 
 
+PIPE_COLOURS = {
+    "sanitary": "#1f4e9c",
+    "vent": "#2e8b57",
+    "supply_h": "#c0392b",
+    "supply_c": "#1f9cc0",
+}
+DEVICE_RADIUS = 60.0
+
+
+def _is_vertical(path: list[list[float]]) -> bool:
+    """A stack: two or more points sharing one plan position (within 0.05mm)."""
+    if len(path) < 2:
+        return False
+    x0, y0 = path[0][0], path[0][1]
+    return all(abs(x - x0) <= 0.05 and abs(y - y0) <= 0.05 for x, y, _z in path)
+
+
+def _device_symbol(device_id: str, kind: str, x: float, y: float) -> str:
+    """Plan symbols per device kind (NEC-style): receptacle = circle + tick, gfci =
+    circle + filled square, receptacle_240 = double ring, switch = square + diagonal."""
+    r = DEVICE_RADIUS
+    head = f'<g class="device {kind}" data-id="{device_id}">'
+    if kind == "switch":
+        body = (
+            f'<rect x="{_f(x - 50)}" y="{_f(y - 50)}" width="100.0" height="100.0" '
+            f'fill="white" stroke="black" stroke-width="15.0"/>'
+            f'<line x1="{_f(x - 50)}" y1="{_f(y + 50)}" x2="{_f(x + 50)}" y2="{_f(y - 50)}" '
+            f'stroke="black" stroke-width="15.0"/>'
+        )
+    else:
+        body = (
+            f'<circle cx="{_f(x)}" cy="{_f(y)}" r="{_f(r)}" fill="white" stroke="black" '
+            f'stroke-width="15.0"/>'
+        )
+        if kind == "gfci":
+            body += (
+                f'<rect x="{_f(x - 25)}" y="{_f(y - 25)}" width="50.0" height="50.0" fill="black"/>'
+            )
+        elif kind == "receptacle_240":
+            body += (
+                f'<circle cx="{_f(x)}" cy="{_f(y)}" r="{_f(r / 2)}" fill="none" stroke="black" '
+                f'stroke-width="15.0"/>'
+            )
+        else:  # receptacle
+            body += (
+                f'<line x1="{_f(x - r)}" y1="{_f(y)}" x2="{_f(x + r)}" y2="{_f(y)}" '
+                f'stroke="black" stroke-width="15.0"/>'
+            )
+    return head + body + "</g>"
+
+
 def _f(v: float) -> str:
     return f"{v:.1f}"
 
@@ -23,6 +74,14 @@ def render_plan(model: SimModel) -> str:
     for fam in model.families.values():
         xs.append(fam["center"][0])
         ys.append(fam["center"][1])
+    # Phase 6 MEP elements extend the viewBox only when present (goldens 1-5 unchanged)
+    for device in model.devices.values():
+        xs.append(device["point"][0])
+        ys.append(device["point"][1])
+    for run in (*model.pipes.values(), *model.conduits.values()):
+        for x, y, _z in run["path"]:
+            xs.append(x)
+            ys.append(y)
     if not xs:
         xs, ys = [0.0], [0.0]
     min_x, max_x = min(xs) - MARGIN, max(xs) + MARGIN
@@ -78,23 +137,39 @@ def render_plan(model: SimModel) -> str:
             f'transform="rotate({_f(fam["rotation_deg"])} {_f(cx)} {_f(cy)})" '
             f'fill="none" stroke="grey" stroke-width="20.0"/>'
         )
+    # ---- Phase 6 MEP symbols (append-only; classes are the review-card legend) ----
     for device_id in sorted(model.devices):
-        x, y, _ = model.devices[device_id]["point"]
-        parts.append(
-            f'<circle class="device {model.devices[device_id]["kind"]}" data-id="{device_id}" '
-            f'cx="{_f(x)}" cy="{_f(y)}" r="60.0" fill="black"/>'
-        )
+        device = model.devices[device_id]
+        x, y, _ = device["point"]
+        parts.append(_device_symbol(device_id, device["kind"], x, y))
     for pipe_id in sorted(model.pipes):
-        pts = " ".join(f"{_f(x)},{_f(y)}" for x, y, _z in model.pipes[pipe_id]["path"])
+        pipe = model.pipes[pipe_id]
+        colour = PIPE_COLOURS.get(pipe["system"], "#1f4e9c")
+        if _is_vertical(pipe["path"]):
+            # a stack: the plan sees a circle with a cross at the riser position
+            x, y, _ = pipe["path"][0]
+            radius = pipe["diameter"] / 2 + 40.0
+            parts.append(
+                f'<g class="stack {pipe["system"]}" data-id="{pipe_id}">'
+                f'<circle cx="{_f(x)}" cy="{_f(y)}" r="{_f(radius)}" fill="white" '
+                f'stroke="{colour}" stroke-width="15.0"/>'
+                f'<line x1="{_f(x - radius)}" y1="{_f(y)}" x2="{_f(x + radius)}" y2="{_f(y)}" '
+                f'stroke="{colour}" stroke-width="15.0"/>'
+                f'<line x1="{_f(x)}" y1="{_f(y - radius)}" x2="{_f(x)}" y2="{_f(y + radius)}" '
+                f'stroke="{colour}" stroke-width="15.0"/></g>'
+            )
+            continue
+        pts = " ".join(f"{_f(x)},{_f(y)}" for x, y, _z in pipe["path"])
         parts.append(
-            f'<polyline class="pipe {model.pipes[pipe_id]["system"]}" data-id="{pipe_id}" '
-            f'points="{pts}" fill="none" stroke="blue" stroke-width="30.0"/>'
+            f'<polyline class="pipe {pipe["system"]}" data-id="{pipe_id}" points="{pts}" '
+            f'fill="none" stroke="{colour}" stroke-width="{_f(max(pipe["diameter"], 20.0))}" '
+            f'stroke-linejoin="round"/>'
         )
     for conduit_id in sorted(model.conduits):
         pts = " ".join(f"{_f(x)},{_f(y)}" for x, y, _z in model.conduits[conduit_id]["path"])
         parts.append(
-            f'<polyline class="conduit" data-id="{conduit_id}" points="{pts}" '
-            f'fill="none" stroke="orange" stroke-width="20.0"/>'
+            f'<polyline class="conduit" data-id="{conduit_id}" points="{pts}" fill="none" '
+            f'stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>'
         )
 
     parts.append("</svg>")
