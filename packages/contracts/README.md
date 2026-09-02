@@ -25,8 +25,8 @@ code when a field is absent:
 | `rooms[].adjacent_room_ids` | `[]` | layout validator |
 | `furniture[].items[].fixture_units` | per `kind` from `catalogs/plumbing.json` | MEP agent P-1/P-3/P-4 |
 | `furniture[].items[].hookups` | per `kind` from `catalogs/plumbing.json` | MEP agent |
-| `furniture[].items[].clearance_front` | `760` mm | interior agent |
-| `furniture[].items[].wall_seeking` | `true` | interior agent |
+| `furniture[].items[].clearance_front` | per catalog type (`new_construction_types.json` families); absent = `0` mm — the validator inflates it on ALL sides | interior agent, layout validator |
+| `furniture[].items[].wall_seeking` | per catalog family `wall_seeking_default` | interior agent |
 | `constraints.circulation_min` | `915` mm | layout validator, interior agent |
 | `constraints.ada` | `false` | layout validator |
 | `constraints.outlet_spacing` | `3660` mm | MEP agent E-1 |

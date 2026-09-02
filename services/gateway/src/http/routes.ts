@@ -11,6 +11,7 @@ import { convertScanBundle, type ReviewPayload } from "../scan/converter-client.
 import { opsFromScanLayout } from "../scan/ops.js";
 import { extractBrief } from "../brief/extractor-client.js";
 import { compileLayout } from "../layout/compiler-client.js";
+import { furnishLayout } from "../layout/furnish-client.js";
 import { commit0LayoutFromReview } from "../layout/snapshot.js";
 
 const createProjectBody = z.object({ name: z.string().min(1).max(200) });
@@ -25,9 +26,24 @@ const envelopeBody = z.object({
     .optional(),
   ttl_s: z.number().int().min(10).max(3600).optional(),
 });
+const wallFlagsSchema = z
+  .record(
+    z.string().regex(/^W-\d{3}$/),
+    z
+      .object({
+        is_demising: z.boolean().optional(),
+        is_load_bearing: z.boolean().optional(),
+        is_exterior: z.boolean().optional(),
+      })
+      .strict(),
+  )
+  .refine((flags) => Object.keys(flags).length <= 64, { message: "too many wall flags" });
 const confirmationsSchema = z.object({
   unit: z.enum(["mm", "inch", "ft", "cm", "m"]).optional(),
   ceiling_height_mm: z.number().min(2100).max(6000).optional(), // create_wall bounds
+  // Phase 5 (Q7): the human confirms structural wall flags on the scan card,
+  // making the Part G immutability guard non-vacuous on real scans
+  wall_flags: wallFlagsSchema.optional(),
 });
 const decideBody = z
   .object({
@@ -44,7 +60,14 @@ const scanBundleBody = z.object({
 });
 const transcriptsBody = z.object({
   sessions: z
-    .array(z.object({ session_id: z.string().min(1).max(120), text: z.string().min(1) }))
+    .array(
+      z.object({
+        // safe charset: session ids become STRUCTURAL prompt markup downstream
+        // (the <brief sessions="..."> attribute) — SI-7 at the ingest boundary
+        session_id: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
+        text: z.string().min(1),
+      }),
+    )
     .min(1)
     .max(20),
   client_names: z.array(z.string().min(1).max(120)).max(10).optional(),
@@ -208,13 +231,13 @@ export function registerRoutes(
       return reply.code(409).send({ error: "scan_review_not_approved", status: review.status });
     }
 
-    const content = review.content as ReviewPayload;
     // shared derivation with the frozen snapshot recordCommitResult writes, so
-    // the snapshot always matches what was committed (heights = confirmed ceiling)
-    const { ceilingMm } = commit0LayoutFromReview(review);
-    const ops = opsFromScanLayout(content.layout, {
+    // the committed model always matches the snapshot (heights = confirmed
+    // ceiling, flags = confirmed wall flags) — the ops read the DERIVED layout
+    const { layout: derived, ceilingMm } = commit0LayoutFromReview(review);
+    const ops = opsFromScanLayout(derived, {
       ceilingMm,
-      cloudRef: content.layout.meta.scan?.cloud_ref,
+      cloudRef: derived.meta.scan?.cloud_ref,
     });
     return issueEnvelope(reply, projectId, {
       ops,
@@ -286,6 +309,83 @@ export function registerRoutes(
           windows: result.layout.windows.length,
           rooms: result.layout.rooms?.length ?? 0,
           demolished: result.demolition.length,
+        },
+      },
+      config.autoApprove,
+    );
+    return reply.code(201).send({
+      review_id: review.id,
+      content_hash: review.content_hash,
+      status: review.status,
+      counts: (review.content as { counts: unknown }).counts,
+    });
+  });
+
+  // ---- Phase 5 interior flow: furnish -> interior_plan review (the BRANCH
+  //      DELTA Phase 6's merge gate consumes — Phase 5 commits nothing) ----
+
+  app.post("/projects/:id/furnish-layout", { preHandler: serviceAuth }, async (req, reply) => {
+    const projectId = (req.params as { id: string }).id;
+    if (!(await repos.getProject(projectId))) {
+      return reply.code(404).send({ error: "unknown_project" });
+    }
+    if (!config.layoutCompilerUrl) {
+      return reply.code(503).send({ error: "layout_compiler_unavailable" });
+    }
+    const commit0 = await repos.getSnapshot(projectId, "commit0");
+    if (!commit0) return reply.code(409).send({ error: "commit0_not_done" });
+    const commit1 = await repos.getSnapshot(projectId, "commit1");
+    if (!commit1) return reply.code(409).send({ error: "commit1_not_done" });
+    // the ops that actually built Commit #1 (the snapshot's review is the one
+    // that committed, by construction) — they rebuild the card's left pane
+    const commit1Review = await repos.getReview(commit1.review_id);
+    if (!commit1Review) return reply.code(409).send({ error: "no_commit1_review" });
+    const brief = await repos.latestBrief(projectId);
+    if (!brief) return reply.code(409).send({ error: "no_brief" });
+    if (!brief.confirmed_by_client) {
+      return reply.code(409).send({ error: "brief_not_confirmed" });
+    }
+
+    const outcome = await furnishLayout(config.layoutCompilerUrl, {
+      project_id: projectId,
+      brief: brief.content,
+      commit0_layout: commit0.layout,
+      commit1_layout: commit1.layout,
+      commit1_ops: (commit1Review.content as { ops: unknown[] }).ops,
+    });
+    if (!outcome.ok) {
+      // REVIEW on failure: informational card, NEVER auto-approved
+      await repos.createReview(
+        projectId,
+        "interior_failure",
+        { error: outcome.error, message: outcome.message, brief_version: brief.brief_version },
+        false,
+      );
+      await repos.logEventDirect(projectId, "gateway", "furnish_failed", {
+        error: outcome.error,
+        message: outcome.message,
+        raw_outputs: outcome.rawOutputs,
+      });
+      return reply.code(422).send({ error: outcome.error, message: outcome.message });
+    }
+
+    const { result } = outcome;
+    // re-runs are always allowed: a newer interior_plan supersedes (Phase 6
+    // reads the LATEST interior_plan and requires it approved)
+    const review = await repos.createReview(
+      projectId,
+      "interior_plan",
+      {
+        layout: result.layout,
+        ops: result.ops,
+        svgs: result.svgs,
+        unplaced: result.unplaced,
+        diagnostics: result.diagnostics,
+        brief_version: brief.brief_version,
+        counts: {
+          items_placed: result.ops.length,
+          items_unplaced: result.unplaced.length,
+          rooms_furnished: result.layout.furniture.length,
         },
       },
       config.autoApprove,
@@ -398,6 +498,17 @@ export function registerRoutes(
       drift_state: project.drift_state,
       commit0_done: project.commit0_done,
       commit1_done: await repos.hasSnapshot(projectId, "commit1"),
+      interior_plan_ready: await (async () => {
+        // approved AND built from the latest CONFIRMED brief — a newer
+        // confirmed brief supersedes the plan (Phase 6 handoff contract)
+        const plan = await repos.latestReviewOfKind(projectId, "interior_plan");
+        if (plan === null || plan.status !== "approved") return false;
+        const confirmed = await repos.latestConfirmedBrief(projectId);
+        return (
+          confirmed !== null &&
+          (plan.content as { brief_version?: number }).brief_version === confirmed.brief_version
+        );
+      })(),
       executor_connected: core.executorReady(projectId),
       last_committed_seq: await repos.lastCommittedSeq(projectId),
       id_map: await repos.idMapEntries(projectId),
@@ -462,13 +573,22 @@ export function registerRoutes(
 
     // form fields (urlencoded) -> confirmations, validated exactly like the REST path
     const form = (req.body ?? {}) as Record<string, string | undefined>;
-    let confirmations: { unit?: "mm" | "inch" | "ft" | "cm" | "m"; ceiling_height_mm?: number } | undefined;
-    if (form["ceiling_height_mm"] || form["unit"]) {
+    // bounded parsing of wall-flag checkboxes: wall_flag.<W-xxx>.<flag> = "on"
+    const wallFlags: Record<string, Record<string, boolean>> = {};
+    for (const key of Object.keys(form).slice(0, 256)) {
+      const match = /^wall_flag\.(W-\d{3})\.(is_demising|is_load_bearing|is_exterior)$/.exec(key);
+      if (match && form[key] === "on") {
+        (wallFlags[match[1]!] ??= {})[match[2]!] = true;
+      }
+    }
+    let confirmations: z.infer<typeof confirmationsSchema> | undefined;
+    if (form["ceiling_height_mm"] || form["unit"] || Object.keys(wallFlags).length) {
       const parsed = confirmationsSchema.safeParse({
         unit: form["unit"] || undefined,
         ceiling_height_mm: form["ceiling_height_mm"]
           ? Number(form["ceiling_height_mm"])
           : undefined,
+        wall_flags: Object.keys(wallFlags).length ? wallFlags : undefined,
       });
       if (!parsed.success) return reply.code(422).send({ error: "bad_confirmations" });
       confirmations = parsed.data;
@@ -497,9 +617,24 @@ export function registerRoutes(
  *  gateway-side rescale (reject, then re-POST /scan-bundles with unit_override). */
 function confirmationProblem(
   review: ReviewRow,
-  confirmations?: { unit?: string; ceiling_height_mm?: number },
+  confirmations?: {
+    unit?: string;
+    ceiling_height_mm?: number;
+    wall_flags?: Record<string, unknown>;
+  },
 ): { error: string; message: string } | null {
   if (review.kind !== "scan_commit0") return null;
+  const layoutWalls = new Set(
+    (review.content as ReviewPayload).layout.walls.map((w) => w.id),
+  );
+  for (const wallId of Object.keys(confirmations?.wall_flags ?? {})) {
+    if (!layoutWalls.has(wallId)) {
+      return {
+        error: "unknown_wall_flag",
+        message: `wall_flags names ${wallId}, which is not a wall in the reviewed scan`,
+      };
+    }
+  }
   const unit = (review.content as ReviewPayload).unit;
   if (confirmations?.ceiling_height_mm === undefined) {
     return {

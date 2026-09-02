@@ -9,6 +9,7 @@ const stateSchema = z.object({
   drift_state: z.enum(["clean", "dirty"]),
   commit0_done: z.boolean(),
   commit1_done: z.boolean(),
+  interior_plan_ready: z.boolean(),
   executor_connected: z.boolean(),
   last_committed_seq: z.number(),
   id_map: z.record(z.string(), z.number()),
@@ -118,6 +119,10 @@ export class GatewayApi {
 
   async issueCommit1(projectId: string) {
     return this.request("POST", `/projects/${projectId}/issue-commit1`, SERVICE_TOKEN, {});
+  }
+
+  async furnishLayout(projectId: string) {
+    return this.request("POST", `/projects/${projectId}/furnish-layout`, SERVICE_TOKEN, {});
   }
 
   /** Full review rows (content included) — the phase4 suite reads the card's SVGs. */

@@ -539,6 +539,17 @@ export class Repos {
     return res.rowCount ? briefRow.parse(res.rows[0]) : null;
   }
 
+  /** The operative brief: the newest version the client actually confirmed
+   *  (Phase 5 staleness — interior_plan_ready compares against this). */
+  async latestConfirmedBrief(projectId: string): Promise<BriefRow | null> {
+    const res = await this.db.query(
+      `SELECT * FROM briefs WHERE project_id = $1 AND confirmed_by_client
+       ORDER BY brief_version DESC LIMIT 1`,
+      [projectId],
+    );
+    return res.rowCount ? briefRow.parse(res.rows[0]) : null;
+  }
+
   /** Most recent review of a kind — a newer pending upload supersedes a stale approval. */
   async latestReviewOfKind(projectId: string, kind: string): Promise<ReviewRow | null> {
     const res = await this.db.query(

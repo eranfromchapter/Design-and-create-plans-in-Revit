@@ -197,6 +197,10 @@ def diff_layouts(frozen: dict[str, Any], new: dict[str, Any]) -> DiffResult:
                     "width": door["width"],
                     "height": door["height"],
                     "swing": door.get("swing", "L"),
+                    # the op record is the executor's only source of truth for
+                    # leaf orientation — Phase 5's swing arcs validate against
+                    # this exact field, so it must ride in the committed op
+                    "flip_facing": bool(door.get("flip_facing", False)),
                 },
             }
         )

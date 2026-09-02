@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-250.0 -592.6 11900.0 7842.6">
+<line class="wall standing" data-id="W-001" x1="0.0" y1="0.0" x2="0.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-002" x1="0.0" y1="0.0" x2="8000.0" y2="0.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-003" x1="0.0" y1="3825.0" x2="3600.0" y2="3825.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-004" x1="0.0" y1="7000.0" x2="11400.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-005" x1="3600.0" y1="0.0" x2="3600.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-006" x1="3600.0" y1="4600.0" x2="7000.0" y2="4600.0" stroke="black" stroke-width="100.0"/>
+<line class="wall demolished" data-id="W-007" x1="5300.0" y1="4600.0" x2="5300.0" y2="7000.0" stroke="black" stroke-width="100.0" stroke-dasharray="240.0 120.0"/>
+<line class="wall demolished" data-id="W-008" x1="7000.0" y1="4600.0" x2="7150.0" y2="7000.0" stroke="black" stroke-width="100.0" stroke-dasharray="240.0 120.0"/>
+<line class="wall standing" data-id="W-009" x1="8000.0" y1="0.0" x2="8258.1" y2="-168.1" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-010" x1="8258.1" y1="-168.1" x2="8543.6" y2="-283.7" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-011" x1="8543.6" y1="-283.7" x2="8846.0" y2="-342.6" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-012" x1="8846.0" y1="-342.6" x2="9154.0" y2="-342.6" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-013" x1="9154.0" y1="-342.6" x2="9456.4" y2="-283.7" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-014" x1="9456.4" y1="-283.7" x2="9741.9" y2="-168.1" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-015" x1="9741.9" y1="-168.1" x2="10000.0" y2="0.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-016" x1="10000.0" y1="0.0" x2="11400.0" y2="0.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-017" x1="11400.0" y1="0.0" x2="11400.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-018" x1="5700.0" y1="4600.0" x2="5700.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-019" x1="8000.0" y1="4600.0" x2="8000.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-020" x1="7000.0" y1="4600.0" x2="8000.0" y2="4600.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-021" x1="8000.0" y1="4600.0" x2="11400.0" y2="4600.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-022" x1="8000.0" y1="0.0" x2="8000.0" y2="4600.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-023" x1="10200.0" y1="4600.0" x2="10200.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-024" x1="3600.0" y1="2800.0" x2="8000.0" y2="2800.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-025" x1="1200.0" y1="3825.0" x2="1200.0" y2="7000.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-026" x1="4800.0" y1="0.0" x2="4800.0" y2="1200.0" stroke="black" stroke-width="100.0"/>
+<line class="wall standing" data-id="W-027" x1="3600.0" y1="1200.0" x2="4800.0" y2="1200.0" stroke="black" stroke-width="100.0"/>
+<circle class="door" data-id="D-001" cx="8600.0" cy="7000.0" r="457.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door demolished" data-id="D-002" cx="3600.0" cy="2000.0" r="381.0" fill="white" stroke="black" stroke-width="20.0" stroke-dasharray="80.0 40.0"/>
+<circle class="door" data-id="D-003" cx="3600.0" cy="4212.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-004" cx="4450.0" cy="4600.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door demolished" data-id="D-005" cx="6150.0" cy="4600.0" r="457.5" fill="white" stroke="black" stroke-width="20.0" stroke-dasharray="80.0 40.0"/>
+<circle class="door" data-id="D-006" cx="6800.0" cy="2800.0" r="850.0" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-007" cx="9500.0" cy="4600.0" r="457.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-008" cx="8000.0" cy="1200.0" r="850.0" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-009" cx="1200.0" cy="5425.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-010" cx="10200.0" cy="5800.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-011" cx="4800.0" cy="600.0" r="355.5" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-012" cx="3600.0" cy="3300.0" r="381.0" fill="white" stroke="black" stroke-width="20.0"/>
+<circle class="door" data-id="D-013" cx="7500.0" cy="4600.0" r="381.0" fill="white" stroke="black" stroke-width="20.0"/>
+<rect class="window" data-id="N-001" x="1266.5" y="-50.0" width="1067.0" height="100.0" fill="white" stroke="black" stroke-width="20.0"/>
+<rect class="window" data-id="N-002" x="6266.5" y="-50.0" width="1067.0" height="100.0" fill="white" stroke="black" stroke-width="20.0"/>
+<rect class="window" data-id="N-003" x="10242.5" y="-50.0" width="915.0" height="100.0" fill="white" stroke="black" stroke-width="20.0"/>
+<rect class="family" data-id="F-001" x="1038.0" y="150.0" width="1524.0" height="2032.0" transform="rotate(0.0 1800.0 1166.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-002" x="1200.0" y="3175.0" width="1200.0" height="600.0" transform="rotate(0.0 1800.0 3475.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-003" x="-175.0" y="1600.0" width="1200.0" height="600.0" transform="rotate(90.0 425.0 1900.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-004" x="2150.0" y="4995.0" width="1372.0" height="1905.0" transform="rotate(0.0 2836.0 5947.5)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-005" x="1076.0" y="6000.0" width="1000.0" height="600.0" transform="rotate(90.0 1576.0 6300.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-006" x="400.0" y="3875.0" width="400.0" height="700.0" transform="rotate(0.0 600.0 4225.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-007" x="350.0" y="6450.0" width="500.0" height="450.0" transform="rotate(0.0 600.0 6675.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-008" x="4159.0" y="5452.0" width="991.0" height="1905.0" transform="rotate(90.0 4654.5 6404.5)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-009" x="3650.0" y="5425.0" width="450.0" height="450.0" transform="rotate(90.0 3875.0 5650.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-010" x="6203.0" y="5047.5" width="991.0" height="1905.0" transform="rotate(90.0 6698.5 6000.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-011" x="5746.0" y="5025.0" width="450.0" height="450.0" transform="rotate(90.0 5971.0 5250.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-012" x="10600.0" y="4646.0" width="400.0" height="700.0" transform="rotate(0.0 10800.0 4996.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-014" x="9775.0" y="1800.0" width="2100.0" height="900.0" transform="rotate(90.0 10825.0 2250.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-015" x="8975.0" y="1000.0" width="900.0" height="1800.0" transform="rotate(0.0 9425.0 1900.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-016" x="3650.0" y="1425.0" width="750.0" height="750.0" transform="rotate(90.0 4025.0 1800.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-017" x="5660.0" y="150.0" width="900.0" height="600.0" transform="rotate(0.0 6110.0 450.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-018" x="6560.0" y="150.0" width="600.0" height="600.0" transform="rotate(0.0 6860.0 450.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+<rect class="family" data-id="F-019" x="7192.0" y="150.0" width="762.0" height="660.0" transform="rotate(180.0 7573.0 480.0)" fill="none" stroke="grey" stroke-width="20.0"/>
+</svg>

@@ -35,7 +35,8 @@ def _llm() -> ExtractorLLM:
 
 class SessionIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    session_id: str = Field(min_length=1, max_length=120)
+    # safe charset only: session ids become structural prompt markup (SI-7)
+    session_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,120}$")
     text: str = Field(min_length=1)
 
 

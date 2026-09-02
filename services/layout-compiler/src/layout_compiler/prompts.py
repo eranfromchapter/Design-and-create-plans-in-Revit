@@ -5,6 +5,8 @@ architectural diff are the enforcement — the prompt is advisory."""
 
 from __future__ import annotations
 
+import re
+
 from layout_compiler.catalogs import new_vocabulary_block
 
 SYSTEM_PROMPT = (
@@ -41,7 +43,10 @@ the envelope allows; where impossible, prefer fewer rooms over invalid geometry.
 
 def compile_block(brief_json: str, existing_json: str, sessions: str = "") -> str:
     # the sessions attribute keys FixtureLLM replays (same pattern as the
-    # brief-extractor's <transcript session="..."> fixture keying)
+    # brief-extractor's <transcript session="..."> fixture keying).
+    # SI-7 defense in depth: it is STRUCTURAL markup — safe charset only
+    # (the gateway also enforces this at ingest)
+    sessions = re.sub(r"[^A-Za-z0-9_,-]", "", sessions)
     attr = f' sessions="{sessions}"' if sessions else ""
     return (
         f"<brief{attr}>\n{brief_json}\n</brief>\n\n"

@@ -6,8 +6,16 @@ from __future__ import annotations
 import json
 
 from layout_compiler.golden_4br import REPO_ROOT, emission
+from layout_compiler.golden_furniture import emission as furniture_emission
 
 
 def test_committed_fixture_matches_generator():
     committed = json.loads((REPO_ROOT / "fixtures" / "llm" / "layout_golden_4br.json").read_text())
     assert committed == {"emission": emission()}
+
+
+def test_committed_furniture_fixture_matches_generator():
+    committed = json.loads(
+        (REPO_ROOT / "fixtures" / "llm" / "furniture_golden_4br.json").read_text()
+    )
+    assert committed == {"emission": furniture_emission()}

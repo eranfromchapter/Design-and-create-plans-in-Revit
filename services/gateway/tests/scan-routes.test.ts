@@ -295,4 +295,109 @@ describe.skipIf(!DATABASE_URL)("gateway scan flow (DB-backed)", () => {
     expect(review?.status).toBe("approved");
     expect(review?.decision_payload).toEqual({ confirmations: { ceiling_height_mm: 2700 } });
   });
+
+  // ---- Phase 5 (Q7): structural wall-flag confirmations on the scan card ----
+
+  it("wall_flags persist and flow into BOTH the frozen snapshot and the commit ops", async () => {
+    const { randomUUID } = await import("node:crypto");
+    const { commit0LayoutFromReview } = await import("../src/layout/snapshot.js");
+    const { opsFromScanLayout } = await import("../src/scan/ops.js");
+
+    const projectId = await createProject();
+    const reviewId = (await uploadBundle(projectId)).json().review_id as string;
+    const approve = await inject({
+      method: "POST", url: `/reviews/${reviewId}/approve`, headers: actor,
+      payload: {
+        confirmations: {
+          ceiling_height_mm: 2700,
+          wall_flags: {
+            "W-001": { is_demising: true },
+            "W-002": { is_exterior: true, is_load_bearing: true },
+          },
+        },
+      },
+    });
+    expect(approve.statusCode).toBe(200);
+
+    const review = await gw.repos.getReview(reviewId);
+    const confirmations = (review?.decision_payload as { confirmations: { wall_flags: unknown } })
+      .confirmations;
+    expect(confirmations.wall_flags).toEqual({
+      "W-001": { is_demising: true },
+      "W-002": { is_exterior: true, is_load_bearing: true },
+    });
+
+    // the single shared derivation: flags land on the layout the ops AND the
+    // snapshot are built from
+    const { layout } = commit0LayoutFromReview(review!);
+    const w1 = layout.walls.find((w) => w.id === "W-001")!;
+    const w2 = layout.walls.find((w) => w.id === "W-002")!;
+    expect(w1.is_demising).toBe(true);
+    expect(w2.is_exterior).toBe(true);
+    expect(w2.is_load_bearing).toBe(true);
+    const ops = opsFromScanLayout(layout, { ceilingMm: 2700 });
+    const createW1 = ops.find(
+      (o) => o.op === "create_wall" && (o.args as { id: string }).id === "W-001",
+    )!;
+    expect((createW1.args as { flags: unknown }).flags).toMatchObject({ is_demising: true });
+
+    // ...and the frozen commit0 snapshot carries them (simulated commit_result)
+    await inject({
+      method: "POST", url: `/projects/${projectId}/workstations`, headers: svc,
+      payload: { workstation_id: "ws-design-01" },
+    });
+    const envelopeId = randomUUID();
+    await gw.repos.insertIssuedEnvelope({
+      envelopeId, projectId, workstationId: "ws-design-01", seq: 1,
+      payload: JSON.stringify({ ttl_s: 600 }), sig: "0".repeat(128),
+      commitLabel: "Commit #0",
+      approvalRef: { review_id: reviewId, content_hash: review!.content_hash },
+      issuedAt: new Date().toISOString(),
+    });
+    await gw.repos.recordCommitResult({ envelopeId, committed: true, idMapDelta: [], errors: [] });
+    const snapshot = await gw.repos.getSnapshot(projectId, "commit0");
+    const frozen = (snapshot!.layout as { walls: { id: string; is_demising?: boolean }[] }).walls;
+    expect(frozen.find((w) => w.id === "W-001")?.is_demising).toBe(true);
+  });
+
+  it("wall_flags naming an unknown wall are refused (422)", async () => {
+    const projectId = await createProject();
+    const reviewId = (await uploadBundle(projectId)).json().review_id as string;
+    const res = await inject({
+      method: "POST", url: `/reviews/${reviewId}/approve`, headers: actor,
+      payload: {
+        confirmations: {
+          ceiling_height_mm: 2700,
+          wall_flags: { "W-099": { is_demising: true } },
+        },
+      },
+    });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().error).toBe("unknown_wall_flag");
+  });
+
+  it("UI renders flag checkboxes and the form parse round-trips them", async () => {
+    const projectId = await createProject();
+    const reviewId = (await uploadBundle(projectId)).json().review_id as string;
+    const page = await inject({
+      method: "GET",
+      url: `/ui/projects/${projectId}/reviews?actor_token=${ACTOR}`,
+    });
+    expect(page.body).toContain('name="wall_flag.W-001.is_demising"');
+
+    const ok = await inject({
+      method: "POST",
+      url: `/ui/reviews/${reviewId}/approve?actor_token=${ACTOR}`,
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      payload: "ceiling_height_mm=2700&wall_flag.W-001.is_demising=on&wall_flag.W-099.is_demising=ignored",
+    });
+    expect(ok.statusCode).toBe(302);
+    const review = await gw.repos.getReview(reviewId);
+    expect(review?.decision_payload).toEqual({
+      confirmations: {
+        ceiling_height_mm: 2700,
+        wall_flags: { "W-001": { is_demising: true } },
+      },
+    });
+  });
 });

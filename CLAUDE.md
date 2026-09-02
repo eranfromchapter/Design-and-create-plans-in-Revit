@@ -103,3 +103,69 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   echo 17 scan walls to 1mm; fixture mode is exact, live failure rate unmeasured until
   ANTHROPIC_API_KEY lands. Standing asks unchanged (catalogs, API key, MANUAL_REVIT_TEST
   checklists for Phases 1–2).
+- Phase 5: code complete on this branch (PR #6). Interior agent = furnish pass in
+  services/layout-compiler (parallel InteriorLLM seam, LLM_MODEL_INTERIOR, forced
+  emit_furniture = the contract furniture subtree only — walls/doors/rooms are data blocks;
+  proposal repair ≤2 for schema/catalog/referential/dup-id errors only; catalog OVERWRITES
+  footprint+clearance; 60s request-boundary timeout → 422) + deterministic Part G placer
+  (interior.py: 162 candidates/wall slide-outer/orientation-inner, spiral cap 324, counter-
+  asserted; predicates: covers → symmetric positive-area footprint-clear (touching legal) →
+  swing arcs (swing.py pins: hinge offset∓w/2, leaf sweeps LEFT of start→end when
+  flip_facing falsy, single swept-side room, pocket exempt, t_finish=0) → model-wide
+  strict-< AABB (sim formula — run_interference_check can never fire on furniture) →
+  incremental circulation via shared geometry.py; unplaceable → REVIEW, never forced).
+  Furnished layout re-passes the FULL validator (furniture checks added: closed
+  family/type/kind vocabulary, footprint pinned to catalog, inside-room, pairwise
+  positive-area overlap, arc intersection; furniture ids in the dup-id sweep). Gateway
+  furnish-layout → interior_plan review {layout, ops, svgs, unplaced, diagnostics, counts}
+  — the BRANCH DELTA for Phase 6 (no envelope, no migration; PHASE 6 HANDOFF: merge gate
+  reads the LATEST interior_plan review, requires approved else 409, content.ops verbatim
+  as the interior half of Commit #2 under {review_id, content_hash}, content.layout.furniture
+  seeds MEP, content.unplaced excluded); interior_failure never auto-approved;
+  state.interior_plan_ready. Q7 SHIPPED: scan card wall-flag confirmations
+  (decision_payload.wall_flags, ≤64, unknown ids 422) applied by commit0LayoutFromReview to
+  BOTH the frozen snapshot and issue-commit0 ops (divergence fixed). Golden furnished 2BR:
+  20 proposals → 18 placed / 2 REVIEW (F-013 bath2 lav, F-020 laundry washer — real
+  geometric verdicts, the acceptance demos), generator gen_golden_furniture.py is the sole
+  source of truth (validator oracle + eroded-area floors); phase5_2br_furnished.svg byte
+  golden (eyeballed). 200-seeded-room property suite (zero overlaps both classes, arcs
+  clear, validator oracle; odd seeds rigidly rotated by 11.25/22.5/30/45°). phase5 e2e
+  (5 children, chain through furnish, card bytes == goldens, seq stays 2) green;
+  make demo-phase5. Catalog gains 15 _PLACEHOLDER furniture families/types (human input);
+  contracts README clearance defaults amended (per-type, absent=0, all-side inflation).
+  ADVERSARIAL REVIEW (22 agents): 17 confirmed findings, all fixed on this branch —
+  flip_facing now rides in create_door ops (committed ops = arc geometry), spiral anchor
+  is the proposed center VERBATIM (out-of-room → REVIEW, never clamped), spiral rotations
+  are proposal-relative, item ordering is GLOBAL (-area, id) across rooms (unplaced order
+  pinned to attempt order: F-020 before F-013), pocket-door exemption unions both
+  catalogs, plumbing closure via catalogs/plumbing.json (fixture_units overwritten,
+  hookups = plumbing ∪ additive electrical/gas), the furnish deadline interrupts the
+  solver itself (callback; interior.py stays clock-free by AST test), duplicate room
+  groups are a repairable proposal error, session ids clamped to a safe charset at every
+  boundary (gateway zod, extractor pattern, prompt builders), interior_plan_ready
+  requires content.brief_version == latest CONFIRMED brief (staleness),
+  COVER_TOLERANCE_MM=0.1 absorbs rotated-wall center rounding; sim interference check
+  replayed for real in the golden test. Phase 6 design-review spill-over fixed here too:
+  the inside-room predicate (placer + validator) tests the room's INNER-FACE polygon
+  (geometry.room_inner_polygon = D1 boundary minus each wall's t/2 slab) — items may
+  touch a wall face, never sink into a wall; golden re-pinned (F-008/F-009/F-011 moved,
+  F-019 +51mm; still 18 placed / F-020, F-013 REVIEW).
+  GATE ITEMS FOR ERAN: (1) clearance semantics — the field is named clearance_FRONT but
+  the validator/Part G inflate all sides; front-only would be a validator/Part G change
+  (bed clearance set to 0 for now: all-around 760 makes <2650mm bedrooms bed-less).
+  (2) Golden reality: bath2 legally holds wc only; the frozen 1200×1200 laundry can't hold
+  any 600mm appliance (D-011 swing) — both ship as REVIEW demos; alternatives touch Phase 4
+  semantics. (3) Pinned v1 interpretations for sign-off: t_finish=0, spiral cap 324,
+  swing/flip conventions, slide-outer nesting, positive-area overlap (touching legal),
+  model-wide AABB as a deliberate 5th predicate. (4) Dry-appliance hookups
+  (range 240V, fridge 120V, washer-stack +240V) are authored per-item, not yet catalog
+  entries; the washer/dryer stack is ONE kind=washer item (Phase 6 never sees 'dryer').
+  (5) Fixture chain stays flag-free by design — confirming wall flags on a real scan
+  obliges the Phase 4 compiler to echo them (live behavior; immutability then bites).
+  (6) brief.v1.json source_sessions has no charset pattern — runtime boundaries clamp to
+  ^[A-Za-z0-9_-]{1,120}$ everywhere, but pinning it in the SCHEMA is a contract change
+  needing approval. (7) PLAN Part H says "hypothesis" for the placer property suite; what
+  shipped is a 200-case seeded-PRNG corpus + hypothesis on validator totality — reconcile
+  or bless. (8) Catalog has no leafless/pocket door flag; the swing exemption is
+  name-based ("pocket") — a real flag needs catalog vocabulary from Eran.
+  Standing asks unchanged (catalogs, ANTHROPIC_API_KEY, MANUAL_REVIT_TEST Phases 1–2).

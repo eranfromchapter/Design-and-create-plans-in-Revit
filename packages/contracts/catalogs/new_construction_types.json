@@ -14,10 +14,130 @@
   "windows": [
     { "revit_type": "CHPT_Window_DoubleHung_PLACEHOLDER", "revit_family": "CHPT_Window_PLACEHOLDER" }
   ],
+  "families_note": "PLACEHOLDER families/types for Phase 5 interior placement — footprints and clearances are authored engineering defaults sized to the synthetic golden; replace with Chapter's real furniture/fixture families. footprint_mm = [width, depth]; clearance_front_mm inflates ALL sides (validator semantics); wall_seeking_default drives Part G when the proposal omits wall_seeking.",
   "families": [
-    { "revit_family": "CHPT_Sofa_PLACEHOLDER", "kinds": ["sofa"] },
-    { "revit_family": "CHPT_WC_PLACEHOLDER", "kinds": ["wc"] },
-    { "revit_family": "CHPT_Lav_PLACEHOLDER", "kinds": ["lav"] },
-    { "revit_family": "CHPT_KitchenSink_PLACEHOLDER", "kinds": ["kitchen_sink"] }
+    {
+      "revit_family": "CHPT_Sofa_PLACEHOLDER",
+      "kinds": ["sofa"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Sofa_2100x900_PLACEHOLDER", "footprint_mm": [2100, 900], "clearance_front_mm": 450 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_WC_PLACEHOLDER",
+      "kinds": ["wc"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "WC_400x700_PLACEHOLDER", "footprint_mm": [400, 700], "clearance_front_mm": 500 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Lav_PLACEHOLDER",
+      "kinds": ["lav"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Lav_500x450_PLACEHOLDER", "footprint_mm": [500, 450], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_KitchenSink_PLACEHOLDER",
+      "kinds": ["kitchen_sink"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Sink_900x600_PLACEHOLDER", "footprint_mm": [900, 600], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Bed_PLACEHOLDER",
+      "kinds": ["bed"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Twin_991x1905_PLACEHOLDER", "footprint_mm": [991, 1905], "clearance_front_mm": 0 },
+        { "revit_type": "Double_1372x1905_PLACEHOLDER", "footprint_mm": [1372, 1905], "clearance_front_mm": 0 },
+        { "revit_type": "Queen_1524x2032_PLACEHOLDER", "footprint_mm": [1524, 2032], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Wardrobe_PLACEHOLDER",
+      "kinds": ["wardrobe"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Wardrobe_1000x600_PLACEHOLDER", "footprint_mm": [1000, 600], "clearance_front_mm": 0 },
+        { "revit_type": "Wardrobe_1200x600_PLACEHOLDER", "footprint_mm": [1200, 600], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Desk_PLACEHOLDER",
+      "kinds": ["desk"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Desk_1200x600_PLACEHOLDER", "footprint_mm": [1200, 600], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Nightstand_PLACEHOLDER",
+      "kinds": ["table"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Nightstand_450x450_PLACEHOLDER", "footprint_mm": [450, 450], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_DiningTable_PLACEHOLDER",
+      "kinds": ["table"],
+      "wall_seeking_default": false,
+      "types": [
+        { "revit_type": "Dining_900x1800_PLACEHOLDER", "footprint_mm": [900, 1800], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Refrigerator_PLACEHOLDER",
+      "kinds": ["refrigerator"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Fridge_750x750_PLACEHOLDER", "footprint_mm": [750, 750], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Range_PLACEHOLDER",
+      "kinds": ["range"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Range_762x660_PLACEHOLDER", "footprint_mm": [762, 660], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Dishwasher_PLACEHOLDER",
+      "kinds": ["dishwasher"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "DW_600x600_PLACEHOLDER", "footprint_mm": [600, 600], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_WasherDryerStack_PLACEHOLDER",
+      "kinds": ["washer"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Stack_600x600_PLACEHOLDER", "footprint_mm": [600, 600], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Shower_PLACEHOLDER",
+      "kinds": ["shower"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Shower_900x900_PLACEHOLDER", "footprint_mm": [900, 900], "clearance_front_mm": 0 }
+      ]
+    },
+    {
+      "revit_family": "CHPT_Tub_PLACEHOLDER",
+      "kinds": ["tub"],
+      "wall_seeking_default": true,
+      "types": [
+        { "revit_type": "Tub_762x1524_PLACEHOLDER", "footprint_mm": [762, 1524], "clearance_front_mm": 0 }
+      ]
+    }
   ]
 }

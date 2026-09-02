@@ -272,6 +272,19 @@ def test_deterministic_op_order_demolition_then_creation():
     assert create_wall["phase"] == "new"
     assert create_wall["flags"] == {"is_wet_wall": True}  # flat layout flags -> nested op flags
     assert result.ops[4]["args"]["swing"] == "L"  # default when the layout omits swing
+    assert result.ops[4]["args"]["flip_facing"] is False  # default when the layout omits it
+
+
+def test_flip_facing_rides_in_create_door_ops():
+    """The committed op is the executor's only source of leaf orientation, and
+    Phase 5's swing arcs are computed from this exact field — a flipped door
+    must carry flip_facing=true into the op, verbatim."""
+    frozen, new = mixed_scenario()
+    new["doors"][0]["flip_facing"] = True
+    result = diff_layouts(frozen, new)
+    (door_op,) = [op for op in result.ops if op["op"] == "create_door"]
+    assert door_op["args"]["flip_facing"] is True
+    jsonschema.validate(door_op["args"], REGISTRY["ops"]["create_door"]["args_schema"])
 
 
 def test_emitted_ops_validate_against_registry_schemas():

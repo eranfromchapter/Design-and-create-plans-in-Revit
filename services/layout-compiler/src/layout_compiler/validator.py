@@ -23,20 +23,32 @@ from typing import Any
 
 import jsonschema
 from chapter_contracts.generated.chapter_layout import ChapterLayout
-from shapely import affinity
 from shapely.geometry import LineString, Point, Polygon
 
 from layout_compiler.catalogs import (
     CONTRACTS_DIR,
     asbuilt_wall_types,
     door_types,
+    family_types,
+    new_families,
     new_wall_types,
-    wall_thickness_mm,
     window_types,
 )
+from layout_compiler.geometry import (
+    BOUNDARY_EDGE_TOLERANCE_MM,
+    COVER_TOLERANCE_MM,
+    OVERLAP_EPS_MM2,
+    circulation_errors,
+    furniture_rect,
+    room_free_space,
+    room_inner_polygon,
+    room_thresholds,
+    wall_len,
+    wall_thickness_of,
+)
+from layout_compiler.swing import room_swing_arcs
 
 DEFAULT_CIRCULATION_MIN_MM = 915.0  # packages/contracts/README.md defaults table
-BOUNDARY_EDGE_TOLERANCE_MM = 1.0  # edge-to-centerline slack on top of t/2
 EDGE_SAMPLE_STEP_MM = 100.0  # boundary edges sampled per-point: collinear walls may share one edge
 
 # Room min clear widths (inscribed-width check): engineering defaults, human-reviewable,
@@ -65,26 +77,6 @@ def _op_names() -> frozenset[str]:
     return frozenset(registry["ops"])
 
 
-def _pt_on_wall(wall: dict[str, Any], offset: float) -> tuple[float, float]:
-    """Centerline placement convention (Part D): start + offset * unit(end-start)."""
-    sx, sy = wall["start"]
-    ex, ey = wall["end"]
-    length = math.hypot(ex - sx, ey - sy)
-    if length == 0:
-        return (sx, sy)
-    return (sx + (ex - sx) * offset / length, sy + (ey - sy) * offset / length)
-
-
-def _wall_len(wall: dict[str, Any]) -> float:
-    return math.hypot(wall["end"][0] - wall["start"][0], wall["end"][1] - wall["start"][1])
-
-
-def _thickness(wall: dict[str, Any]) -> float | None:
-    if wall.get("as_built_thickness"):
-        return float(wall["as_built_thickness"])
-    return wall_thickness_mm().get(wall["revit_type"])
-
-
 def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None) -> list[str]:
     """`frozen` (the Commit #0 snapshot) enables the envelope check: generated
     walls must stay within the existing conditions' bounding box."""
@@ -107,12 +99,18 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
     rooms = {r["id"]: r for r in layout["rooms"]}
 
     # 2. referential integrity + id uniqueness across element classes
+    #    (furniture item ids share the namespace — they become place_family ids)
     seen_ids: set[str] = set()
     for group in ("walls", "doors", "windows", "rooms"):
         for element in layout[group]:
             if element["id"] in seen_ids:
                 errors.append(f"{group}.{element['id']}: duplicate element id")
             seen_ids.add(element["id"])
+    for entry in layout["furniture"]:
+        for item in entry["items"]:
+            if item["id"] in seen_ids:
+                errors.append(f"furniture.{item['id']}: duplicate element id")
+            seen_ids.add(item["id"])
     for group in ("doors", "windows"):
         for opening in layout[group]:
             if opening["host_wall_id"] not in walls:
@@ -158,6 +156,34 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
             errors.append(
                 f"windows.{window['id']}: revit_type {window['revit_type']!r} not in any catalog"
             )
+    # furniture vocabulary is closed too (Phase 5): family + type from the
+    # catalog, kind consistent, footprint EXACTLY the catalog's — the LLM
+    # proposes what goes where, never geometry
+    for entry in layout["furniture"]:
+        for item in entry["items"]:
+            if item["revit_family"] not in new_families():
+                errors.append(
+                    f"furniture.{item['id']}: revit_family {item['revit_family']!r} not in "
+                    "new_construction_types.json families (closed vocabulary)"
+                )
+                continue
+            spec = family_types().get((item["revit_family"], item["revit_type"]))
+            if spec is None:
+                errors.append(
+                    f"furniture.{item['id']}: revit_type {item['revit_type']!r} is not a "
+                    f"catalog type of {item['revit_family']!r}"
+                )
+                continue
+            if item["kind"] not in spec["kinds"]:
+                errors.append(
+                    f"furniture.{item['id']}: kind {item['kind']!r} not offered by "
+                    f"{item['revit_family']!r}"
+                )
+            if [float(v) for v in item["footprint"]] != spec["footprint_mm"]:
+                errors.append(
+                    f"furniture.{item['id']}: footprint must match the catalog "
+                    f"{spec['footprint_mm']} for {item['revit_type']!r}"
+                )
 
     # generated walls must bound at least one room (a wall bounding nothing is
     # floating or outside the plan — also the cheap envelope-closure rule)
@@ -189,7 +215,7 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
     for group in ("doors", "windows"):
         for opening in layout[group]:
             host = walls[opening["host_wall_id"]]
-            length = _wall_len(host)
+            length = wall_len(host)
             lo = opening["offset"] - opening["width"] / 2
             hi = opening["offset"] + opening["width"] / 2
             if lo < 0 or hi > length:
@@ -199,7 +225,7 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
                 )
                 continue
             host_line = LineString([host["start"], host["end"]])
-            host_t = _thickness(host) or 0.0
+            host_t = wall_thickness_of(host) or 0.0
             for other in layout["walls"]:
                 if other["id"] == host["id"]:
                     continue
@@ -255,7 +281,7 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
         centerlines: list[tuple[str, LineString, float]] = []
         for wall_id in room["boundary_wall_ids"]:
             wall = walls[wall_id]
-            thickness = _thickness(wall)
+            thickness = wall_thickness_of(wall)
             if thickness is None:
                 errors.append(f"rooms.{room['id']}: wall {wall_id} has no resolvable thickness")
                 continue
@@ -300,54 +326,46 @@ def validate_layout(layout: dict[str, Any], frozen: dict[str, Any] | None = None
                 f"rooms.{room['id']}: {program} min clear width {min_width:.0f}mm not met"
             )
 
-        # free space = room minus furniture footprints (inflated by clearances)
-        free = polygon
-        for entry in layout["furniture"]:
-            if entry["room_id"] != room["id"]:
-                continue
-            for item in entry["items"]:
-                cx, cy = item["center"]
-                w, d = item["footprint"]
-                rect = Polygon([(-w / 2, -d / 2), (w / 2, -d / 2), (w / 2, d / 2), (-w / 2, d / 2)])
-                rect = affinity.rotate(rect, item["rotation_deg"], origin=(0, 0))
-                rect = affinity.translate(rect, cx, cy)
-                clearance = float(item.get("clearance_front", 0))
-                free = free.difference(rect.buffer(clearance))
-
-        eroded = free.buffer(-circulation_min / 2)
-        # a room's thresholds are the doors ON ITS OWN boundary: a shared wall
-        # (e.g. a full-height spine) hosts doors for several rooms, and a door
-        # beyond this room's edge extent is another room's door
-        thresholds = []
-        for door in layout["doors"]:
-            if door["host_wall_id"] not in room["boundary_wall_ids"]:
-                continue
-            pt = _pt_on_wall(walls[door["host_wall_id"]], door["offset"])
-            if polygon.exterior.distance(Point(pt)) <= BOUNDARY_EDGE_TOLERANCE_MM:
-                thresholds.append(pt)
-        if thresholds and eroded.is_empty:
-            errors.append(
-                f"rooms.{room['id']}: free space vanishes under circulation erosion "
-                f"({circulation_min:.0f}mm) — min width violated"
-            )
-            continue
-        if len(thresholds) >= 1 and not eroded.is_empty:
-            parts = list(eroded.geoms) if hasattr(eroded, "geoms") else [eroded]
-            components = []
-            for tx, ty in thresholds:
-                point = Point(tx, ty)
-                best = min(range(len(parts)), key=lambda i: parts[i].distance(point))
-                if parts[best].distance(point) > circulation_min:
-                    errors.append(
-                        f"rooms.{room['id']}: door threshold ({tx:.0f},{ty:.0f}) unreachable "
-                        "from the room's circulation space"
-                    )
-                components.append(best)
-            if len(set(components)) > 1:
+        # Phase 5 furniture geometry: every footprint inside the room's INNER-FACE
+        # polygon (centerline boundary minus each wall's t/2 slab; `covers` so
+        # face-touching is legal, sinking into a wall is not) and pairwise
+        # POSITIVE-AREA disjoint (touching is legal — a flush kitchen run shares edges)
+        room_items = [
+            item
+            for entry in layout["furniture"]
+            if entry["room_id"] == room["id"]
+            for item in entry["items"]
+        ]
+        rects = [(item["id"], furniture_rect(item)) for item in room_items]
+        room_cover = room_inner_polygon(room, polygon, walls).buffer(COVER_TOLERANCE_MM)
+        for item_id, rect in rects:
+            if not room_cover.covers(rect):
                 errors.append(
-                    f"rooms.{room['id']}: door thresholds fall in disconnected circulation "
-                    f"components (circulation_min {circulation_min:.0f}mm)"
+                    f"rooms.{room['id']}: furniture {item_id} footprint outside the room boundary"
                 )
+        for i, (id_a, rect_a) in enumerate(rects):
+            for id_b, rect_b in rects[i + 1 :]:
+                overlap = rect_a.intersection(rect_b).area
+                if overlap > OVERLAP_EPS_MM2:
+                    errors.append(
+                        f"furniture.{id_a}~{id_b}: footprints overlap ({overlap:.0f} mm²)"
+                    )
+        if rects:
+            for door_id, arc in room_swing_arcs(room, polygon, layout["doors"], walls):
+                for item_id, rect in rects:
+                    swept = rect.intersection(arc).area
+                    if swept > OVERLAP_EPS_MM2:
+                        errors.append(
+                            f"rooms.{room['id']}: furniture {item_id} intersects door "
+                            f"{door_id} swing arc ({swept:.0f} mm²)"
+                        )
+
+        # free space = room minus furniture footprints (inflated by clearances),
+        # then the Part G circulation check — both shared with the interior
+        # placer via geometry.py (one implementation, validator-stable strings)
+        free = room_free_space(polygon, room_items)
+        thresholds = room_thresholds(room, polygon, layout["doors"], walls)
+        errors.extend(circulation_errors(room["id"], free, thresholds, circulation_min))
 
     # 4c. rooms must not overlap each other (interiors disjoint; shared edges fine)
     room_list = layout["rooms"]
