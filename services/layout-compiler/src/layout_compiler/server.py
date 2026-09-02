@@ -19,6 +19,8 @@ from layout_compiler.interior_llm import InteriorLLM
 from layout_compiler.llm import CompilerLLM
 from layout_compiler.mep.inputs import MepError
 from layout_compiler.mep.plan import MepOptions, plan_mep
+from layout_compiler.merge.gate import MergeOptions, merge
+from layout_compiler.merge.replan import MergeError
 
 app = FastAPI(title="layout-compiler", docs_url=None, redoc_url=None)
 
@@ -140,6 +142,54 @@ def plan_mep_endpoint(req: MepRequest):
             MepOptions(project_id=req.project_id),
         )
     except MepError as err:
+        return JSONResponse(
+            status_code=422,
+            content={"error": err.code, "message": err.message, "raw_outputs": []},
+        )
+
+
+class MergeBranch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    review_id: str
+    content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    ops: list[dict[str, Any]] = Field(default_factory=list)
+    layout: dict[str, Any] = Field(default_factory=dict)
+    plan: dict[str, Any] = Field(default_factory=dict)
+
+
+class MergeRequest(BaseModel):
+    """Phase 6 merge gate: the approved interior branch (ops + furnished layout), the
+    approved MEP plan, and the chain's iteration state (stateless replay)."""
+
+    model_config = ConfigDict(extra="forbid")
+    project_id: str = Field(
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    )
+    commit0_layout: dict[str, Any]
+    commit1_ops: list[dict[str, Any]]
+    interior: MergeBranch
+    mep: MergeBranch
+    iterations_used: int = Field(default=0, ge=0, le=3)
+    iteration: int = Field(default=1, ge=1, le=16)
+    prior_actions: list[dict[str, Any]] = Field(default_factory=list)
+    clash_pairs: list[dict[str, Any]] = Field(default_factory=list, max_length=256)
+
+
+@app.post("/merge")
+def merge_endpoint(req: MergeRequest):
+    try:
+        return merge(
+            req.commit0_layout,
+            req.commit1_ops,
+            req.interior.model_dump(),
+            req.mep.model_dump(),
+            req.iterations_used,
+            req.iteration,
+            req.prior_actions,
+            req.clash_pairs,
+            MergeOptions(project_id=req.project_id),
+        )
+    except MergeError as err:
         return JSONResponse(
             status_code=422,
             content={"error": err.code, "message": err.message, "raw_outputs": []},

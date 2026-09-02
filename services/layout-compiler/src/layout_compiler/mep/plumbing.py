@@ -8,6 +8,7 @@ outer iteration."""
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -152,7 +153,13 @@ def _riser_distance(wall: dict[str, Any], layout: dict[str, Any]) -> float | Non
     return min(point_distance_to_wall((r["center"][0], r["center"][1]), wall) for r in risers)
 
 
-def plan_plumbing(inputs: MepInputs, deadline_check: DeadlineCheck = None) -> PlumbingResult:
+def plan_plumbing(
+    inputs: MepInputs,
+    deadline_check: DeadlineCheck = None,
+    banned_walls: Iterable[str] = (),
+) -> PlumbingResult:
+    """`banned_walls` (merge-gate relocate_stack): walls that never become P-1
+    candidates for this run — unlike the per-iteration exclusions, they persist."""
     layout = inputs.layout
     items: list[ReviewItem] = []
     counters = {"p1_iterations": 0, "p4_prune_steps": 0, "snap_steps": 0}
@@ -166,6 +173,7 @@ def plan_plumbing(inputs: MepInputs, deadline_check: DeadlineCheck = None) -> Pl
     h_plenum, h_fitting = inputs.h_plenum, inputs.h_fitting
     residual = set(fixtures)
     excluded: set[str] = set()
+    banned = set(banned_walls)
     iteration = 0
     while residual:
         if deadline_check:
@@ -200,7 +208,7 @@ def plan_plumbing(inputs: MepInputs, deadline_check: DeadlineCheck = None) -> Pl
                 continue
             for wall_id in inputs.rooms[room_id]["boundary_wall_ids"]:
                 wall = inputs.walls[wall_id]
-                if wall_id in excluded:
+                if wall_id in excluded or wall_id in banned:
                     continue
                 if P1_EXCLUDE_SI8_WALLS and si8_flagged(wall):
                     continue

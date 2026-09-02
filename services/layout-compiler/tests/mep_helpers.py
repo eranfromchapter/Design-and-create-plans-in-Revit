@@ -277,3 +277,28 @@ def golden_chain() -> dict[str, Any]:
 
 
 GOLDEN_CONFIRMATIONS = {"panel": [8050.0, 5200.0], "slab_to_slab_mm": 3000.0}
+
+
+_GOLDEN_PLAN: dict[str, Any] = {}
+
+
+def golden_plan() -> dict[str, Any]:
+    """plan_mep on the golden chain with GOLDEN_CONFIRMATIONS, once per session
+    (callers deep-copy before mutating)."""
+    if not _GOLDEN_PLAN:
+        from layout_compiler.mep.plan import MepOptions, plan_mep
+
+        g = golden_chain()
+        _GOLDEN_PLAN.update(
+            plan_mep(
+                g["commit0"],
+                g["commit1_layout"],
+                g["commit1_ops"],
+                g["interior_ops"],
+                g["furnished"],
+                g["placer_wall_ids"],
+                GOLDEN_CONFIRMATIONS,
+                MepOptions(project_id=g["brief"]["meta"]["project_id"]),
+            )
+        )
+    return _GOLDEN_PLAN

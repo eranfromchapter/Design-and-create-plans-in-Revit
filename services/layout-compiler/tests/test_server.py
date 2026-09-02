@@ -173,3 +173,41 @@ def test_plan_mep_endpoint_happy_path_and_422():
     assert bad.status_code == 422 and bad.json()["error"] == "panel_not_on_wall"
     unknown = client.post("/plan-mep", json={**body, "surprise": 1})
     assert unknown.status_code == 422  # extra="forbid"
+
+
+def test_merge_endpoint_happy_path_and_422():
+    from mep_helpers import golden_chain, golden_plan
+
+    g, plan = golden_chain(), golden_plan()
+    body = {
+        "project_id": g["brief"]["meta"]["project_id"],
+        "commit0_layout": g["commit0"],
+        "commit1_ops": g["commit1_ops"],
+        "interior": {
+            "review_id": "rv-int",
+            "content_hash": "a" * 64,
+            "ops": g["interior_ops"],
+            "layout": g["furnished"],
+        },
+        "mep": {"review_id": "rv-mep", "content_hash": "b" * 64, "plan": plan},
+    }
+    res = client.post("/merge", json=body)
+    assert res.status_code == 200, res.text
+    result = res.json()
+    assert result["status"] == "clean" and result["counts"]["run_interference_check"] == 1
+    assert result["interior"]["content_hash"] == "a" * 64
+    replan = client.post(
+        "/merge",
+        json={**body, "clash_pairs": [{"a_id": "P-001", "b_id": "E-001", "kind": "hard"}]},
+    )
+    assert replan.status_code == 200 and replan.json()["iterations_used"] == 1
+    unknown = client.post(
+        "/merge", json={**body, "clash_pairs": [{"a_id": "X-1", "b_id": "Y-2", "kind": "hard"}]}
+    )
+    assert unknown.status_code == 422 and unknown.json()["error"] == "clash_pair_unknown"
+    bad_hash = client.post("/merge", json={**body, "mep": {**body["mep"], "content_hash": "zz"}})
+    assert bad_hash.status_code == 422
+    over_budget = client.post("/merge", json={**body, "iterations_used": 4})
+    assert over_budget.status_code == 422
+    extra = client.post("/merge", json={**body, "surprise": 1})
+    assert extra.status_code == 422  # extra="forbid"

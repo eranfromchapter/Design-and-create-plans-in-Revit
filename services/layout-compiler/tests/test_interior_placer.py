@@ -298,3 +298,36 @@ def test_free_standing_item_never_sinks_into_a_wall_half_thickness():
     (item,) = outcome.furniture[0]["items"]
     assert item["center"][0] - 225.0 >= 46.0 - 0.1
     assert outcome.diagnostics["items"][0]["spiral_tried"] > 1  # the anchor itself failed
+
+
+def test_preplaced_items_seed_the_predicates_and_stay_out_of_the_output():
+    """Phase 6 merge-gate seam: a re-legalized single item must not land on furniture
+    that is already placed; preplaced items are inputs, never outputs."""
+    layout = layout_4x3()
+    alone = legalize_furniture([nightstand(1, [3500.0, 400.0])], layout)
+    spot = alone.furniture[0]["items"][0]
+    preplaced = [{**spot, "room_id": "R-001"}]
+    outcome = legalize_furniture([nightstand(2, [3500.0, 400.0])], layout, preplaced=preplaced)
+    assert outcome.unplaced == []
+    [item] = outcome.furniture[0]["items"]
+    assert item["id"] == "F-002" and item["center"] != spot["center"]
+    from layout_compiler.geometry import furniture_rect
+
+    assert furniture_rect(item).intersection(furniture_rect(spot)).area == 0
+    assert [d["item_id"] for d in outcome.diagnostics["items"]] == ["F-002"]
+
+
+def test_obstacles_exclude_candidate_footprints():
+    layout = layout_4x3()
+    free = legalize_furniture([nightstand(1, [3500.0, 400.0])], layout)
+    spot = free.furniture[0]["items"][0]["center"]
+    blocker = Polygon([(3000, 0), (4000, 0), (4000, 600), (3000, 600)])  # covers the spot
+    outcome = legalize_furniture([nightstand(1, [3500.0, 400.0])], layout, obstacles=[blocker])
+    assert outcome.unplaced == []
+    [item] = outcome.furniture[0]["items"]
+    assert item["center"] != spot
+    from layout_compiler.geometry import furniture_rect
+
+    assert furniture_rect(item).intersection(blocker).area == 0
+    # the defaults are the Phase 5 placer verbatim
+    assert legalize_furniture([nightstand(1, [3500.0, 400.0])], layout) == free
