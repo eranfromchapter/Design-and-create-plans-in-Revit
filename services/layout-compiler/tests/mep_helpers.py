@@ -145,3 +145,84 @@ def commit0_for(layout: dict[str, Any], height: float = 2700.0) -> dict[str, Any
 
 
 CONFIRMATIONS = {"panel": [50.0, 1500.0], "slab_to_slab_mm": 3000.0}
+
+
+def kitchen(with_casework: bool) -> dict[str, Any]:
+    """6000x3600 kitchen; sink + dishwasher on W-001 (south), range further along it.
+    With casework: one is_counter run 600..3600 on W-001."""
+    walls = [
+        wall(1, [0, 0], [6000, 0]),
+        wall(2, [6000, 0], [6000, 3600]),
+        wall(3, [6000, 3600], [0, 3600]),
+        wall(4, [0, 3600], [0, 0]),
+    ]
+    rooms = [
+        room(
+            1,
+            [[0, 0], [6000, 0], [6000, 3600], [0, 3600]],
+            ["W-001", "W-002", "W-003", "W-004"],
+            program="kitchen",
+        )
+    ]
+    placed = [
+        fixture(1, "R-001", "kitchen_sink", [1500.0, 346.0]),
+        fixture(2, "R-001", "dishwasher", [2250.0, 346.0]),
+        fixture(3, "R-001", "range", [4000.0, 376.0]),
+    ]
+    layout = assemble(walls, [door(1, "W-003", 3000)], rooms, placed)
+    if with_casework:
+        layout["casework"] = [
+            {
+                "id": "K-001",
+                "host_wall_id": "W-001",
+                "offset": 600.0,
+                "length": 3000.0,
+                "depth": 600.0,
+                "height": 900.0,
+                "is_counter": True,
+                "revit_family": "CHPT_Base_PLACEHOLDER",
+                "revit_type": "Base_600_PLACEHOLDER",
+            }
+        ]
+    return layout
+
+
+def two_rooms_shared_wall(
+    width: float = 3000.0, door_spec: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """North room R-001 (y 0..3000) and south room R-002 (y -3000..0) share W-001
+    (0,0)->(width,0); optional door on W-001 (offset/width/swing/flip_facing)."""
+    walls = [
+        wall(1, [0, 0], [width, 0]),
+        wall(2, [width, 0], [width, 3000]),
+        wall(3, [width, 3000], [0, 3000]),
+        wall(4, [0, 3000], [0, 0]),
+        wall(5, [width, 0], [width, -3000]),
+        wall(6, [width, -3000], [0, -3000]),
+        wall(7, [0, -3000], [0, 0]),
+    ]
+    rooms = [
+        room(
+            1,
+            [[0, 0], [width, 0], [width, 3000], [0, 3000]],
+            ["W-001", "W-002", "W-003", "W-004"],
+            program="living",
+        ),
+        room(
+            2,
+            [[0, -3000], [width, -3000], [width, 0], [0, 0]],
+            ["W-006", "W-005", "W-001", "W-007"],
+            program="living",
+        ),
+    ]
+    doors = [door(9, "W-003", width / 2), door(8, "W-006", width / 2)]
+    if door_spec is not None:
+        doors.append(
+            door(
+                1,
+                "W-001",
+                door_spec["offset"],
+                **{k: v for k, v in door_spec.items() if k != "offset"},
+            )
+        )
+    return assemble(walls, doors, rooms, [])

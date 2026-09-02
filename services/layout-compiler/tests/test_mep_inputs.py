@@ -9,8 +9,7 @@ import json
 from pathlib import Path
 
 import pytest
-from helpers import door, room, wall
-from mep_helpers import CONFIRMATIONS, assemble, commit0_for, fixture, two_baths
+from mep_helpers import CONFIRMATIONS, commit0_for, kitchen, two_baths
 
 from layout_compiler.mep.inputs import MepError, resolve_inputs
 
@@ -140,46 +139,8 @@ def test_outlet_spacing_default_and_floor():
     ]
 
 
-def kitchen_layout(with_casework: bool) -> dict:
-    walls = [
-        wall(1, [0, 0], [6000, 0]),
-        wall(2, [6000, 0], [6000, 3600]),
-        wall(3, [6000, 3600], [0, 3600]),
-        wall(4, [0, 3600], [0, 0]),
-    ]
-    rooms = [
-        room(
-            1,
-            [[0, 0], [6000, 0], [6000, 3600], [0, 3600]],
-            ["W-001", "W-002", "W-003", "W-004"],
-            program="kitchen",
-        )
-    ]
-    placed = [
-        fixture(1, "R-001", "kitchen_sink", [1500.0, 346.0]),
-        fixture(2, "R-001", "dishwasher", [2250.0, 346.0]),
-        fixture(3, "R-001", "range", [4000.0, 376.0]),
-    ]
-    layout = assemble(walls, [door(1, "W-003", 3000)], rooms, placed)
-    if with_casework:
-        layout["casework"] = [
-            {
-                "id": "K-001",
-                "host_wall_id": "W-001",
-                "offset": 600.0,
-                "length": 3000.0,
-                "depth": 600.0,
-                "height": 900.0,
-                "is_counter": True,
-                "revit_family": "CHPT_Base_PLACEHOLDER",
-                "revit_type": "Base_600_PLACEHOLDER",
-            }
-        ]
-    return layout
-
-
 def test_counter_walls_from_casework():
-    layout = kitchen_layout(with_casework=True)
+    layout = kitchen(with_casework=True)
     inputs = resolve_inputs(
         layout, commit0_for(layout), {"panel": [50.0, 1800.0], "slab_to_slab_mm": 3000.0}
     )
@@ -190,7 +151,7 @@ def test_counter_walls_from_casework():
 
 
 def test_counter_walls_derived_from_sink_and_dishwasher_minus_appliances():
-    layout = kitchen_layout(with_casework=False)
+    layout = kitchen(with_casework=False)
     inputs = resolve_inputs(
         layout, commit0_for(layout), {"panel": [50.0, 1800.0], "slab_to_slab_mm": 3000.0}
     )
