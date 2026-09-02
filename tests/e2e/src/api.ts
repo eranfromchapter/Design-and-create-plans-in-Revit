@@ -10,6 +10,23 @@ const stateSchema = z.object({
   commit0_done: z.boolean(),
   commit1_done: z.boolean(),
   interior_plan_ready: z.boolean(),
+  mep_plan_ready: z.boolean(),
+  commit2_done: z.boolean(),
+  commit2: z.object({
+    chain: z.object({ interior_review_id: z.string(), mep_review_id: z.string() }).nullable(),
+    iteration: z.number().nullable(),
+    iterations_used: z.number(),
+    budget_limit: z.number(),
+    budget_remaining: z.number(),
+    merge_review_id: z.string().nullable(),
+    merge_status: z.enum(["none", "pending", "approved", "rejected"]),
+    envelope_status: z.string().nullable(),
+    clash_pairs: z.array(z.object({ a_id: z.string(), b_id: z.string(), kind: z.string() })).nullable(),
+    last_errors: z.array(z.unknown()).nullable(),
+    exhausted: z.boolean(),
+    failed: z.boolean(),
+    merge_current: z.boolean(),
+  }),
   executor_connected: z.boolean(),
   last_committed_seq: z.number(),
   id_map: z.record(z.string(), z.number()),
@@ -123,6 +140,29 @@ export class GatewayApi {
 
   async furnishLayout(projectId: string) {
     return this.request("POST", `/projects/${projectId}/furnish-layout`, SERVICE_TOKEN, {});
+  }
+
+  /** Phase 6: the MEP agent (confirmations = the card's panel / slab-to-slab). */
+  async planMep(projectId: string, confirmations?: { panel?: [number, number]; slab_to_slab_mm?: number }) {
+    return this.request(
+      "POST", `/projects/${projectId}/plan-mep`, SERVICE_TOKEN,
+      confirmations ? { confirmations } : {},
+    );
+  }
+
+  async mergeCommit2(projectId: string) {
+    return this.request("POST", `/projects/${projectId}/merge-commit2`, SERVICE_TOKEN, {});
+  }
+
+  async issueCommit2(projectId: string) {
+    return this.request("POST", `/projects/${projectId}/issue-commit2`, SERVICE_TOKEN, {});
+  }
+
+  /** Every review row (kind/status/content) for chain assertions. */
+  async listReviewRows(projectId: string): Promise<{ id: string; kind: string; status: string; content: Record<string, unknown> }[]> {
+    const res = await this.request("GET", `/projects/${projectId}/reviews`, ACTOR_TOKEN);
+    if (res.status !== 200) throw new Error(`reviews ${res.status}`);
+    return (res.json as { reviews: { id: string; kind: string; status: string; content: Record<string, unknown> }[] }).reviews;
   }
 
   /** Full review rows (content included) — the phase4 suite reads the card's SVGs. */

@@ -115,10 +115,13 @@ demo-phase5:
 
 # Phase 6 demo (Part E): deterministic MEP plan + merge gate on the recorded chain —
 # MEP card, merged Commit #2 card, clash report, the two-reject recovery replay and
-# the gate note to out/phase6/ (the phase6 e2e joins this target in step 12).
+# the gate note to out/phase6/, after the phase6 e2e (recovery + exhaustion).
 demo-phase6:
 	cd $(SIM_DIR) && uv sync --quiet
+	cd $(SCAN_DIR) && uv sync --quiet
+	cd $(BRIEF_DIR) && uv sync --quiet
 	cd $(LAYOUT_DIR) && uv sync --quiet
+	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run phase6
 	cd $(LAYOUT_DIR) && uv run python scripts/demo_phase6.py
 	@echo "demo-phase6: merged plan SVG golden at fixtures/goldens/phase6_2br_mep.svg"
 
