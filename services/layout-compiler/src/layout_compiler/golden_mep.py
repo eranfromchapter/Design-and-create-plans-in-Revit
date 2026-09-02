@@ -31,7 +31,7 @@ from layout_compiler.merge.gate import MergeOptions, merge
 PANEL = [8050.0, 5200.0]  # foyer, inside face of W-019 → panel foot (8000, 5200)
 SLAB_TO_SLAB_MM = 3000.0  # h_plenum = 300 with the 2700 ceiling
 CONFIRMATIONS: dict[str, Any] = {"panel": PANEL, "slab_to_slab_mm": SLAB_TO_SLAB_MM}
-INJECTED_PAIR = {"a_id": "P-001", "b_id": "E-001", "kind": "hard_interference"}
+INJECTED_PAIR = {"a_id": "E-001", "b_id": "P-001", "kind": "hard_interference"}  # executor order
 RECOVERY_REJECTS = 2  # executor rolls Commit #2 back twice → commits at plan 3
 EXHAUSTION_REJECTS = MERGE_BUDGET + 1  # one more than the budget → REVIEW
 EXPECTED_SHIFTS = [1762.5, 1612.5]  # E-001 offset after rejects 1 and 2 (1912.5 − 150·k)
@@ -270,6 +270,9 @@ def gate_note(
             "review_items": dict(
                 sorted(Counter(i.code for i in [*electrical.items, *routing.items]).items())
             ),
+            "positions": [
+                [d.id, d.host_wall_id, round(d.offset, 1), d.height_afl] for d in electrical.devices
+            ],
         }
 
     codes = Counter(i["code"] for i in plan["review_items"])

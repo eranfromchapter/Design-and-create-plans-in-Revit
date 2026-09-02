@@ -4,9 +4,11 @@ the higher priority NUMBER moves — furniture re-legalizes through the Phase 5 
 re-route with the clash as a forbidden obstacle, a stack relocates off its wall.
 Every action is recorded with before/after and is REPLAYABLE without re-searching
 (the merge endpoint is stateless); the progress guarantee escalates once and then
-drops the element (never an unchanged element after an action). Ids of furniture,
-devices and pipes are never re-assigned; conduit trunks are re-derived from the
-raceway tree (drops keep their device pairing)."""
+drops the element (never an unchanged element after an action). Ids of furniture and
+devices are never re-assigned; conduit drops are Q-n for device E-n, trunks renumber
+from a fixed base and never reuse a dropped id, a dropped trunk stays out as forbidden
+geometry; pipes are derived state whenever P-1..P-4 re-run (relocate_stack, or a moved/
+dropped plumbing fixture -> the recorded `replan_plumbing` action)."""
 
 from __future__ import annotations
 
@@ -17,12 +19,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from shapely import wkt
+from shapely.geometry import LineString, Point
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
 from layout_compiler.geometry import pt_on_wall
 from layout_compiler.interior import legalize_furniture
-from layout_compiler.mep.constants import DEVICE_B2B_MM, DEVICE_SHIFT_MM
+from layout_compiler.mep.constants import DEVICE_B2B_MM, DEVICE_SHIFT_MM, E4_STACK_EXCLUSION_MM
 from layout_compiler.mep.electrical import Device, room_face
 from layout_compiler.mep.inputs import MepInputs, offset_of
 from layout_compiler.mep.ops import conduit_ops, pipe_ops
@@ -53,10 +56,17 @@ class MergeState:
     stacks_meta: list[dict[str, Any]]  # [{id, wall_id, offset}]
     inputs: MepInputs
     segment_stack: dict[str, str] = field(default_factory=dict)  # branch id -> stack id
-    refresh_inputs: Callable[[dict[str, Any]], MepInputs] | None = None
+    refresh_inputs: Callable[[dict[str, Any], set[str]], MepInputs] | None = None
+    trunk_base: int | None = None  # first trunk id, fixed for the whole chain
     banned_walls: set[str] = field(default_factory=set)
     obstacles: list[BaseGeometry] = field(default_factory=list)
     dropped: list[str] = field(default_factory=list)
+    dropped_paths: set[str] = field(default_factory=set)  # dropped conduit geometry (json)
+    routed_devices: set[str] = field(default_factory=set)  # devices that HAD a home run
+    moved_fixtures: set[str] = field(default_factory=set)  # recorded host walls invalid
+    pending_actions: list[dict[str, Any]] = field(default_factory=list)  # emitted by re-runs
+    iteration: int = 0
+    trigger: str = "phase_a"
     interior_verbatim: bool = True
     replan_deltas: list[dict[str, Any]] = field(default_factory=list)
     blocked: str | None = None
@@ -104,18 +114,65 @@ class MergeState:
 
     # ---- rebuilds -----------------------------------------------------------
     def rerun_routing(self, deadline_check=None) -> None:
-        """Conduits are derived state: drops keep their device pairing (Q-n follows
-        device order), trunk chains follow the raceway tree."""
+        """Conduits are derived state: drop Q-n belongs to device E-n, trunks renumber from
+        the chain's fixed base skipping dropped ids, dropped geometry never comes back. A
+        device the re-run cannot reach any more (isolated by an obstacle or a new stack
+        square) is DROPPED and reported — never left silently without a home run."""
         pipes = [op for op in self.mep_ops if op["op"] == "create_pipe"]
         devices = [op for op in self.mep_ops if op["op"] == "place_device"]
         result = route_home_runs(
-            self.inputs, self.devices(), self.zones(), deadline_check, list(self.obstacles)
+            self.inputs,
+            self.devices(),
+            self.zones(),
+            deadline_check,
+            list(self.obstacles),
+            trunk_base=self.trunk_base,
+            reserved=frozenset(i for i in self.dropped if i.startswith("Q-")),
         )
         conduits = [
             op
             for op in conduit_ops(result.drops, result.trunks, self.inputs)
             if op["args"]["id"] not in self.dropped
+            and json.dumps(op["args"]["path"]) not in self.dropped_paths
         ]
+        # only a device that HAD a home run and lost it to this re-plan is dropped: a device
+        # the approved plan already carried without one (PIN-13 default) stays as approved
+        routed_now = {d["device_id"] for d in result.drops}
+        unroutable = sorted(
+            {ref for i in result.items if i.code == "device_unroutable" for ref in i.refs}
+            & self.routed_devices
+        )
+        self.routed_devices = routed_now
+        for device_id in unroutable:
+            if device_id in self.dropped:
+                continue
+            self.dropped.append(device_id)
+            devices = [op for op in devices if op["args"]["id"] != device_id]
+            self.replan_deltas.append(
+                {
+                    "id": device_id,
+                    "kind": "device",
+                    "from": None,
+                    "to": None,
+                    "reason": "unroutable after re-plan (isolated by an obstacle or stack square)",
+                }
+            )
+            self.pending_actions.append(
+                _record(
+                    self.iteration,
+                    self.trigger,
+                    device_id,
+                    "-",
+                    "unroutable",
+                    device_id,
+                    4,
+                    "-",
+                    0,
+                    "drop",
+                    {"reason": "no wall path from the panel after re-plan"},
+                    True,
+                )
+            )
         self.mep_ops = pipes + devices + conduits
 
     def rerun_plumbing(self, deadline_check=None) -> bool:
@@ -134,15 +191,36 @@ class MergeState:
 
     def fixture_changed(self, item: dict[str, Any] | None, deadline_check=None) -> None:
         """A plumbing fixture moved or vanished: P-2 feet and P-1 scores are stale, so
-        the inputs are re-resolved from the mutated layout and P-1..P-4 + E-4 re-run
+        the inputs are re-resolved from the mutated layout (the moved item's recorded
+        host wall is forgotten) and P-1..P-4 + E-4 re-run; the re-run is RECORDED as a
+        `replan_plumbing` action so the gateway verifier knows the pipes are derived
         (device positions are kept — E-1..E-3 do not depend on fixtures)."""
         if item is None or "sanitary" not in (item.get("hookups") or []):
             return
         if self.refresh_inputs is None:
             return
-        self.inputs = self.refresh_inputs(self.layout)
+        self.moved_fixtures.add(item["id"])
+        self.inputs = self.refresh_inputs(self.layout, set(self.moved_fixtures))
         if self.rerun_plumbing(deadline_check):
             self.rerun_routing(deadline_check)
+            pipe_ids = [op["args"]["id"] for op in self.mep_ops if op["op"] == "create_pipe"]
+            stacks = ",".join(s["id"] for s in self.stacks_meta) or "-"
+            self.pending_actions.append(
+                _record(
+                    self.iteration,
+                    self.trigger,
+                    item["id"],
+                    stacks,
+                    "fixture_moved",
+                    stacks,
+                    1,
+                    item["id"],
+                    5,
+                    "replan_plumbing",
+                    {"fixture_id": item["id"], "pipe_ids": pipe_ids},
+                    True,
+                )
+            )
 
 
 def canonical(op: dict[str, Any] | None) -> str:
@@ -174,6 +252,7 @@ def apply_pair(
 ) -> dict[str, Any]:
     """Resolve one clash pair: the lower-priority element re-plans. Returns the
     action record (also appended to the caller's list)."""
+    state.iteration, state.trigger = iteration, trigger
     prisms = state.prisms()
     # unknown ids are a contract error — except the plugin's `revit:<ElementId>` for
     # structure the merged plan never modelled (columns, risers, existing MEP)
@@ -191,6 +270,7 @@ def apply_pair(
         a_id, b_id, a_cls, b_cls, a_pri, b_pri = b_id, a_id, b_cls, a_cls, b_pri, a_pri
     higher_geom = _geometry_of(a_id, prisms)
     before = canonical(state.op_by_id(b_id))
+    obstacles_before = len(state.obstacles)
     if b_cls == "furniture":
         action, params = _relegalize_furniture(state, b_id, higher_geom, deadline_check)
     elif b_cls == "device":
@@ -221,8 +301,15 @@ def apply_pair(
         after = canonical(state.op_by_id(b_id))
         changed = before != after or b_id in state.dropped
         if not changed:
-            _drop(state, b_id)
-            action, params, changed = "drop", {"reason": "no progress after escalation"}, True
+            # the reroute attempts' obstacles did nothing: forget them (replay never sees
+            # them) and drop the element — its own geometry becomes the forbidden zone
+            del state.obstacles[obstacles_before:]
+            extra = _drop(state, b_id, deadline_check)
+            action, params, changed = (
+                "drop",
+                {"reason": "no progress after escalation", **extra},
+                True,
+            )
     return _record(
         iteration, trigger, a_id, b_id, kind, b_id, b_pri, a_id, a_pri, action, params, changed
     )
@@ -259,9 +346,17 @@ def _record(
 # ---- actions ---------------------------------------------------------------------
 
 
-def _drop(state: MergeState, element_id: str) -> None:
+def _drop(state: MergeState, element_id: str, deadline_check=None) -> dict[str, Any]:
+    """Remove an element for good. Returns the params to record (a conduit's path, so a
+    stateless replay can re-forbid the same geometry even though trunk ids move)."""
     if element_id in state.dropped:
-        return
+        return {}
+    extra: dict[str, Any] = {}
+    if element_id.startswith("Q-"):
+        op = state.op_by_id(element_id)
+        if op is not None:
+            extra["path"] = op["args"]["path"]
+            _forbid_path(state, op["args"]["path"])
     state.dropped.append(element_id)
     state.interior_ops = [op for op in state.interior_ops if op["args"].get("id") != element_id]
     state.mep_ops = [op for op in state.mep_ops if op["args"].get("id") != element_id]
@@ -273,9 +368,21 @@ def _drop(state: MergeState, element_id: str) -> None:
         if len(entry["items"]) != before:
             state.interior_verbatim = False
     state.layout["furniture"] = [e for e in state.layout.get("furniture", []) if e["items"]]
-    if element_id.startswith("E-"):
-        state.rerun_routing()
-    state.fixture_changed(gone)
+    if element_id.startswith(("E-", "Q-")):
+        # a dropped device or a newly forbidden trunk changes the raceway NOW (and on replay
+        # identically): devices whose only path went through the trunk are dropped here
+        state.rerun_routing(deadline_check)
+    state.fixture_changed(gone, deadline_check)
+    return extra
+
+
+def _forbid_path(state: MergeState, path: list[list[float]]) -> None:
+    """A dropped conduit's geometry stays forbidden for every later raceway re-run."""
+    state.dropped_paths.add(json.dumps(path))
+    xy = [(float(p[0]), float(p[1])) for p in path]
+    distinct = [xy[0], *[q for a, q in zip(xy, xy[1:], strict=False) if q != a]]
+    geom = LineString(distinct) if len(distinct) >= 2 else Point(distinct[0])
+    state.obstacles.append(geom.buffer(1.0))
 
 
 def _relegalize_furniture(
@@ -301,7 +408,7 @@ def _relegalize_furniture(
     placed = [i for e in outcome.furniture for i in e["items"]]
     before = {"center": list(target["center"]), "rotation_deg": target["rotation_deg"]}
     if not placed:
-        _drop(state, item_id)
+        _drop(state, item_id, deadline_check)
         return "drop", {
             "reason": outcome.unplaced[0]["reason"] if outcome.unplaced else "unplaceable",
             "before": before,
@@ -330,7 +437,7 @@ def _relegalize_furniture(
     # validator oracle on the moved item
     errors = validate_layout(state.layout)
     if errors:
-        _drop(state, item_id)
+        _drop(state, item_id, deadline_check)
         return "drop", {
             "reason": "validator rejected the re-legalized item",
             "errors": errors[:3],
@@ -361,7 +468,7 @@ def _shift_device(
     meta = state.devices_meta.get(device_id, {})
     room = state.inputs.rooms.get(meta.get("room_id", ""))
     if room is None:
-        _drop(state, device_id)
+        _drop(state, device_id, deadline_check)
         return "drop", {"reason": "device room unknown"}
     runs = wall_runs(state.layout, room, wall, float(args["height_afl"]), [])
     offset = float(args["offset"])
@@ -381,6 +488,13 @@ def _shift_device(
         trial = offset + sign * k * DEVICE_SHIFT_MM
         if not legal_on_runs(runs, trial):
             continue
+        # stay routable: E-4 forbids the stack's ±300 square, so a slot inside it would
+        # only be dropped as unroutable by the raceway re-run
+        if any(
+            w == args["host_wall_id"] and abs(trial - s_off) <= E4_STACK_EXCLUSION_MM
+            for w, s_off in state.zones()
+        ):
+            continue
         if any(
             w == args["host_wall_id"]
             and abs(t - trial) < DEVICE_B2B_MM
@@ -398,8 +512,9 @@ def _shift_device(
             "k": k,
             "away_from": higher_id,
         }
-    _drop(state, device_id)
-    return "drop", {
+    # no legal slot in this band: report it WITHOUT dropping so apply_pair can escalate
+    # to k = 5..8 first (PIN-26) and only then drop
+    return "no_shift", {
         "reason": f"no legal shift within {tries[1]}x150 mm",
         "before": {"offset": offset},
     }
@@ -413,8 +528,8 @@ def _reroute_conduit(
     buffer_mm: float = OBSTACLE_BUFFER_MM,
 ) -> tuple[str, dict[str, Any]]:
     if higher_geom is None:
-        _drop(state, conduit_id)
-        return "drop", {"reason": "no geometry to route around"}
+        extra = _drop(state, conduit_id, deadline_check)
+        return "drop", {"reason": "no geometry to route around", **extra}
     obstacle = higher_geom.buffer(buffer_mm)
     state.obstacles.append(obstacle)
     before = canonical(state.op_by_id(conduit_id))
@@ -458,7 +573,14 @@ def replay_actions(
             deadline_check()
         kind, lower, params = act.get("action"), act.get("lower"), act.get("params", {})
         if kind == "drop":
-            _drop(state, lower)
+            if params.get("path"):  # a conduit: trunk ids move, its geometry is what is dropped
+                _forbid_path(state, params["path"])
+                if lower not in state.dropped:
+                    state.dropped.append(lower)
+            _drop(state, lower, deadline_check)
+            routing_dirty = routing_dirty or bool(params.get("path"))
+        elif kind == "replan_plumbing":
+            pass  # re-derived by the replayed relegalize/drop that caused it
         elif kind == "relegalize_furniture" and "after" in params:
             for entry in state.layout.get("furniture", []):
                 for item in entry["items"]:
@@ -497,6 +619,7 @@ def replay_actions(
             routing_dirty = True
     if routing_dirty:
         state.rerun_routing(deadline_check)
+    state.pending_actions.clear()  # replay never emits actions of its own
 
 
 def foot_of(state: MergeState, device_id: str) -> tuple[float, float] | None:

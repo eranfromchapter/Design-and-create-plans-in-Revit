@@ -8,13 +8,13 @@ outer iteration."""
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
 from layout_compiler.catalogs import drain_slope
 from layout_compiler.geometry import pt_on_wall, wall_len
-from layout_compiler.interior import project_to_wall
 from layout_compiler.mep.constants import (
     COORD_ROUND,
     LAMBDA_FU_PER_MM,
@@ -153,6 +153,19 @@ def _riser_distance(wall: dict[str, Any], layout: dict[str, Any]) -> float | Non
     return min(point_distance_to_wall((r["center"][0], r["center"][1]), wall) for r in risers)
 
 
+def _riser_point_distance(xy: tuple[float, float], layout: dict[str, Any]) -> float | None:
+    """PIN-04: the STACK's distance to the nearest existing sanitary riser."""
+    risers = [r for r in layout.get("risers", []) if r["type"] == "sanitary"]
+    if not risers:
+        return None
+    return min(math.dist(xy, (r["center"][0], r["center"][1])) for r in risers)
+
+
+PLUMBING_BLOCKING = frozenset(
+    {"levels_missing", "levels_inconsistent", "plenum_too_shallow", "fixture_kind_unknown"}
+)
+
+
 def plan_plumbing(
     inputs: MepInputs,
     deadline_check: DeadlineCheck = None,
@@ -167,8 +180,9 @@ def plan_plumbing(
     segments: list[Segment] = []
     routes: list[dict[str, Any]] = []
     fixtures = {f.id: f for f in inputs.fixtures}
-    if inputs.h_plenum is None or inputs.blocking():
-        # levels missing/inconsistent or an unknown fixture kind: no plumbing plan yet
+    if inputs.h_plenum is None or any(c in PLUMBING_BLOCKING for c in inputs.blocking()):
+        # levels missing/inconsistent, plenum too shallow or an unknown fixture kind: no
+        # plumbing plan yet (electrical-only blockers such as panel_missing do not stop P-1..P-4)
         return PlumbingResult(stacks, segments, routes, items, counters)
     h_plenum, h_fitting = inputs.h_plenum, inputs.h_fitting
     residual = set(fixtures)
@@ -212,7 +226,16 @@ def plan_plumbing(
                     continue
                 if P1_EXCLUDE_SI8_WALLS and si8_flagged(wall):
                     continue
-                cand.setdefault(wall_id, set()).update(room_fixtures)
+                # a fixture can only drain to a wall it FACES: its perpendicular projection
+                # must land on the wall segment (rooms are bounded by several collinear
+                # walls; a foot clamped to a wall end would be a diagonal leg)
+                facing = {
+                    fid
+                    for fid in room_fixtures
+                    if -1.0 <= offset_of(fixtures[fid].center, wall) <= wall_len(wall) + 1.0
+                }
+                if facing:
+                    cand.setdefault(wall_id, set()).update(facing)
         if not cand:
             items.append(
                 ReviewItem(
@@ -245,7 +268,6 @@ def plan_plumbing(
         _key, pick, score, bias = scored[0]
         ranking = [(w, s) for _k, w, s, _b in scored[:5]]
         wall = inputs.walls[pick]
-        length = wall_len(wall)
         serve: list[str] = sorted(cand[pick])
         # ---- P-2 / P-3 / P-4 prune loop (bounded by len(serve))
         stack_offset: float | None = None
@@ -254,8 +276,7 @@ def plan_plumbing(
         while serve:
             feet = {}
             for fid in serve:
-                t_star, _foot = project_to_wall(fixtures[fid].center, wall)
-                feet[fid] = t_star * length
+                feet[fid] = offset_of(fixtures[fid].center, wall)  # unclamped: on-segment by P-1
             total_fu = sum(fixtures[f].fixture_units for f in serve)
             t_s = sum(fixtures[f].fixture_units * feet[f] for f in serve) / total_fu
             diameter = stack_diameter([fixtures[f] for f in serve])
@@ -265,8 +286,8 @@ def plan_plumbing(
             if snapped_offset is None:
                 stack_offset = None
                 break
-            if abs(snapped_offset - t_s) > 1e-9:
-                snapped = True
+            snapped = abs(snapped_offset - t_s) > 1e-9  # the FINAL iteration decides the flag
+            if snapped:
                 counters["snap_steps"] += 1
             stack_offset = snapped_offset
             violations: list[tuple[float, int, str]] = []
@@ -294,8 +315,6 @@ def plan_plumbing(
             )
         if stack_offset is None or not serve:
             excluded.add(pick)
-            if snapped:
-                counters["snap_steps"] += 0
             continue
         stack_id = f"P-{len(stacks) + 1:03d}"
         xy = pt_on_wall(wall, stack_offset)
@@ -323,7 +342,7 @@ def plan_plumbing(
                     f"snapped to offset {stack_offset:.1f}",
                 )
             )
-        riser_d = _riser_distance(wall, layout)
+        riser_d = _riser_point_distance(pt_on_wall(wall, stack_offset), layout)
         if riser_d is not None and riser_d <= RISER_ADJACENT_MM:
             items.append(
                 ReviewItem(
@@ -342,16 +361,25 @@ def plan_plumbing(
     for stack in stacks:
         tree, next_pipe = _branch_tree(stack, fixtures, inputs, next_pipe, items, routes)
         segments.extend(tree)
-    manual = (("vent", "vent_manual"), ("supply_h", "supply_manual"), ("gas", "gas_manual"))
-    for hookup, code in manual:
-        refs = sorted(f.id for f in inputs.fixtures if hookup in (f.item.get("hookups") or []))
+    manual = (
+        (("vent",), "vent_manual"),
+        (("supply_h", "supply_c"), "supply_manual"),
+        (("gas",), "gas_manual"),
+    )
+    for hookups, code in manual:
+        refs = sorted(
+            f.id
+            for f in inputs.fixtures
+            if any(h in (f.item.get("hookups") or []) for h in hookups)
+        )
         if refs:
             items.append(
                 ReviewItem(
                     code,
                     "info",
                     refs,
-                    f"v1 emits sanitary DWV only; {hookup} connections are completed manually",
+                    f"v1 emits sanitary DWV only; {'/'.join(hookups)} connections are "
+                    "completed manually",
                 )
             )
     return PlumbingResult(stacks, segments, routes, items, counters)
@@ -423,7 +451,12 @@ def _branch_tree(
         rises[fid] = sum(
             seg_slope[edge_of(a, b)] * _dist(a, b) for a, b in zip(nodes, nodes[1:], strict=False)
         )
-    governing = max(sorted(rises), key=lambda f: (rises[f], -int(f.split("-")[1])))
+    # the governing fixture is the one whose pipe TOP would sit highest (rise + Ø/2), so
+    # every fixture's pipe top stays at or below floor_z - h_fitting; ties -> smaller id
+    governing = max(
+        sorted(rises),
+        key=lambda f: (rises[f] + fixtures[f].drain_mm / 2, -int(f.split("-")[1])),
+    )
     z_junction = floor_z - h_fitting - fixtures[governing].drain_mm / 2 - rises[governing]
     # node z by walking outward from the stack along each path (a tree: consistent)
     node_z: dict[tuple[float, float], float] = {stack_node: z_junction}

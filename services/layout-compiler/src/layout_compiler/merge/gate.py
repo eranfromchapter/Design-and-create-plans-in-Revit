@@ -83,9 +83,16 @@ def merge(
         ],
         inputs=inputs,
         segment_stack={b["id"]: b["stack_id"] for b in plan.get("branches", [])},
-        refresh_inputs=lambda layout: resolve_inputs(
-            layout, commit0_layout, None, plan["inputs"].get("host_walls"), deadline_check
+        refresh_inputs=lambda layout, moved: resolve_inputs(
+            layout,
+            commit0_layout,
+            None,
+            {k: v for k, v in (plan["inputs"].get("host_walls") or {}).items() if k not in moved},
+            deadline_check,
         ),
+        trunk_base=1
+        + max((int(d["id"].split("-")[1]) for d in plan.get("devices", [])), default=0),
+        routed_devices={h["device_id"] for h in plan.get("home_runs", [])},
     )
     replay_actions(state, prior_actions, deadline_check)
 
@@ -158,6 +165,8 @@ def merge(
                     deadline_check,
                 )
             )
+            acts.extend(state.pending_actions)
+            state.pending_actions.clear()
             if state.blocked:
                 break
         actions.extend(acts)
@@ -177,7 +186,10 @@ def merge(
                     "merge_internal", "merged layout fails the validator: " + "; ".join(oracle[:3])
                 )
             ops = [*state.interior_ops, *state.mep_ops, INTERFERENCE_CHECK]
-            validate_ops(ops)
+            try:
+                validate_ops(ops)
+            except MepError as err:
+                raise MergeError("merge_internal", f"merged ops: {err.code}: {err}") from err
             try:
                 svgs = render_merge_svgs(commit0_layout, commit1_ops, ops)
             except OpError as err:
@@ -187,15 +199,27 @@ def merge(
             return result("clean", [], ops, svgs)
         if used >= MERGE_BUDGET:
             return result("budget_exhausted", clashes, [], {})
+        # act on LIVE pairs only: every action may re-derive conduits, so the sweep is
+        # repeated before the next pair (bounded by the round's pairs + prism count)
         acts = []
-        for c in clashes:
+        pending = list(clashes)
+        acted: set[tuple[str, str]] = set()
+        cap = len(clashes) + len(state.prisms())
+        while pending and len(acted) < cap:
+            c = pending[0]
+            acted.add((c.a_id, c.b_id))
             acts.append(
                 apply_pair(
                     state, c.a_id, c.b_id, "phase_a_overlap", iteration, "phase_a", deadline_check
                 )
             )
+            acts.extend(state.pending_actions)
+            state.pending_actions.clear()
             if state.blocked:
                 break
+            pending = [
+                p for p in phase_a(state.prisms(), deadline_check) if (p.a_id, p.b_id) not in acted
+            ]
         actions.extend(acts)
         used += 1
         rounds.append(

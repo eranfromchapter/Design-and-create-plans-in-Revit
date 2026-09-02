@@ -10,6 +10,10 @@ namespace ChapterHub.Revit.Addin.Ops;
 public sealed class OpFailure(string code, string message) : Exception($"{code}: {message}")
 {
     public string Code { get; } = code;
+
+    /// <summary>The raw wire message (the sim's OpError.message) — for an interference this
+    /// is exactly "A~B"; the exception text above carries the code prefix for logs only.</summary>
+    public string Detail { get; } = message;
 }
 
 public sealed class OpContext(Document doc, HubStateStore store, AddinCatalogs catalogs)

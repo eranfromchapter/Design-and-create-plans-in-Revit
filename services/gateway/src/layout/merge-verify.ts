@@ -15,9 +15,13 @@ import canonicalize from "canonicalize";
 import type { MergeResult } from "./merge-client.js";
 
 export interface BranchOps {
-  interior: { content_hash: string; ops: { op: string; args: Record<string, unknown> }[] };
-  mep: { content_hash: string; ops: { op: string; args: Record<string, unknown> }[] };
+  interior: { review_id?: string; content_hash: string; ops: { op: string; args: Record<string, unknown> }[] };
+  mep: { review_id?: string; content_hash: string; ops: { op: string; args: Record<string, unknown> }[] };
 }
+
+/** Actions after which P-1..P-4 re-ran: every pipe op is derived state (ids renumber). */
+const PIPE_REPLANS = new Set(["relocate_stack", "replan_plumbing"]);
+export const CLASH_ID = /^([A-Z]{1,2}-[0-9]{2,4}|revit:[0-9]+)$/;
 
 export type VerifyOutcome = { ok: true } | { ok: false; code: "merge_ops_unverified"; detail: string };
 
@@ -32,6 +36,12 @@ export function verifyMergeResult(
   const fail = (detail: string): VerifyOutcome => ({ ok: false, code: "merge_ops_unverified", detail });
   if (result.interior.content_hash !== branches.interior.content_hash) return fail("interior content_hash mismatch");
   if (result.mep.content_hash !== branches.mep.content_hash) return fail("mep content_hash mismatch");
+  if (branches.interior.review_id !== undefined && result.interior.review_id !== branches.interior.review_id) {
+    return fail("interior review_id mismatch");
+  }
+  if (branches.mep.review_id !== undefined && result.mep.review_id !== branches.mep.review_id) {
+    return fail("mep review_id mismatch");
+  }
   if (result.status !== "clean") return { ok: true }; // no ops to verify; the caller files a failure review
 
   const ops = result.ops;
@@ -50,7 +60,7 @@ export function verifyMergeResult(
   for (const id of result.dropped) {
     if (!branchOps.has(id) && !CONDUIT_ID.test(id)) return fail(`dropped id ${id} is not a branch id`);
   }
-  const relocated = [...priorActions, ...result.actions].some((a) => a.action === "relocate_stack");
+  const relocated = [...priorActions, ...result.actions].some((a) => PIPE_REPLANS.has(a.action ?? ""));
   const seen = new Set<string>();
   for (const op of ops.slice(0, -1)) {
     const id = op.args["id"];
@@ -63,15 +73,23 @@ export function verifyMergeResult(
       if (!CONDUIT_ID.test(id)) return fail(`conduit id ${id} malformed`);
       continue; // derived state (PIN-27)
     }
-    if (!approved) return fail(`id ${id} is not in either approved branch`);
-    if (approved.op !== op.op) return fail(`op kind changed for ${id}`);
     if (op.op === "create_pipe") {
       if (!PIPE_ID.test(id)) return fail(`pipe id ${id} malformed`);
-      if (relocated) continue; // P-1..P-4 re-ran: geometry legitimately differs
+      if (relocated) continue; // P-1..P-4 re-ran: ids and geometry legitimately differ
     }
+    if (!approved) return fail(`id ${id} is not in either approved branch`);
+    if (approved.op !== op.op) return fail(`op kind changed for ${id}`);
     if (acted.has(id)) continue;
     if (canonicalize(op.args) !== canonicalize(approved.args)) {
       return fail(`un-actioned op ${id} differs from the approved branch`);
+    }
+  }
+  // completeness: every approved op survives, is dropped, or is derived state
+  for (const [id, approved] of branchOps) {
+    if (approved.op === "create_conduit") continue;
+    if (approved.op === "create_pipe" && relocated) continue;
+    if (!seen.has(id) && !result.dropped.includes(id)) {
+      return fail(`approved op ${id} vanished without a drop`);
     }
   }
   const interiorIds = branches.interior.ops.map((o) => o.args["id"] as string);
@@ -91,8 +109,9 @@ export function clashPairsFromErrors(errors: unknown[]): { a_id: string; b_id: s
   for (const e of errors) {
     const err = e as { code?: unknown; message?: unknown };
     if (err.code !== "interference" || typeof err.message !== "string") continue;
-    const m = /^([A-Za-z0-9:_-]+)~([A-Za-z0-9:_-]+)$/.exec(err.message.trim());
-    if (m) pairs.push({ a_id: m[1]!, b_id: m[2]!, kind: "hard_interference" });
+    const parts = err.message.trim().split("~");
+    if (parts.length !== 2 || !CLASH_ID.test(parts[0]!) || !CLASH_ID.test(parts[1]!)) continue;
+    pairs.push({ a_id: parts[0]!, b_id: parts[1]!, kind: "hard_interference" });
   }
   return pairs;
 }

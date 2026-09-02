@@ -72,7 +72,7 @@ def test_e3_corner_fallback_on_the_adjacent_wall():
     sw = by_door[
         "D-001"
     ]  # latch 881 + 150 = 1031 > 950: illegal -> latch corner (1000,0) -> W-002 @ 150
-    assert (sw.host_wall_id, sw.offset) == ("W-002", 150.0)
+    assert (sw.host_wall_id, sw.offset) == ("W-002", 300.0)  # E3_CORNER_FALLBACK_MM from the corner
     assert any(
         i.code == "switch_corner_fallback" and i.refs == ["D-001", "W-002"] for i in result.items
     )

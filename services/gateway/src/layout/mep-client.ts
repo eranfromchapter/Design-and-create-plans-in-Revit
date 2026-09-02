@@ -61,12 +61,19 @@ export interface MepRequest {
 }
 
 export async function planMep(baseUrl: string, req: MepRequest): Promise<MepOutcome> {
-  const res = await fetch(new URL("/plan-mep", baseUrl), {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(req),
-  });
-  const body: unknown = await res.json();
+  let res: Response;
+  let body: unknown;
+  try {
+    res = await fetch(new URL("/plan-mep", baseUrl), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(req),
+    });
+    body = await res.json();
+  } catch (err) {
+    // connection refused / proxy HTML / cut transfer: a TRANSIENT outcome, never a 500
+    return { ok: false, error: "layout_compiler_unreachable", message: String(err), rawOutputs: [] };
+  }
   if (res.status === 422) {
     const parsed = errorSchema.safeParse(body);
     return {

@@ -123,8 +123,8 @@ public sealed class EnvelopeHandler : IExternalEventHandler
             group.RollBack();
             var failure = indexed.Failure;
             SendCommitResult(body, committed: false, delta: [],
-                errors: [Error(failure.Code, failure.Message, indexed.OpIndex)]);
-            if (failure.Code == "interference" && ClashPairs.Parse(failure.Message) is { } pair)
+                errors: [Error(failure.Code, failure.Detail, indexed.OpIndex)]);
+            if (failure.Code == "interference" && ClashPairs.Parse(failure.Detail) is { } pair)
             {
                 _send(new
                 {
@@ -137,7 +137,7 @@ public sealed class EnvelopeHandler : IExternalEventHandler
         catch (OpFailure failure)
         {
             group.RollBack();
-            SendCommitResult(body, committed: false, delta: [], errors: [Error(failure.Code, failure.Message)]);
+            SendCommitResult(body, committed: false, delta: [], errors: [Error(failure.Code, failure.Detail)]);
         }
         catch (Exception ex)
         {

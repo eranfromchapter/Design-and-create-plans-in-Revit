@@ -266,7 +266,7 @@ public sealed class CreatePipeHandler : IOpHandler
         if (!types.SystemTypeNames.TryGetValue(a.System, out var systemName))
             throw new OpFailure("invalid_args", $"system {a.System}");
         if (!types.PipeTypes.Values.Contains(a.PipeType))
-            throw new OpFailure("unknown_pipe_type", a.PipeType);
+            throw new OpFailure("unknown_revit_type", a.PipeType); // the sim's code for the same condition
         var doc = context.Doc;
         var systemType = new FilteredElementCollector(doc).OfClass(typeof(PipingSystemType))
             .Cast<PipingSystemType>().FirstOrDefault(t => t.Name == systemName)
@@ -305,7 +305,8 @@ public sealed class CreatePipeHandler : IOpHandler
         }
         catch (PipePathError error)
         {
-            throw new OpFailure(error.Code, error.Message);
+            // sim parity: a degenerate segment is `invalid_path` there; fittings keep their code
+            throw new OpFailure(error.Code == "zero_length" ? "invalid_path" : error.Code, error.Message);
         }
     }
 }
@@ -366,18 +367,28 @@ public sealed class RunInterferenceCheckHandler : IOpHandler
         doc.Regenerate();
 
         var created = context.Created();
-        var candidateIds = created.Select(c => new ElementId(c.ElementId))
-            .Concat(context.Store.Entries.Values.Select(id => new ElementId(id)))
-            .Distinct()
-            .ToList();
-        if (candidateIds.Count == 0) return;
+        if (created.Count == 0) return;
+        // created × ALL: every clash-class element in the document is a candidate — modelled
+        // columns, existing MEP and hand-placed families included (reported as
+        // revit:<ElementId> when the HUB never created them); walls/doors/windows never are
+        var clashCategories = new ElementMulticategoryFilter(new List<BuiltInCategory>
+        {
+            BuiltInCategory.OST_PipeCurves, BuiltInCategory.OST_PipeFitting, BuiltInCategory.OST_FlexPipeCurves,
+            BuiltInCategory.OST_Conduit, BuiltInCategory.OST_ConduitFitting,
+            BuiltInCategory.OST_ElectricalFixtures, BuiltInCategory.OST_LightingDevices,
+            BuiltInCategory.OST_Furniture, BuiltInCategory.OST_PlumbingFixtures, BuiltInCategory.OST_Casework,
+            BuiltInCategory.OST_SpecialityEquipment, BuiltInCategory.OST_ElectricalEquipment,
+            BuiltInCategory.OST_Columns, BuiltInCategory.OST_StructuralColumns, BuiltInCategory.OST_StructuralFraming,
+        });
 
         foreach (var (aLogical, aElementId) in created)
         {
             if (doc.GetElement(new ElementId(aElementId)) is not { } element) continue;
             var aClass = ClashClass(element);
             if (aClass is null) continue;
-            var hits = new FilteredElementCollector(doc, candidateIds)
+            var hits = new FilteredElementCollector(doc)
+                .WhereElementIsNotElementType()
+                .WherePasses(clashCategories)
                 .WherePasses(new ElementIntersectsElementFilter(element))
                 .ToElements();
             foreach (var other in hits.OrderBy(e => e.Id.Value))

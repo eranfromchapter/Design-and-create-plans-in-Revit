@@ -253,15 +253,18 @@ export class Repos {
     }
   }
 
-  async recordAck(envelopeId: string, accepted: boolean, reason?: string): Promise<void> {
+  /** `projectId` (the executor's session project) scopes the update: a workstation can
+   *  only resolve its OWN project's envelopes (SI-10, design §5.3). */
+  async recordAck(envelopeId: string, accepted: boolean, reason?: string, projectId?: string): Promise<void> {
     const client = await this.db.connect();
     try {
       await client.query("BEGIN");
       const res = await client.query(
         `UPDATE envelopes
            SET status = $2, reject_reason = $3, resolved_at = CASE WHEN $2 = 'ack_rejected' THEN now() END
-         WHERE envelope_id = $1 AND status = 'issued' RETURNING project_id`,
-        [envelopeId, accepted ? "ack_accepted" : "ack_rejected", reason ?? null],
+         WHERE envelope_id = $1 AND status = 'issued' AND ($4::uuid IS NULL OR project_id = $4::uuid)
+         RETURNING project_id`,
+        [envelopeId, accepted ? "ack_accepted" : "ack_rejected", reason ?? null, projectId ?? null],
       );
       if (res.rowCount) {
         await this.logEvent(client, res.rows[0].project_id, "gateway", "ack", {
@@ -285,6 +288,7 @@ export class Repos {
     committed: boolean;
     idMapDelta: { logical_id: string; element_id: number }[];
     errors: unknown[];
+    projectId?: string; // the executor's session project: scopes the update (SI-10)
   }): Promise<{ projectId: string; seq: number } | null> {
     const client = await this.db.connect();
     try {
@@ -292,8 +296,9 @@ export class Repos {
       const res = await client.query(
         `UPDATE envelopes SET status = $2, resolved_at = now()
          WHERE envelope_id = $1 AND status IN ('issued', 'ack_accepted')
+           AND ($3::uuid IS NULL OR project_id = $3::uuid)
          RETURNING project_id, seq`,
-        [r.envelopeId, r.committed ? "committed" : "rolled_back"],
+        [r.envelopeId, r.committed ? "committed" : "rolled_back", r.projectId ?? null],
       );
       if (!res.rowCount) {
         await client.query("ROLLBACK");

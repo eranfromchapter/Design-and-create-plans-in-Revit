@@ -222,9 +222,14 @@ def _resolve_levels(
             )
             return floor_z, ceiling_z, None, "meta"
         return floor_z, ceiling_z, slab, "meta"
-    floor_z = 0.0
-    heights = Counter(float(w["height"]) for w in commit0_layout.get("walls", []))
-    ceiling_z = heights.most_common(1)[0][0] if heights else 2700.0
+    if {"floor_z", "ceiling_z"} <= set(meta_levels):
+        # Lane B: measured floor/ceiling without slab_to_slab -> the card supplies the slab
+        floor_z = float(meta_levels["floor_z"])
+        ceiling_z = float(meta_levels["ceiling_z"])
+    else:
+        floor_z = 0.0
+        heights = Counter(float(w["height"]) for w in commit0_layout.get("walls", []))
+        ceiling_z = heights.most_common(1)[0][0] if heights else 2700.0
     confirmed = confirmations.get("slab_to_slab_mm")
     if confirmed is None:
         items.append(

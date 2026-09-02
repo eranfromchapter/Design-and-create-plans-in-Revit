@@ -415,7 +415,8 @@ describe.skipIf(!DATABASE_URL)("gateway Phase 6 flow (DB-backed)", () => {
     const failure = await gw.repos.latestReviewOfKind(projectId, "mep_failure");
     expect(failure?.status).toBe("pending");
     const bad = await planMep(projectId, { confirmations: { slab_to_slab_mm: 100 } });
-    expect(bad.statusCode).toBeGreaterThanOrEqual(400); // zod refuses before the compiler is called
+    expect(bad.statusCode).toBe(400); // zod refuses before the compiler is called
+    expect(bad.json().error).toBe("bad_request");
     expect(mepRequests).toHaveLength(3);
   });
 
@@ -563,7 +564,11 @@ describe.skipIf(!DATABASE_URL)("gateway Phase 6 flow (DB-backed)", () => {
     await gw.repos.recordAck(await issueFor(projectId, first.reviewId, 5, "Commit #2"), false, "bad_seq");
     const capped = await issue(projectId);
     expect(capped.json()).toEqual({ error: "merge_review_reissue_exhausted", reissues: 3 });
-    expect((await gw.repos.latestReviewOfKind(projectId, "commit2_failure"))!.content).toMatchObject({ reason: "merge_review_reissue_exhausted", hard: false });
+    expect((await gw.repos.latestReviewOfKind(projectId, "commit2_failure"))!.content).toMatchObject({ reason: "merge_review_reissue_exhausted", hard: true });
+    // the chain is done: a new mep_plan restarts it; repeated calls file no duplicate card
+    expect((await issue(projectId)).json().error).toBe("merge_review_reissue_exhausted");
+    expect((await gw.pool.query("SELECT count(*)::int AS n FROM reviews WHERE project_id = $1 AND kind = 'commit2_failure'", [projectId])).rows[0].n).toBe(1);
+    expect((await merge(projectId)).json()).toEqual({ error: "merge_chain_failed" });
 
     // hard: the merged plan is wrong for this model → chain failed, never re-merged
     const { projectId: p2 } = await chainToInterior();
@@ -662,7 +667,7 @@ describe.skipIf(!DATABASE_URL)("gateway Phase 6 flow (DB-backed)", () => {
     expect(events.rows[0].payload).toMatchObject({ merge_review_id: m.reviewId, iterations_used: 0 });
   });
 
-  it("POST /envelopes: commit-class envelopes need an approval_ref", async () => {
+  it("POST /envelopes: commit-class envelopes need an approval_ref that names the approved ops", async () => {
     const projectId = await createProject();
     for (const payload of [
       { ops: [CHECK], commit_label: "ad hoc" },
@@ -673,6 +678,47 @@ describe.skipIf(!DATABASE_URL)("gateway Phase 6 flow (DB-backed)", () => {
       expect(res.statusCode).toBe(422);
       expect(res.json().error).toBe("approval_ref_required");
     }
+    // a well-formed ref is not enough: the review must exist, be approved, hash-match
+    // and carry exactly these ops (SI-2)
+    const { projectId: p2 } = await chainToInterior();
+    await approvedMep(p2);
+    const m = await approvedMerge(p2);
+    const review = (await gw.repos.getReview(m.reviewId))!;
+    const ref = { review_id: review.id, content_hash: review.content_hash };
+    const forged = await inject({
+      method: "POST", url: `/projects/${p2}/envelopes`, headers: svc,
+      payload: { ops: [...MEP_OPS, CHECK], commit_label: "Commit #2", approval_ref: ref },
+    });
+    expect(forged.statusCode).toBe(422);
+    expect(forged.json().error).toBe("approval_ref_mismatch");
+    const wrongHash = await inject({
+      method: "POST", url: `/projects/${p2}/envelopes`, headers: svc,
+      payload: { ops: (review.content as { ops: Op[] }).ops, approval_ref: { ...ref, content_hash: "f".repeat(64) } },
+    });
+    expect(wrongHash.json().error).toBe("approval_ref_mismatch");
+    const otherProject = await inject({
+      method: "POST", url: `/projects/${projectId}/envelopes`, headers: svc,
+      payload: { ops: (review.content as { ops: Op[] }).ops, approval_ref: ref },
+    });
+    expect(otherProject.json().error).toBe("approval_ref_mismatch");
+    // the genuine ops under the genuine ref pass the guard (and stop at the executor)
+    const genuine = await inject({
+      method: "POST", url: `/projects/${p2}/envelopes`, headers: svc,
+      payload: { ops: (review.content as { ops: Op[] }).ops, commit_label: "Commit #2", approval_ref: ref },
+    });
+    expect(genuine.json().error).toBe("no_executor_connected");
+  });
+
+  it("a transient merge error (timeout / unreachable) files a retryable card and does not fail the chain", async () => {
+    const { projectId } = await chainToInterior();
+    await approvedMep(projectId);
+    mergeQueue.push({ status: 422, body: { error: "merge_timeout", message: "merge exceeded 60s", raw_outputs: [] } });
+    expect((await merge(projectId)).json().error).toBe("merge_timeout");
+    const failure = await gw.repos.latestReviewOfKind(projectId, "commit2_failure");
+    expect(failure!.content).toMatchObject({ reason: "merge_error", hard: false });
+    expect((await state(projectId)).commit2.failed).toBe(false);
+    const retry = await merge(projectId); // the stub answers clean this time
+    expect(retry.statusCode).toBe(201);
   });
 
   // ---- clash signal plumbing ------------------------------------------------------
@@ -682,6 +728,9 @@ describe.skipIf(!DATABASE_URL)("gateway Phase 6 flow (DB-backed)", () => {
     await approvedMep(projectId);
     const m = await approvedMerge(projectId);
     const envelopeId = await issueFor(projectId, m.reviewId, 3, "Commit #2");
+    // a commit_result scoped to ANOTHER project never touches this envelope (SI-10)
+    expect(await gw.repos.recordCommitResult({ envelopeId, committed: true, idMapDelta: [], errors: [], projectId: randomUUID() })).toBeNull();
+    expect((await gw.repos.latestEnvelopeForReview(m.reviewId))!.status).toBe("issued");
     expect(await gw.repos.recordClashDelta(projectId, envelopeId, [{ a_id: "revit:4711", b_id: "Q-001", kind: "hard_interference" }])).toBe(true);
     expect(await gw.repos.recordClashDelta(randomUUID(), envelopeId, [{ a_id: "X-1", b_id: "Y-1", kind: "k" }])).toBe(false);
     expect(await gw.repos.recordClashDelta(projectId, randomUUID(), [])).toBe(false);
@@ -693,8 +742,14 @@ describe.skipIf(!DATABASE_URL)("gateway Phase 6 flow (DB-backed)", () => {
     ]);
     const many = Array.from({ length: 300 }, (_, i) => ({ a_id: `E-${String(i).padStart(3, "0")}`, b_id: "P-001", kind: "k" }));
     expect(mergeClashPairs([], many)).toHaveLength(256);
-    expect(clashPairsFromErrors([{ code: "interference", message: "A-1~B-2" }, { code: "other", message: "x~y" }])).toEqual([
-      { a_id: "A-1", b_id: "B-2", kind: "hard_interference" },
+    expect(clashPairsFromErrors([
+      { code: "interference", message: "E-001~P-001" },
+      { code: "interference", message: "revit:4711~Q-012" },
+      { code: "interference", message: "interference: E-001~P-001" }, // a prefixed message is not a pair
+      { code: "other", message: "x~y" },
+    ])).toEqual([
+      { a_id: "E-001", b_id: "P-001", kind: "hard_interference" },
+      { a_id: "revit:4711", b_id: "Q-012", kind: "hard_interference" },
     ]);
     expect(isHardRollback([{ code: "interference", message: "a~b" }, { code: "expired_ttl" }])).toBe(false);
     expect(isHardRollback([{ code: "unknown_host", message: "W-9" }])).toBe(true);

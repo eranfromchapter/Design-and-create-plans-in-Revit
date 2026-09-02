@@ -75,6 +75,8 @@ def phase_a(prisms: list[Prism], deadline_check: DeadlineCheck = None) -> list[C
             q = prisms[j]
             if q.element_id == p.element_id:
                 continue
+            if p.cls == q.cls == "structure":
+                continue  # columns/risers are existing conditions: never created, never re-planned
             key = (min(p.element_id, q.element_id), max(p.element_id, q.element_id))
             if key in seen:
                 continue

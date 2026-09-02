@@ -103,8 +103,8 @@
 <g class="device switch" data-id="E-041"><rect x="1074.0" y="5880.5" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="1074.0" y1="5980.5" x2="1174.0" y2="5880.5" stroke="black" stroke-width="15.0"/></g>
 <g class="device switch" data-id="E-042"><rect x="10074.0" y="6255.5" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="10074.0" y1="6355.5" x2="10174.0" y2="6255.5" stroke="black" stroke-width="15.0"/></g>
 <g class="device switch" data-id="E-043"><rect x="4674.0" y="1055.5" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="4674.0" y1="1155.5" x2="4774.0" y2="1055.5" stroke="black" stroke-width="15.0"/></g>
-<g class="device switch" data-id="E-044"><rect x="3500.0" y="2719.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="3500.0" y1="2819.0" x2="3600.0" y2="2719.0" stroke="black" stroke-width="15.0"/></g>
-<g class="device switch" data-id="E-045"><rect x="7904.0" y="4700.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="7904.0" y1="4800.0" x2="8004.0" y2="4700.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-044"><rect x="3250.0" y="3725.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="3250.0" y1="3825.0" x2="3350.0" y2="3725.0" stroke="black" stroke-width="15.0"/></g>
+<g class="device switch" data-id="E-045"><rect x="7904.0" y="4850.0" width="100.0" height="100.0" fill="white" stroke="black" stroke-width="15.0"/><line x1="7904.0" y1="4950.0" x2="8004.0" y2="4850.0" stroke="black" stroke-width="15.0"/></g>
 <g class="stack sanitary" data-id="P-001"><circle cx="5133.3" cy="7000.0" r="78.0" fill="white" stroke="#1f4e9c" stroke-width="15.0"/><line x1="5055.3" y1="7000.0" x2="5211.3" y2="7000.0" stroke="#1f4e9c" stroke-width="15.0"/><line x1="5133.3" y1="6922.0" x2="5133.3" y2="7078.0" stroke="#1f4e9c" stroke-width="15.0"/></g>
 <g class="stack sanitary" data-id="P-002"><circle cx="4800.0" cy="169.0" r="65.5" fill="white" stroke="#1f4e9c" stroke-width="15.0"/><line x1="4734.5" y1="169.0" x2="4865.5" y2="169.0" stroke="#1f4e9c" stroke-width="15.0"/><line x1="4800.0" y1="103.5" x2="4800.0" y2="234.5" stroke="#1f4e9c" stroke-width="15.0"/></g>
 <polyline class="pipe sanitary" data-id="P-003" points="600.0,4225.0 600.0,6675.0" fill="none" stroke="#1f4e9c" stroke-width="76.0" stroke-linejoin="round"/>
@@ -158,8 +158,8 @@
 <polyline class="conduit" data-id="Q-041" points="1200.0,5930.5 1200.0,5930.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
 <polyline class="conduit" data-id="Q-042" points="10200.0,6305.5 10200.0,6305.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
 <polyline class="conduit" data-id="Q-043" points="4800.0,1105.5 4800.0,1105.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
-<polyline class="conduit" data-id="Q-044" points="3600.0,2769.0 3600.0,2769.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
-<polyline class="conduit" data-id="Q-045" points="8000.0,4750.0 8000.0,4750.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-044" points="3300.0,3825.0 3300.0,3825.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
+<polyline class="conduit" data-id="Q-045" points="8000.0,4900.0 8000.0,4900.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
 <polyline class="conduit" data-id="Q-046" points="0.0,1912.5 0.0,3825.0 1200.0,3825.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
 <polyline class="conduit" data-id="Q-047" points="900.0,7000.0 1200.0,7000.0" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>
 <polyline class="conduit" data-id="Q-048" points="1200.0,3825.0 1200.0,5930.5" fill="none" stroke="#e08a00" stroke-width="20.0" stroke-dasharray="120.0 60.0"/>

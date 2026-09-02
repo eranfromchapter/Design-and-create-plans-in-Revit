@@ -158,7 +158,7 @@ def build_prisms(
                 (fx + sa * along * ux + st * (t / 2) * nx, fy + sa * along * uy + st * (t / 2) * ny)
                 for sa, st in ((-1, -1), (1, -1), (1, 1), (-1, 1))
             ]
-            h = float(args["height_afl"])
+            h = floor_z + float(args["height_afl"])  # absolute, like the pipe/conduit z
             prisms.append(
                 Prism(
                     args["id"],

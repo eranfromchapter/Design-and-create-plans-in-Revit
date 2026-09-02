@@ -82,7 +82,7 @@ export class GatewayCore {
         break;
       case "ack": {
         const m = msg as unknown as { envelope_id: string; status: "accepted" | "rejected"; reason?: string };
-        await this.repos.recordAck(m.envelope_id, m.status === "accepted", m.reason);
+        await this.repos.recordAck(m.envelope_id, m.status === "accepted", m.reason, session.projectId);
         break;
       }
       case "commit_result": {
@@ -95,6 +95,7 @@ export class GatewayCore {
           committed: m.status === "committed",
           idMapDelta: m.id_map_delta,
           errors: m.errors,
+          projectId: session.projectId,
         });
         break;
       }

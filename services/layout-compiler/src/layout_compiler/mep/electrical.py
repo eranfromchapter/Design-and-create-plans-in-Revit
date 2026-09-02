@@ -13,7 +13,7 @@ from typing import Any
 
 from shapely.geometry import Point
 
-from layout_compiler.geometry import pt_on_wall, wall_len
+from layout_compiler.geometry import BOUNDARY_EDGE_TOLERANCE_MM, pt_on_wall, wall_len
 from layout_compiler.mep.constants import (
     APPLIANCE_SHIFT_MAX_MM,
     COORD_ROUND,
@@ -28,6 +28,7 @@ from layout_compiler.mep.constants import (
     E2_HEIGHT_AFL_MM,
     E2_INSET_MM,
     E2_SPACING_MM,
+    E3_CORNER_FALLBACK_MM,
     E3_HEIGHT_AFL_MM,
     E3_JAMB_OFFSET_MM,
     E4_STACK_EXCLUSION_MM,
@@ -41,8 +42,15 @@ from layout_compiler.mep.inputs import (
     left_normal,
     offset_of,
     placed_items,
+    wall_thickness,
 )
-from layout_compiler.mep.runs import Interval, legal_on_runs, run_containing, wall_runs
+from layout_compiler.mep.runs import (
+    Interval,
+    legal_on_runs,
+    room_edges_on_wall,
+    run_containing,
+    wall_runs,
+)
 from layout_compiler.swing import swing_side_normal
 
 E1_PROGRAMS_EXCLUDED = ("closet", "bathroom", "powder", "corridor", "laundry")
@@ -126,13 +134,20 @@ def spacing_positions(
 # ---- helpers ---------------------------------------------------------------------
 
 
+def side_probe_mm(wall: dict[str, Any]) -> float:
+    """Distance off the centerline that clears any validator-legal room edge (edges may
+    sit up to t/2 + BOUNDARY_EDGE_TOLERANCE_MM from the centerline, i.e. face-aligned)."""
+    return wall_thickness(wall) / 2 + BOUNDARY_EDGE_TOLERANCE_MM + 1.0
+
+
 def room_face(polygon: Any, wall: dict[str, Any], offset: float) -> str:
     """Which face of the wall the room is on ('left' | 'right' of start->end)."""
     fx, fy = pt_on_wall(wall, offset)
     nx, ny = left_normal(wall)
-    if polygon.covers(Point(fx + nx, fy + ny)):
+    d = side_probe_mm(wall)
+    if polygon.covers(Point(fx + nx * d, fy + ny * d)):
         return "left"
-    if polygon.covers(Point(fx - nx, fy - ny)):
+    if polygon.covers(Point(fx - nx * d, fy - ny * d)):
         return "right"
     return "left"
 
@@ -269,17 +284,17 @@ def plan_electrical(
                 for t0, t1 in runs:
                     for x in spacing_positions(t1 - t0, E1_INSET_MM, inputs.outlet_spacing):
                         e1.append(make("E-1", room, wall, t0 + x, E1_HEIGHT_AFL_MM, runs))
-        # ---- E-2 counter circuit on kitchen counter walls
-        if program == "kitchen":
-            for wall_id in inputs.counter_walls.get(room_id, []):
-                wall = inputs.walls[wall_id]
-                runs = runs_for(room, wall, E2_HEIGHT_AFL_MM)
-                for interval in inputs.counter_runs.get((room_id, wall_id), []):
-                    for t0, t1 in _clip(runs, interval):
-                        for x in spacing_positions(t1 - t0, E2_INSET_MM, E2_SPACING_MM):
-                            counter.append(
-                                make("E-2", room, wall, t0 + x, E2_HEIGHT_AFL_MM, runs, "gfci")
-                            )
+        # ---- E-2 counter circuit on every counter wall the room owns (kitchens, and any
+        #      other program with is_counter casework — the interval E-1 gave up above)
+        for wall_id in inputs.counter_walls.get(room_id, []):
+            wall = inputs.walls[wall_id]
+            runs = runs_for(room, wall, E2_HEIGHT_AFL_MM)
+            for interval in inputs.counter_runs.get((room_id, wall_id), []):
+                for t0, t1 in _clip(runs, interval):
+                    for x in spacing_positions(t1 - t0, E2_INSET_MM, E2_SPACING_MM):
+                        counter.append(
+                            make("E-2", room, wall, t0 + x, E2_HEIGHT_AFL_MM, runs, "gfci")
+                        )
 
     # ---- E-2 basin rule: a gfci within 914 mm of every bathroom/powder lav
     for f in inputs.fixtures:
@@ -381,8 +396,9 @@ def plan_electrical(
         latch_t = door["offset"] + half if swing_left else door["offset"] - half
         nx, ny = swing_side_normal(door, wall)
         mx, my = pt_on_wall(wall, door["offset"])
-        room = _room_at(inputs, (mx + nx, my + ny), wall["id"]) or _room_at(
-            inputs, (mx - nx, my - ny), wall["id"]
+        d = side_probe_mm(wall)
+        room = _room_at(inputs, (mx + nx * d, my + ny * d), wall["id"]) or _room_at(
+            inputs, (mx - nx * d, my - ny * d), wall["id"]
         )
         if room is None:
             items.append(
@@ -410,12 +426,22 @@ def plan_electrical(
                 door_id=door["id"],
             )
         else:
-            corner = tuple(wall["end"]) if sign > 0 else tuple(wall["start"])
-            adjacent = _adjacent_wall_at(inputs, room, wall["id"], corner)
-            if adjacent is not None:
+            # the ROOM's latch corner: the end of the room edge on this (possibly shared,
+            # longer) wall that holds the door — not the host wall's endpoint
+            corner: tuple[float, float] | None = None
+            for t0, t1 in room_edges_on_wall(room, wall):
+                if t0 - 1.0 <= door["offset"] <= t1 + 1.0:
+                    corner = pt_on_wall(wall, t1 if sign > 0 else t0)
+                    break
+            adjacent = (
+                _adjacent_wall_at(inputs, room, wall["id"], corner) if corner is not None else None
+            )
+            if adjacent is not None and corner is not None:
                 at_start = math.dist(adjacent["start"], corner) <= 1.0
                 adj_offset = (
-                    E3_JAMB_OFFSET_MM if at_start else wall_len(adjacent) - E3_JAMB_OFFSET_MM
+                    E3_CORNER_FALLBACK_MM
+                    if at_start
+                    else wall_len(adjacent) - E3_CORNER_FALLBACK_MM
                 )
                 adj_runs = runs_for(room, adjacent, E3_HEIGHT_AFL_MM)
                 if legal_on_runs(adj_runs, adj_offset):

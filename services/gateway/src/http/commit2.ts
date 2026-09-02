@@ -30,6 +30,7 @@ const planMepBody = z.object({ confirmations: mepConfirmationsSchema.optional() 
 
 export const PANEL_WALL_TOLERANCE_MM = 600;
 export const COMMIT2_REISSUE_CAP = 3;
+const TRANSIENT_MERGE_ERRORS = new Set(["merge_timeout", "merge_error", "layout_compiler_unreachable"]);
 
 export interface IssueSpec {
   ops: OpInput[];
@@ -314,20 +315,25 @@ export function registerCommit2Routes(
       }
       iterationsUsed = latestContent.iterations_used;
       if (iterationsUsed >= MERGE_BUDGET) {
-        await repos.createReview(
-          projectId,
-          "commit2_failure",
-          {
-            reason: "merge_budget_exhausted",
-            hard: false,
-            merge_review_id: latest.id,
-            envelope_id: env.envelope_id,
-            iterations_used: iterationsUsed,
-            clash_pairs: envelopeClashPairs(env),
-            chain: { interior_review_id: interior.id, mep_review_id: mep.id },
-          },
-          false,
-        );
+        // one REVIEW card per exhausted plan — a polling client never piles up duplicates
+        const existing = await repos.pendingReviewOfKind(projectId, "commit2_failure");
+        const dup = existing && (existing.content as { merge_review_id?: string; reason?: string });
+        if (!(dup && dup.merge_review_id === latest.id && dup.reason === "merge_budget_exhausted")) {
+          await repos.createReview(
+            projectId,
+            "commit2_failure",
+            {
+              reason: "merge_budget_exhausted",
+              hard: false,
+              merge_review_id: latest.id,
+              envelope_id: env.envelope_id,
+              iterations_used: iterationsUsed,
+              clash_pairs: envelopeClashPairs(env),
+              chain: { interior_review_id: interior.id, mep_review_id: mep.id },
+            },
+            false,
+          );
+        }
         return reply.code(409).send({ error: "merge_budget_exhausted", iterations_used: iterationsUsed });
       }
       iteration = latestContent.iteration + 1;
@@ -376,7 +382,10 @@ export function registerCommit2Routes(
         false,
       );
     if (!outcome.ok) {
-      await failure({ reason: "merge_error", error: outcome.error, message: outcome.message }, true);
+      // a timeout / unreachable compiler says nothing about the plan: retryable (hard=false);
+      // a contract refusal (clash_pair_unknown, merge_internal, ...) is the plan's fault
+      const transient = TRANSIENT_MERGE_ERRORS.has(outcome.error);
+      await failure({ reason: "merge_error", error: outcome.error, message: outcome.message }, !transient);
       await repos.logEventDirect(projectId, "gateway", "merge_failed", {
         error: outcome.error,
         message: outcome.message,
@@ -388,8 +397,8 @@ export function registerCommit2Routes(
     const verified = verifyMergeResult(
       result,
       {
-        interior: { content_hash: interior.content_hash, ops: interiorContent.ops },
-        mep: { content_hash: mep.content_hash, ops: mepContent.ops },
+        interior: { review_id: interior.id, content_hash: interior.content_hash, ops: interiorContent.ops },
+        mep: { review_id: mep.id, content_hash: mep.content_hash, ops: mepContent.ops },
       },
       priorActions,
     );
@@ -464,18 +473,24 @@ export function registerCommit2Routes(
     }
     const reissues = await repos.envelopeCountForReview(review.id);
     if (reissues >= COMMIT2_REISSUE_CAP) {
-      await repos.createReview(
-        projectId,
-        "commit2_failure",
-        {
-          reason: "merge_review_reissue_exhausted",
-          hard: false,
-          merge_review_id: review.id,
-          reissues,
-          chain: { interior_review_id: chain.interior!.id, mep_review_id: chain.mep!.id },
-        },
-        false,
-      );
+      // three transient failures of the same plan: the chain is done (hard) — a new
+      // mep_plan restarts it; the card is filed once
+      const existing = await repos.pendingReviewOfKind(projectId, "commit2_failure");
+      const dup = existing && (existing.content as { merge_review_id?: string; reason?: string });
+      if (!(dup && dup.merge_review_id === review.id && dup.reason === "merge_review_reissue_exhausted")) {
+        await repos.createReview(
+          projectId,
+          "commit2_failure",
+          {
+            reason: "merge_review_reissue_exhausted",
+            hard: true,
+            merge_review_id: review.id,
+            reissues,
+            chain: { interior_review_id: chain.interior!.id, mep_review_id: chain.mep!.id },
+          },
+          false,
+        );
+      }
       return reply.code(409).send({ error: "merge_review_reissue_exhausted", reissues });
     }
     const content = review.content as { ops: OpInput[] };

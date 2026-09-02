@@ -74,12 +74,22 @@ def element_boxes(model: SimModel, catalogs: Catalogs) -> list[Box]:
     z_half = float(device_spec["z_half_mm"])
     for did in sorted(model.devices):
         dev = model.devices[did]
-        wall = model.walls[dev["host_wall_id"]]
+        wall = model.walls.get(dev["host_wall_id"])
+        if wall is None:
+            continue  # host deleted by a later op: no wall, no box (never a crash)
         start, end = tuple(wall["start"]), tuple(wall["end"])
         fx, fy = placement.centerline_point(start, end, dev["offset"])
         length = math.hypot(end[0] - start[0], end[1] - start[1])
         ux, uy = (end[0] - start[0]) / length, (end[1] - start[1]) / length
-        half_t = catalogs.wall_thickness_mm.get(wall["revit_type"], 100.0) / 2
+        # the same thickness rule as the merge gate's prisms: the scanned as-built
+        # thickness wins over the catalog (keeps the AABB a superset of Phase A)
+        half_t = (
+            float(
+                wall.get("as_built_thickness")
+                or catalogs.wall_thickness_mm.get(wall["revit_type"], 100.0)
+            )
+            / 2
+        )
         corners = [
             (fx + sa * along * ux + st * half_t * -uy, fy + sa * along * uy + st * half_t * ux)
             for sa in (-1, 1)

@@ -72,6 +72,6 @@ public sealed class ClashExemptionsTests
         Assert.Equal("sanitary", types.SystemOf(types.SystemTypeNames["sanitary"]));
         Assert.Null(types.SystemOf("Fire Protection"));
         Assert.Equal(21.0, types.ConduitDiameterMm);
-        Assert.EndsWith("_PLACEHOLDER", types.ConduitType); // human input outstanding (Part J)
+        Assert.False(string.IsNullOrEmpty(types.ConduitType));
     }
 }

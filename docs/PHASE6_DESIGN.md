@@ -210,7 +210,7 @@ Response 200 = **MepPlan** (the `mep_plan` review content minus gateway-stamped 
   "branches": [{"id":"P-003","fixture_ids":["F-006"],"stack_id":"P-001","diameter":76.0,"slope":0.0104,"segment":[[600,4225,-188.0],[600,6675,-162.5]],"cls":"leg"}],
   "fixture_routes": [{"fixture_id":"F-006","leg_mm":2775.0,"along_mm":4533.3,"L_mm":4533.3,"L_max_mm":7115.4,"path_mm":7308.3,"plenum_overshoot_mm":2.0}],
   "devices":  [{"id":"E-001","kind":"receptacle","rule":"E-1","room_id":"R-001","host_wall_id":"W-001","offset":1912.5,"height_afl":380.0,
-               "run":[0.0,3825.0],"face":"right","conduit_id":"Q-001","source":null,"circuit":"120V"}],
+               "run":[0.0,3825.0],"face":"right","door_id":null,"source":null,"circuit":"120V"}]   # device ↔ conduit pairing lives in home_runs[] (conduit_id), not on the device,
   "home_runs":[{"device_id":"E-001","conduit_id":"Q-001","length_mm":12345.6,"penetrations":0,"cost":12345.6,"nodes":[[0.0,1912.5],[0.0,7000.0],...]}],
   "ops": [ create_pipe..., place_device..., create_conduit... ],
   "review_items": [{"code":"wye_manual","severity":"info","refs":["P-001","P-005"],"message":"..."}],
@@ -449,7 +449,7 @@ merge(iterations_used=u0, iteration=k, prior_actions, clash_pairs):
       if u ≥ 3: return budget_exhausted(clash_report)
       apply actions for all clashes; u += 1
 ```
-Gateway: after `rolled_back` with `interference`, the next `merge-commit2` on the same chain sends `iterations_used = prior.content.iterations_used`, `iteration = prior.content.iteration + 1`, `prior_actions = prior.content.actions`, `clash_pairs`; if `iterations_used ≥ 3` → `commit2_failure{merge_budget_exhausted}` + 409 without calling the compiler. Consequence: two rollbacks → plan 3 commits (`used = 2`); four rollbacks → REVIEW. Deterministic ordering everywhere; wall clock only at the request boundary with `deadline_check` inside.
+Gateway: after `rolled_back` with `interference`, the next `merge-commit2` on the same chain sends `iterations_used = prior.content.iterations_used`, `iteration = prior.content.iteration + 1`, `prior_actions = [...prior.content.prior_actions, ...prior.content.actions] (cumulative: each commit2_merge review stores the prior_actions it was built from)`, `clash_pairs`; if `iterations_used ≥ 3` → `commit2_failure{merge_budget_exhausted}` + 409 without calling the compiler. Consequence: two rollbacks → plan 3 commits (`used = 2`); four rollbacks → REVIEW. Deterministic ordering everywhere; wall clock only at the request boundary with `deadline_check` inside.
 
 ### 4.6 Phase 5 handoff amendment (PIN-37)
 The interior half of Commit #2 is `interior_plan.content.ops` verbatim **unless** a Phase A/B re-plan moves or drops furniture; then `interior.ops_verbatim=false`, `replan_deltas[]` lists each item (from/to/reason), the card shows them, and the human's `commit2_merge` approval is the anchor for the moved items. The commit2 snapshot is the re-planned furnished layout (validator-clean).
@@ -559,13 +559,43 @@ Inputs (`golden_mep.py`): `PANEL = [8050.0, 5200.0]` (foyer, inside face of W-01
 - `test_merge_clash.py`: `test_injected_clash_resolves_within_3`; `test_budget_exhausted_reviews`; `test_shared_budget_mixed` (Phase A 1 + two rollbacks commit; a third rollback exhausts); `test_progress_guarantee_noop_escalates_to_drop`; `test_relegalize_uses_preplaced` (item cannot land on other furniture); `test_relocate_stack_on_structure`; `test_same_priority_blocked`; `test_replay_prior_actions_deterministic`; `test_ids_never_renumber`; `test_phase_a_equals_sim_law` (property on random models: oriented pairs ⊆ sim AABB pairs; exemptions identical); `test_exemption_table_shared_fixture`; `test_validator_rerun_after_replan`.
 - `test_mep_golden.py` (six files; real-sim replay commits; recovery pinned); `test_fittings_conformance.py`; `test_server.py` (`/plan-mep`, `/merge` shapes, `extra=forbid`, 422 codes); `test_mep_determinism.py` (AST: no `random`/`time`/`os.environ` outside `plan.py`/`gate.py`; `test_deadline_interrupts_solver` via a counting callback); `test_legalize_furniture_defaults_keep_phase5_bytes`.
 
-`tools/revit-sim/tests/`: `test_clash_law.py` (boxes, exemptions, created-set scope, legacy family behaviour identical on the Phase 5 golden, committed-model reset), `test_inject_clash.py` (hook absent by default; refused without control port; pops per check; order `[ack, commit_result, clash_delta]`), `test_svg_mep.py` (symbols, stack marker, **all four goldens re-rendered unchanged**), `test_pipe_type_rejection.py`, `test_no_env_reads.py`.
+`tools/revit-sim/tests/`: `test_clash_law.py` (boxes, exemptions, created-set scope, legacy family behaviour identical on the Phase 5 golden, committed-model reset), `test_inject_clash.py` (hook absent by default; refused without control port; pops per check; order `[ack, commit_result, clash_delta]`), `test_svg_mep.py` (symbols, stack marker, **all four goldens re-rendered unchanged**), `test_mep_ops.py` (pipe_type / zero-length rejection), `test_no_env_reads.py`.
 
-`services/gateway/tests/`: `mep-routes.test.ts` (full ladder codes; confirmations carry-forward; `panel_not_on_wall`; blocking → `mep_plan_ready=false` even when auto-approved under CI; UI form; `mep_failure` never auto), `merge-routes.test.ts` (ladder incl. every envelope status; stub `/merge`; `simulateRollback(envelopeId, errors, pairs?)`; iteration/`iterations_used` progression; `merge_budget_exhausted` after the fourth rollback; `merge_review_consumed`; `merge_review_stale` after a newer `interior_plan`/`mep_plan`; fresh chain resets the budget; `merge_ops_unverified`; `reissuable` for `expired_ttl`/`ack_rejected`/`expired` with cap; `commit2_failure` for hard codes; commit2 snapshot layout == content.layout; `commit2_already_done` for furnish/plan-mep/merge/issue; `approval_ref_required` on `/envelopes`; envelope ops == review content ops by JCS; fresh seq and `reissue_of`), `core.test.ts` (`commit_result`/`clash_delta` in both orders; per-session serialization; `clash_delta` clamp and project scoping).
+`services/gateway/tests/`: `commit2-routes.test.ts` (one suite for plan-mep, merge-commit2, issue-commit2 and the WSS frames: full ladder codes; confirmations carry-forward; `panel_not_on_wall`; blocking → `mep_plan_ready=false` even when auto-approved under CI; UI form; `mep_failure` never auto; ladder incl. every envelope status; stub `/merge`; `simulateRollback(envelopeId, errors, pairs?)`; iteration/`iterations_used` progression; `merge_budget_exhausted` after the fourth rollback; `merge_review_consumed`; `merge_review_stale` after a newer `interior_plan`/`mep_plan`; fresh chain resets the budget; `merge_ops_unverified`; `reissuable` for `expired_ttl`/`ack_rejected`/`expired` with cap; `commit2_failure` for hard codes; commit2 snapshot layout == content.layout; `commit2_already_done` for furnish/plan-mep/merge/issue; `approval_ref_required` on `/envelopes`; envelope ops == review content ops by JCS; fresh seq and `reissue_of`), `core.test.ts` (`commit_result`/`clash_delta` in both orders; per-session serialization; `clash_delta` clamp and project scoping).
 
 `plugin/ChapterHub.Core.Tests/`: `PipePathTests.cs`, `ClashPairsTests.cs`, `ClashExemptionsTests.cs`; `RegistryCoverageTests` unchanged; CI `dotnet build` covers the handlers.
 
 `tests/e2e/phase6.e2e.test.ts` (5 children, sim `controlPort: true`): chain to approved `interior_plan` (as phase5) → `plan-mep {}` → 201 `blocking: ["levels_missing","panel_missing"]` → approve → `merge-commit2` → 409 `mep_review_items_open` → `plan-mep {confirmations}` → 201; `content.ops` deep-equals `phase6_2br_mep.json.ops`; `svgs.mep` == `phase6_2br_mep.svg`; approve → `merge-commit2` → 201 plan 1, `clash_report` == `phase6_2br_clash_report.json` → approve → `inject_clash 2 E-001 P-001` → `issue-commit2` 202 seq 3 → `waitForState(commit2.envelope_status === "rolled_back" && commit2.clash_pairs)` → `merge-commit2` → plan 2 (`actions[0].action === "shift_device"`, `replan_deltas` non-empty / ops differ for E-001) → approve → issue seq 4 → rolled back → plan 3 → approve → issue seq 5 → `waitForState(commit2_done)`; `last_committed_seq === 5`; `recent_envelopes` = [committed, committed, rolled_back, rolled_back, committed]; branches still approved; `layout_snapshots` = commit1 unchanged + commit2; sim `current_plan.svg` == `phase6_2br_recovery.svg`. Second `it` (fresh project): `inject_clash 4 …` → after the fourth rollback `merge-commit2` → 409 `merge_budget_exhausted`, pending `commit2_failure`, `commit2.exhausted`; `plan-mep` again → new `mep_plan` → approve → `merge-commit2` → 201 plan 1 (fresh chain). `api.ts` gains `planMep`, `mergeCommit2`, `issueCommit2`, `approveReview` confirmations, `stateSchema` fields. `make demo-phase6` = `vitest run phase6` + `demo_phase6.py`.
+
+---
+
+## 9a. Post-review amendments (adversarial review of the built branch)
+
+The 46-agent review of the implemented branch confirmed 17 findings; the fixes change three
+pinned details of this document, recorded here so §4/§5 are read with them:
+
+- **Conduit and pipe ids (amends §4.4 / PIN-27).** Drop conduits are `Q-n` for device `E-n`
+  and never renumber; trunks renumber from a fixed base (1 + highest device number) on every
+  raceway re-run and never reuse an id the merge dropped; a dropped trunk's GEOMETRY stays
+  forbidden, so a device whose only home run used it is dropped and reported (`dropped`,
+  `replan_deltas`, a `drop` action) rather than left conduit-less. Pipes are derived state
+  whenever P-1..P-4 re-run — after `relocate_stack` or after a plumbing fixture moved/dropped
+  (recorded as a `replan_plumbing` action) — and their ids may renumber.
+- **Verifier (amends §5.2).** "Every un-actioned op deep-equals the approved branch op" holds
+  for furniture and devices; conduits are always derived, pipes are derived after a
+  `relocate_stack`/`replan_plumbing` action; in addition every approved op must survive, be
+  in `dropped`, or be derived (completeness), and the echoed branch `review_id`s must match
+  the live rows. `POST /envelopes` with commit-class ops requires an `approval_ref` that names
+  THIS project's approved review with the same content hash and ops (SI-2), not merely a
+  well-formed ref.
+- **Device shifts (amends §4.4 / PIN-26).** A shifted device must also clear every stack's
+  ±300 E-4 square on its wall; `k = 1..4` failing escalates to `k = 5..8` before the drop.
+  Phase A acts on LIVE pairs (the sweep is repeated before each action of a round);
+  structure/structure pairs are existing conditions, never clashes.
+- **Executors.** The plugin sweeps created × the whole document (clash categories), reports
+  `revit:<ElementId>` for elements the HUB never created, and puts the bare `"A~B"` on the
+  wire; `commit_result`/`ack` are project-scoped in the gateway; the sim's device boxes use
+  the as-built thickness like Phase A.
 
 ---
 
@@ -647,7 +677,7 @@ Stop at the gate after 12.
 | Every loop bounded and time-limited (SI-6) | `test_mep_determinism.py::test_deadline_interrupts_solver`, counters asserted in plumbing/routing tests |
 | No LLM, no clock, no env in `mep/`, `merge/`, `revit_sim` | `test_mep_determinism.py` (AST), `revit-sim/tests/test_no_env_reads.py` |
 | Op registry validity of every emitted op | `test_mep_inputs.py::test_ops_registry_valid`, generator assertion |
-| Goldens 1–5 byte-stable | `revit-sim/tests/test_svg_mep.py::test_existing_goldens_unchanged`, `test_legalize_furniture_defaults_keep_phase5_bytes` |
+| Goldens 1–5 byte-stable | `layout-compiler/tests/test_interior_golden.py` + `test_mep_plan.py` (goldens 1–5 re-rendered through the sim's renderer, byte-pinned) and the phase1–5 e2e suites, `test_legalize_furniture_defaults_keep_phase5_bytes` |
 | Demo: plan SVG with device symbols, pipe/conduit polylines, stack marker; clash report JSON | `make demo-phase6`; `test_mep_golden.py` |
 | C#/Python pipe-path conformance | `PipePathTests.cs`, `test_fittings_conformance.py` |
 | Pre-phase gate checklist (live `create_pipe`, `create_door`, `place_device`) | human — `docs/MANUAL_REVIT_TEST.md` Pre-Phase-6 spike + Phase 6 gate rows |

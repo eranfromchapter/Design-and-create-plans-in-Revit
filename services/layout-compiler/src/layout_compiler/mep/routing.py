@@ -243,8 +243,15 @@ def route_home_runs(
     stacks: list[tuple[str, float]],
     deadline_check: DeadlineCheck = None,
     forbidden: list[Any] | None = None,
-    next_conduit: int = 1,
+    *,
+    trunk_base: int | None = None,
+    reserved: frozenset[str] = frozenset(),
 ) -> RoutingResult:
+    """Conduit ids are STABLE across re-runs (merge-gate re-plans re-derive the raceway):
+    a device's drop is Q-n for device E-n (the slot is kept even when unroutable), trunks
+    number from `trunk_base` (default 1 + the highest device number) and never reuse an
+    id in `reserved` (ids the merge gate dropped). z is ABSOLUTE like the pipes:
+    floor_z + AFL."""
     items: list[ReviewItem] = []
     if inputs.panel_node is None or inputs.panel_wall_id is None:
         empty = {"graph_nodes": 0, "graph_edges": 0, "dijkstra_states": 0}
@@ -255,6 +262,12 @@ def route_home_runs(
     home_runs: list[HomeRun] = []
     drops: list[dict[str, Any]] = []
     tree_edges: set[tuple[Node, Node]] = set()
+    floor_z = inputs.floor_z
+    next_conduit = (
+        trunk_base
+        if trunk_base is not None
+        else 1 + max((_device_number(d.id) for d in devices), default=0)
+    )
     for d in devices:
         foot = pt_on_wall(inputs.walls[d.host_wall_id], d.offset)
         node = min(graph.nodes, key=lambda n: math.dist(n, foot))
@@ -285,16 +298,23 @@ def route_home_runs(
             penetrations += pen
         path.reverse()  # panel -> device
         length = sum(math.dist(a, b) for a, b in zip(path, path[1:], strict=False))
-        conduit_id = f"Q-{next_conduit:03d}"
-        next_conduit += 1
+        conduit_id = f"Q-{_device_number(d.id):03d}"  # Q-n <-> E-n, stable across re-runs
         home_runs.append(HomeRun(d.id, conduit_id, length, penetrations, cost, path))
         drops.append(
             {
                 "id": conduit_id,
                 "device_id": d.id,
                 "path": [
-                    [round(node[0], COORD_ROUND), round(node[1], COORD_ROUND), d.height_afl],
-                    [round(node[0], COORD_ROUND), round(node[1], COORD_ROUND), E4_CONDUIT_Z_MM],
+                    [
+                        round(node[0], COORD_ROUND),
+                        round(node[1], COORD_ROUND),
+                        floor_z + d.height_afl,
+                    ],
+                    [
+                        round(node[0], COORD_ROUND),
+                        round(node[1], COORD_ROUND),
+                        floor_z + E4_CONDUIT_Z_MM,
+                    ],
                 ],
             }
         )
@@ -326,35 +346,35 @@ def route_home_runs(
                 visited.add((chain[-1], following))
                 visited.add((following, chain[-1]))
                 chain.append(following)
-            pts3 = [(x, y, E4_CONDUIT_Z_MM) for x, y in chain]
+            pts3 = [(x, y, floor_z + E4_CONDUIT_Z_MM) for x, y in chain]
             pieces, splits = split_unsupported(pts3)
             if splits:
                 junctions += splits
             for piece in pieces:
+                if len(piece) > E4_MAX_PATH_POINTS:  # one item per over-long chain
+                    items.append(
+                        ReviewItem(
+                            "conduit_path_too_long",
+                            "info",
+                            [_next_free(next_conduit, reserved)],
+                            f"raceway chain with {len(piece)} points split at {E4_MAX_PATH_POINTS}",
+                        )
+                    )
                 for k in range(0, max(1, len(piece) - 1), E4_MAX_PATH_POINTS - 1):
                     chunk = piece[k : k + E4_MAX_PATH_POINTS]
                     if len(chunk) < 2:
                         continue
-                    if len(piece) > E4_MAX_PATH_POINTS:
-                        items.append(
-                            ReviewItem(
-                                "conduit_path_too_long",
-                                "info",
-                                [f"Q-{next_conduit:03d}"],
-                                f"raceway chain with {len(piece)} points split at "
-                                f"{E4_MAX_PATH_POINTS}",
-                            )
-                        )
+                    conduit_id = _next_free(next_conduit, reserved)
+                    next_conduit = int(conduit_id[2:]) + 1
                     trunks.append(
                         {
-                            "id": f"Q-{next_conduit:03d}",
+                            "id": conduit_id,
                             "path": [
                                 [round(x, COORD_ROUND), round(y, COORD_ROUND), z]
                                 for x, y, z in chunk
                             ],
                         }
                     )
-                    next_conduit += 1
     if junctions:
         items.append(
             ReviewItem(
@@ -366,3 +386,17 @@ def route_home_runs(
         )
     counters = {**graph.counts(), "dijkstra_states": states}
     return RoutingResult(home_runs, drops, trunks, items, counters)
+
+
+def _device_number(device_id: str) -> int:
+    return int(device_id.split("-", 1)[1])
+
+
+def _next_free(n: int, reserved: frozenset[str]) -> str:
+    """The first trunk id >= Q-n that the merge gate has not dropped (bounded by |reserved|)."""
+    for _ in range(len(reserved) + 1):
+        candidate = f"Q-{n:03d}"
+        if candidate not in reserved:
+            return candidate
+        n += 1
+    return f"Q-{n:03d}"

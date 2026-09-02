@@ -14,6 +14,21 @@ from revit_sim.state import SimState
 CHECK = {"op": "run_interference_check", "args": {"scope": "last_commit"}}
 
 
+def family_op(fid: str, center: list[float]) -> dict:
+    return {
+        "op": "place_family",
+        "args": {
+            "id": fid,
+            "revit_family": "CHPT_Nightstand_PLACEHOLDER",
+            "revit_type": "Nightstand_450x450_PLACEHOLDER",
+            "center": center,
+            "rotation_deg": 0.0,
+            "footprint": [450.0, 450.0],
+            "level": "Level 1",
+        },
+    }
+
+
 def test_hooks_absent_by_default(tmp_path: Path):
     ex = Executor(
         state=SimState.load(tmp_path / "state"),
@@ -43,9 +58,29 @@ def test_injected_clash_fires_n_times_then_the_real_law_applies(make_executor):
         ]
         assert ex.model.walls == {}  # nothing partial
     assert ex.test_hooks.clash_remaining == 0
-    third = ex.handle_envelope(sign_envelope(make_body(1, ops)))  # same seq: rollbacks burn nothing
+    # the real law now applies — with REAL clash elements in the envelope: two families
+    # that touch (legal, strict <) commit; the injected pair is spent
+    touching = [
+        wall_op(1),
+        wall_op(2, y=3000.0),
+        family_op("F-001", [1000.0, 1000.0]),
+        family_op("F-002", [1450.0, 1000.0]),  # 450 wide: shares an edge, no overlap
+        CHECK,
+    ]
+    third = ex.handle_envelope(
+        sign_envelope(make_body(1, touching))
+    )  # same seq: rollbacks burn nothing
     assert third[-1]["status"] == "committed"
     assert set(ex.model.walls) == {"W-001", "W-002"}
+    # ...and an overlapping family is caught by the law itself (not by the hook): the
+    # created F-003 sits on the committed F-001 -> created-first pair
+    fourth = ex.handle_envelope(
+        sign_envelope(make_body(2, [family_op("F-003", [1200.0, 1000.0]), CHECK]))
+    )
+    assert fourth[1]["status"] == "rolled_back"
+    assert fourth[1]["errors"][0]["code"] == "interference"
+    assert fourth[1]["errors"][0]["message"] == "F-003~F-001"
+    assert "F-003" not in ex.model.families
 
 
 def test_injected_pair_with_unknown_ids_is_ignored(make_executor):

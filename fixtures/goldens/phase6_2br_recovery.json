@@ -35,8 +35,8 @@
     ]
   },
   "injected_pair": {
-    "a_id": "P-001",
-    "b_id": "E-001",
+    "a_id": "E-001",
+    "b_id": "P-001",
     "kind": "hard_interference"
   },
   "recovery": {
@@ -118,8 +118,8 @@
                 "iteration": 2,
                 "pairs": [
                   {
-                    "a_id": "P-001",
-                    "b_id": "E-001",
+                    "a_id": "E-001",
+                    "b_id": "P-001",
                     "kind": "hard_interference"
                   }
                 ]
@@ -144,8 +144,8 @@
         },
         "injected": [
           {
-            "a_id": "P-001",
-            "b_id": "E-001",
+            "a_id": "E-001",
+            "b_id": "P-001",
             "kind": "hard_interference"
           }
         ],
@@ -333,8 +333,8 @@
                 "iteration": 3,
                 "pairs": [
                   {
-                    "a_id": "P-001",
-                    "b_id": "E-001",
+                    "a_id": "E-001",
+                    "b_id": "P-001",
                     "kind": "hard_interference"
                   }
                 ]
@@ -359,8 +359,8 @@
         },
         "injected": [
           {
-            "a_id": "P-001",
-            "b_id": "E-001",
+            "a_id": "E-001",
+            "b_id": "P-001",
             "kind": "hard_interference"
           }
         ],

@@ -55,11 +55,13 @@ the `_PLACEHOLDER` rows.
       id-map grows by the op count (one logical id per op; extra segments/fittings grouped).
 - [ ] Wye/tee fittings completed manually per `wye_manual` / `conduit_fittings_manual`
       review items; time recorded; template routing-preference gaps noted.
-- [ ] Interference: place a test family overlapping a committed conduit drop, re-issue →
-      `commit_result rolled_back {interference "A~B", op_index}` followed by `clash_delta`
-      with logical ids (`revit:<ElementId>` for the manual family); TransactionGroup rolled
-      back (no partial MEP); the gateway's `commit2` state shows the pair; `merge-commit2`
-      produces the iteration k+1 card; the re-planned envelope commits under a fresh seq.
+- [ ] Interference: model a short PIPE by hand (any system) crossing where a conduit drop
+      of the golden envelope will run (furniture and devices are EXEMPT from conduits by the
+      shared table, so use a pipe or a structural column), re-issue → `commit_result
+      rolled_back {interference "A~B", op_index}` followed by `clash_delta` with logical ids
+      (`revit:<ElementId>` for the hand-modelled element); TransactionGroup rolled back (no
+      partial MEP); the gateway's `commit2` state shows the pair; `merge-commit2` produces
+      the iteration k+1 card; the re-planned envelope commits under a fresh seq.
 - [ ] Fire-rated wall in the template → conduit route detours (compare
       `home_runs[].penetrations` against the card).
 - [ ] Ctrl+Z after Commit #2 → `state_divergence`.

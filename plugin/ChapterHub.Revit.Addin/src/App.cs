@@ -31,8 +31,18 @@ public sealed class App : IExternalApplication
             return Result.Succeeded;
         }
 
-        // MEP vocabulary + clash table enrolled beside the config (docs/MANUAL_REVIT_TEST.md)
-        var catalogs = AddinCatalogs.Load(Path.Combine(configDir, "catalogs"));
+        // MEP vocabulary + clash table enrolled beside the config (docs/MANUAL_REVIT_TEST.md).
+        // A malformed catalog must not take the whole add-in offline: MEP ops then fail
+        // cleanly with catalog_missing while everything else keeps working.
+        AddinCatalogs catalogs;
+        try
+        {
+            catalogs = AddinCatalogs.Load(Path.Combine(configDir, "catalogs"));
+        }
+        catch (Exception)
+        {
+            catalogs = AddinCatalogs.Empty;
+        }
         _handler = new EnvelopeHandler(message => _client?.Send(message), catalogs);
         _handler.Attach(ExternalEvent.Create(_handler));
 

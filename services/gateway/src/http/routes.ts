@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import canonicalize from "canonicalize";
 import type { Config } from "../config.js";
 import type { Repos, ReviewRow } from "../db/repos.js";
 import type { GatewayCore } from "../core.js";
@@ -186,8 +187,23 @@ export function registerRoutes(
     const commitClass =
       /^Commit #/.test(body.commit_label ?? "") ||
       body.ops.some((o) => COMMIT_CLASS_OPS.has(o.op));
-    if (commitClass && !body.approval_ref) {
-      return reply.code(422).send({ error: "approval_ref_required" });
+    if (commitClass) {
+      if (!body.approval_ref) return reply.code(422).send({ error: "approval_ref_required" });
+      // SI-2: the ref must name THIS project's approved review whose content ops are
+      // exactly the ops being signed — a well-formed ref alone is not a human gate
+      const review = await repos.getReview(body.approval_ref.review_id);
+      if (
+        !review ||
+        review.project_id !== projectId ||
+        review.status !== "approved" ||
+        review.content_hash !== body.approval_ref.content_hash
+      ) {
+        return reply.code(422).send({ error: "approval_ref_mismatch", detail: "no approved review with that id/hash" });
+      }
+      const approvedOps = (review.content as { ops?: unknown }).ops;
+      if (canonicalize(approvedOps) !== canonicalize(body.ops)) {
+        return reply.code(422).send({ error: "approval_ref_mismatch", detail: "ops differ from the approved review content" });
+      }
     }
     return issueEnvelope(reply, projectId, {
       ops: body.ops as OpInput[],

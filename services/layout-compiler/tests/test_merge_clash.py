@@ -156,13 +156,17 @@ def test_phase_a_slides_a_device_off_the_stack_and_leaves_no_clash():
     assert before[0].overlap_area_mm2 > 0 and before[0].z_overlap_mm == 120.0
     r = run(plan)
     assert r["status"] == "clean" and r["iterations_used"] == 1
-    [act] = r["actions"]
-    assert act["trigger"] == "phase_a" and act["action"] == "shift_device"
+    shifts = [a for a in r["actions"] if a["action"] == "shift_device"]
+    [act] = shifts
+    assert act["trigger"] == "phase_a"
     assert act["lower"] == "E-013" and act["higher"] == "P-001" and act["changed"] is True
     assert act["params"]["before"]["offset"] == s["offset"]
     k = act["params"]["k"]
-    assert 1 <= k <= 4
+    assert 1 <= k <= 8
     assert abs(abs(act["params"]["after"]["offset"] - s["offset"]) - 150.0 * k) < 1e-6
+    # the new slot clears the stack's ±300 E-4 exclusion square: the device stays routable
+    assert abs(act["params"]["after"]["offset"] - s["offset"]) > 300.0
+    assert r["dropped"] == []
     assert act["params"]["after"]["face"] in ("left", "right")
     [round_] = r["clash_report"]["phase_a"]["rounds"]
     assert round_["clashes"][0]["a_id"] == "P-001" and round_["clashes"][0]["b_id"] == "E-013"
@@ -229,7 +233,14 @@ def test_structure_on_the_stack_relocates_it_off_the_wall():
     sanitary = {i["id"] for i in all_items(plan["layout"]) if "sanitary" in i.get("hookups", [])}
     served = _served_fixtures(r)
     assert served == sanitary
-    assert r["dropped"] == [] and r["interior"]["ops_verbatim"] is True
+    assert r["interior"]["ops_verbatim"] is True
+    # a device the relocated stack's new exclusion square isolates is DROPPED and reported,
+    # never left without a home run
+    for dropped in r["dropped"]:
+        assert dropped.startswith("E-")
+        assert dropped not in ids(r["ops"], "place_device")
+        assert any(d["id"] == dropped and d["kind"] == "device" for d in r["replan_deltas"])
+        assert any(a["action"] == "drop" and a["lower"] == dropped for a in r["actions"])
 
 
 def _served_fixtures(result) -> set[str]:
@@ -283,20 +294,22 @@ def test_replay_of_prior_actions_is_stateless_and_identical():
 
 
 def test_shared_budget_counts_phase_b_and_phase_a_rounds_together():
-    plan = forced_onto_stack("E-013")
-    r = run(plan, pairs=[pair("P-001", "E-001")])
+    plan = golden_plan()
+    bed = item_by_id(plan["layout"], "F-001")
+    column = with_column(bed["center"], [300.0, 300.0])  # a Phase A clash routing cannot touch
+    r = run(column, pairs=[pair("P-001", "E-001")])
     assert r["status"] == "clean" and r["iterations_used"] == 2
-    assert [(a["trigger"], a["lower"]) for a in r["actions"]] == [
-        ("phase_b", "E-001"),
-        ("phase_a", "E-013"),
+    assert [(a["trigger"], a["action"], a["lower"]) for a in r["actions"]] == [
+        ("phase_b", "shift_device", "E-001"),
+        ("phase_a", "relegalize_furniture", "F-001"),
     ]
     # two rounds already spent: Phase B takes the last one, Phase A finds the overlap
     # and may not start another round → REVIEW with the open clash listed
-    r = run(plan, used=MERGE_BUDGET - 1, iteration=3, pairs=[pair("P-001", "E-001")])
+    r = run(column, used=MERGE_BUDGET - 1, iteration=3, pairs=[pair("P-001", "E-001")])
     assert r["status"] == "budget_exhausted" and r["iterations_used"] == MERGE_BUDGET
     assert [a["lower"] for a in r["actions"]] == ["E-001"]
     assert [(c["a_id"], c["b_id"]) for c in r["clash_report"]["open_clashes"]] == [
-        ("P-001", "E-013")
+        ("C-001", "F-001")
     ]
     assert r["ops"] == []
 
@@ -304,8 +317,8 @@ def test_shared_budget_counts_phase_b_and_phase_a_rounds_together():
 def test_structure_reported_by_the_executor_relocates_the_stack():
     r = run(pairs=[pair("revit:4711", "P-001")])
     assert r["status"] == "clean" and r["iterations_used"] == 1
-    [act] = r["actions"]
-    assert act["action"] == "relocate_stack" and act["higher"] == "revit:4711"
+    [act] = [a for a in r["actions"] if a["action"] == "relocate_stack"]
+    assert act["higher"] == "revit:4711"
     assert act["higher_priority"] == 0 and act["params"]["banned_walls"] == ["W-004"]
     # a branch segment names its stack through the recorded segment → stack map
     r2 = run(pairs=[pair("revit:4711", "P-004")])
@@ -318,15 +331,38 @@ def test_progress_guarantee_escalates_then_drops_and_the_drop_sticks():
     far = ids(plan["ops"], "create_conduit")[-1]  # a trunk nowhere near the stack
     r = run(pairs=[pair("P-001", far)])
     assert r["status"] == "clean" and r["iterations_used"] == 1
-    [act] = r["actions"]
+    act = r["actions"][0]  # the trunk drop; the orphaned devices' drops follow it
     assert act["action"] == "drop" and act["lower"] == far and act["changed"] is True
-    assert act["params"] == {"reason": "no progress after escalation"}
-    assert r["dropped"] == [far] and far not in ids(r["ops"], "create_conduit")
-    assert r["counts"]["create_conduit"] == plan["counts"]["conduits"] - 1
-    # a later round re-derives the raceway tree; the dropped conduit stays dropped
+    assert all(a["action"] == "drop" and a["lower"].startswith("E-") for a in r["actions"][1:])
+    assert act["params"]["reason"] == "no progress after escalation"
+    far_path = next(op["args"]["path"] for op in plan["ops"] if op["args"].get("id") == far)
+    assert act["params"]["path"] == far_path  # the GEOMETRY is what stays dropped
+    assert r["dropped"][0] == far and far not in ids(r["ops"], "create_conduit")
+    assert far_path not in [op["args"]["path"] for op in r["ops"] if op["op"] == "create_conduit"]
+    # the trunk was the ONLY path for some devices: with its geometry forbidden they lose
+    # their home run and are dropped + reported — never left silently without a conduit
+    orphans = r["dropped"][1:]
+    assert orphans and all(d.startswith("E-") for d in orphans)
+    for d in orphans:
+        assert d not in ids(r["ops"], "place_device")
+        assert any(x["id"] == d and x["kind"] == "device" for x in r["replan_deltas"])
+    _every_device_has_its_drop(r)
+    # a later round re-derives the raceway tree; the dropped GEOMETRY stays out even when
+    # trunk ids move (the replay re-forbids it from the recorded path)
     again = run(used=1, iteration=2, prior=r["actions"], pairs=[pair("P-001", "E-001")])
     assert again["status"] == "clean" and far not in ids(again["ops"], "create_conduit")
-    assert again["dropped"] == [far]
+    assert far_path not in [
+        op["args"]["path"] for op in again["ops"] if op["op"] == "create_conduit"
+    ]
+    assert again["dropped"] == r["dropped"]
+    _every_device_has_its_drop(again)
+
+
+def _every_device_has_its_drop(result) -> None:
+    """Q-n <-> E-n: every remaining device owns exactly one vertical drop at its foot."""
+    conduit_ids = set(ids(result["ops"], "create_conduit"))
+    for device in ids(result["ops"], "place_device"):
+        assert f"Q-{device[2:]}" in conduit_ids, device
 
 
 def test_same_priority_pair_is_blocked_not_guessed():
@@ -359,13 +395,28 @@ def test_ids_never_renumber_across_replans():
     ]
     for r in scenarios:
         assert r["status"] == "clean"
-        assert ids(r["ops"], "place_device") == ids(plan["ops"], "place_device")
+        # devices/furniture keep their ids (a dropped device is listed, never renumbered)
+        assert ids(r["ops"], "place_device") == [
+            i for i in ids(plan["ops"], "place_device") if i not in r["dropped"]
+        ]
         assert {i["id"] for i in all_items(r["layout"])} == {
             i["id"] for i in all_items(plan["layout"])
         } - set(r["dropped"])
         assert ids(r["ops"], "place_family") == ids(golden_chain()["interior_ops"], "place_family")
-        assert set(ids(r["ops"], "create_pipe")) <= {f"P-{i:03d}" for i in range(1, 40)}
-        assert len(set(ids(r["ops"], "create_conduit"))) == r["counts"]["create_conduit"]
+        replanned = any(a["action"] in ("relocate_stack", "replan_plumbing") for a in r["actions"])
+        if replanned:  # pipes are derived state after P-1..P-4 re-ran (ids may renumber)
+            assert set(ids(r["ops"], "create_pipe")) <= {f"P-{i:03d}" for i in range(1, 40)}
+        else:
+            assert ids(r["ops"], "create_pipe") == ids(plan["ops"], "create_pipe")
+        conduits = ids(r["ops"], "create_conduit")
+        assert len(set(conduits)) == r["counts"]["create_conduit"]
+        # drop Q-n <-> device E-n, always
+        for op in r["ops"]:
+            if op["op"] == "create_conduit" and len(op["args"]["path"]) == 2:
+                a, b = op["args"]["path"]
+                if a[:2] == b[:2]:  # a vertical drop
+                    n = op["args"]["id"][2:]
+                    assert f"E-{n}" in ids(r["ops"], "place_device")
 
 
 # ---- ONE clash law ---------------------------------------------------------------
@@ -492,3 +543,95 @@ def test_merge_rules_are_clock_free_except_the_gate():
         and n.func.value.id == "time"
     }
     assert calls == {"time.monotonic"}
+
+
+def test_dropped_conduit_geometry_stays_out_when_trunk_ids_shift(monkeypatch):
+    """Ids are transient for trunks: after a device drop every later trunk renumbers.
+    The dropped trunk's GEOMETRY must stay out and no unrelated conduit may vanish."""
+    from layout_compiler.merge import replan as replan_mod
+
+    plan = golden_plan()
+    trunk = ids(plan["ops"], "create_conduit")[-1]
+    trunk_path = next(op["args"]["path"] for op in plan["ops"] if op["args"].get("id") == trunk)
+    first = run(pairs=[pair("P-001", trunk)])
+    assert first["dropped"][0] == trunk  # plus the devices that only reached the panel via it
+    # now force a device drop: no slot is ever legal -> escalation -> drop E-005
+    monkeypatch.setattr(replan_mod, "legal_on_runs", lambda runs, trial: False)
+    second = run(used=1, iteration=2, prior=first["actions"], pairs=[pair("P-001", "E-005")])
+    assert second["status"] == "clean"
+    assert second["dropped"][0] == trunk and second["dropped"][-1] == "E-005"
+    assert set(second["dropped"]) == set(first["dropped"]) | {"E-005"}
+    paths = [op["args"]["path"] for op in second["ops"] if op["op"] == "create_conduit"]
+    assert trunk_path not in paths
+    gone = set(second["dropped"])
+    before = {
+        json.dumps(op["args"]["path"])
+        for op in plan["ops"]
+        if op["op"] == "create_conduit"
+        and op["args"]["id"] != trunk
+        and f"E-{op['args']['id'][2:]}" not in gone
+    }
+    after = {json.dumps(p) for p in paths}
+    # every surviving device's drop is byte-identical; trunks re-route around the geometry
+    drops_before = {p for p in before if json.loads(p)[0][:2] == json.loads(p)[1][:2]}
+    assert drops_before <= after
+    assert "E-005" not in ids(second["ops"], "place_device")
+    assert "Q-005" not in ids(second["ops"], "create_conduit")
+    _every_device_has_its_drop(second)
+
+
+def test_device_escalation_reaches_the_second_band_before_dropping(monkeypatch):
+    """PIN-26: k = 1..4 fails -> escalate to k = 5..8 -> only then drop."""
+    from layout_compiler.merge import replan as replan_mod
+
+    real = replan_mod.legal_on_runs
+    # legal only ≥ 750 mm away from the original E-001 offset (1912.5)
+    monkeypatch.setattr(
+        replan_mod,
+        "legal_on_runs",
+        lambda runs, trial: abs(trial - 1912.5) >= 750 and real(runs, trial),
+    )
+    r = run(pairs=[pair("P-001", "E-001")])
+    [act] = [a for a in r["actions"] if a["lower"] == "E-001"]
+    assert act["action"] == "shift_device" and act["params"]["k"] >= 5
+    assert "E-001" in ids(r["ops"], "place_device")
+    # nothing legal anywhere -> drop, recorded once
+    monkeypatch.setattr(replan_mod, "legal_on_runs", lambda runs, trial: False)
+    r2 = run(pairs=[pair("P-001", "E-001")])
+    [act2] = [a for a in r2["actions"] if a["lower"] == "E-001"]
+    assert act2["action"] == "drop" and r2["dropped"] == ["E-001"]
+
+
+def test_structure_pairs_are_existing_conditions_not_clashes():
+    plan = with_column(stack_xy(golden_plan()), [100.0, 100.0])
+    plan["layout"]["columns"].append(
+        {
+            "id": "C-002",
+            "center": plan["layout"]["columns"][0]["center"],
+            "footprint": [100.0, 100.0],
+        }
+    )
+    prisms = build_prisms(plan["layout"], plan["ops"], {})
+    pairs = {(c.a_id, c.b_id) for c in phase_a(prisms)}
+    assert ("C-001", "C-002") not in pairs and ("C-002", "C-001") not in pairs
+    assert ("C-001", "P-001") in pairs and ("C-002", "P-001") in pairs
+    r = run(plan)
+    assert r["status"] == "clean"
+
+
+def test_moving_a_plumbing_fixture_records_a_replan_plumbing_action():
+    """A column under the lav: the fixture re-legalizes, so P-1..P-4 re-run and the
+    pipes are derived state — the RECORDED action is what tells the gateway verifier."""
+    plan = golden_plan()
+    lav = item_by_id(plan["layout"], "F-007")
+    r = run(with_column(lav["center"], [200.0, 200.0]))
+    assert r["status"] == "clean"
+    kinds = [a["action"] for a in r["actions"]]
+    assert "relegalize_furniture" in kinds and "replan_plumbing" in kinds
+    replan = next(a for a in r["actions"] if a["action"] == "replan_plumbing")
+    assert replan["params"]["fixture_id"] == "F-007"
+    assert set(replan["params"]["pipe_ids"]) == set(ids(r["ops"], "create_pipe"))
+    # the moved fixture is still served: its new position has a drain leg
+    served = _served_fixtures(r)
+    assert "F-007" in served
+    assert validate_layout(r["layout"]) == []
