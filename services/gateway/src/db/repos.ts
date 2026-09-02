@@ -6,6 +6,7 @@ import { z } from "zod";
 import canonicalize from "canonicalize";
 import { idMapHash } from "@chapter/contracts";
 import { commit0LayoutFromReview } from "../layout/snapshot.js";
+import { clashPairsFromErrors, isHardRollback } from "../layout/merge-verify.js";
 import type { Db } from "./pool.js";
 
 export const sha256hex = (s: string | Buffer): string =>
@@ -71,8 +72,45 @@ const envelopeRow = z.object({
   status: z.enum(["issued", "ack_accepted", "ack_rejected", "committed", "rolled_back", "expired"]),
   reject_reason: z.string().nullable(),
   issued_at: z.date(),
+  resolved_at: z.date().nullable(),
+  commit_label: z.string().nullable(),
+  approval_ref: z.unknown().nullable(),
+  // Phase 6: the executor's rollback errors verbatim + the clash pairs parsed from
+  // interference errors (authoritative) merged with clash_delta (supplementary)
+  clash_pairs: z.unknown().nullable(),
+  errors: z.unknown().nullable(),
 });
 export type EnvelopeRow = z.infer<typeof envelopeRow>;
+
+export interface ClashPairRow {
+  a_id: string;
+  b_id: string;
+  kind: string;
+}
+
+/** The Phase 6 merge chain (PIN-28): the latest approved interior_plan I and the
+ *  latest mep_plan M, the commit2_merge reviews built from exactly (I, M) in order,
+ *  the newest one and its newest envelope. Iteration state is DERIVED from this,
+ *  never stored. */
+export interface MergeChain {
+  interior: ReviewRow | null;
+  mep: ReviewRow | null;
+  merges: ReviewRow[];
+  latest: ReviewRow | null;
+  envelope: EnvelopeRow | null;
+  failed: boolean;
+  exhausted: boolean;
+}
+
+export const MERGE_BUDGET = 3;
+
+export function envelopeClashPairs(e: EnvelopeRow | null): ClashPairRow[] {
+  return Array.isArray(e?.clash_pairs) ? (e!.clash_pairs as ClashPairRow[]) : [];
+}
+
+export function envelopeHasInterference(e: EnvelopeRow | null): boolean {
+  return e !== null && e.status === "rolled_back" && envelopeClashPairs(e).length > 0;
+}
 
 export class Repos {
   constructor(private readonly db: Db) {}
@@ -166,6 +204,17 @@ export class Repos {
     return Number(res.rows[0].seq);
   }
 
+  /** Highest seq ever ISSUED (any status) — Commit #2 re-issues take a fresh seq
+   *  above both this and the last committed seq (PIN-30), so a rolled-back merged
+   *  envelope and its rebuilt successor never share a number. */
+  async lastIssuedSeq(projectId: string): Promise<number> {
+    const res = await this.db.query(
+      `SELECT COALESCE(MAX(seq), 0) AS seq FROM envelopes WHERE project_id = $1`,
+      [projectId],
+    );
+    return Number(res.rows[0].seq);
+  }
+
   async insertIssuedEnvelope(e: {
     envelopeId: string;
     projectId: string;
@@ -176,6 +225,7 @@ export class Repos {
     commitLabel?: string;
     approvalRef?: unknown;
     issuedAt: string;
+    reissueOf?: string;
   }): Promise<void> {
     const client = await this.db.connect();
     try {
@@ -192,6 +242,7 @@ export class Repos {
       await this.logEvent(client, e.projectId, "gateway", "envelope_issued", {
         envelope_id: e.envelopeId,
         seq: e.seq,
+        ...(e.reissueOf ? { reissue_of: e.reissueOf } : {}),
       });
       await client.query("COMMIT");
     } catch (err) {
@@ -304,6 +355,73 @@ export class Repos {
             layout: content.layout,
           });
         }
+        // Commit #2 completion (Phase 6): freeze the merged furnished layout (meta
+        // levels/panel stamped) — the snapshot row IS commit2_done. Branches stay.
+        const commit2 = await client.query(
+          `SELECT rv.id AS review_id, rv.content
+           FROM envelopes e JOIN reviews rv ON rv.id = (e.approval_ref->>'review_id')::uuid
+           WHERE e.envelope_id = $1 AND rv.kind = 'commit2_merge'`,
+          [r.envelopeId],
+        );
+        if (commit2.rowCount) {
+          const content = commit2.rows[0].content as { layout: unknown; iterations_used?: number };
+          await this.insertSnapshot(client, {
+            projectId,
+            commitLabel: "commit2",
+            seq: Number(seq),
+            envelopeId: r.envelopeId,
+            reviewId: commit2.rows[0].review_id,
+            layout: content.layout,
+          });
+          await this.logEvent(client, projectId, "gateway", "commit2_done", {
+            envelope_id: r.envelopeId,
+            seq: Number(seq),
+            merge_review_id: commit2.rows[0].review_id,
+            iterations_used: content.iterations_used ?? 0,
+          });
+        }
+      } else {
+        // Rolled back: keep the executor's errors verbatim and, when any of them is an
+        // interference, the clash pairs parsed from "A~B" — the AUTHORITATIVE Phase B
+        // signal (clash_delta only merges into the same column). A hard code on a
+        // Commit #2 envelope (not a clash, not a TTL) means the merged plan is wrong for
+        // this model → commit2_failure, never auto-approved, never re-issued.
+        const pairs = clashPairsFromErrors(r.errors);
+        const existing = await client.query(
+          `SELECT clash_pairs FROM envelopes WHERE envelope_id = $1`,
+          [r.envelopeId],
+        );
+        const merged = mergeClashPairs(
+          Array.isArray(existing.rows[0]?.clash_pairs) ? (existing.rows[0].clash_pairs as ClashPairRow[]) : [],
+          pairs,
+        );
+        await client.query(
+          `UPDATE envelopes SET errors = $2, clash_pairs = $3 WHERE envelope_id = $1`,
+          [r.envelopeId, JSON.stringify(r.errors), merged.length ? JSON.stringify(merged) : null],
+        );
+        const merge = await client.query(
+          `SELECT rv.id AS review_id, rv.content
+           FROM envelopes e JOIN reviews rv ON rv.id = (e.approval_ref->>'review_id')::uuid
+           WHERE e.envelope_id = $1 AND rv.kind = 'commit2_merge'`,
+          [r.envelopeId],
+        );
+        if (merge.rowCount && isHardRollback(r.errors)) {
+          const content = merge.rows[0].content as {
+            interior?: { review_id?: string };
+            mep?: { review_id?: string };
+          };
+          await this.createReviewWith(client, projectId, "commit2_failure", {
+            reason: "executor_rejected",
+            hard: true,
+            envelope_id: r.envelopeId,
+            merge_review_id: merge.rows[0].review_id,
+            errors: r.errors,
+            chain: {
+              interior_review_id: content.interior?.review_id ?? null,
+              mep_review_id: content.mep?.review_id ?? null,
+            },
+          }, false);
+        }
       }
       await this.logEvent(client, projectId, "gateway", "commit_result", {
         envelope_id: r.envelopeId,
@@ -319,6 +437,118 @@ export class Repos {
     } finally {
       client.release();
     }
+  }
+
+  /** clash_delta from the executor (supplementary to commit_result): merge into the
+   *  envelope's pairs, project-scoped so a workstation can only annotate its own
+   *  project's envelopes. Returns false for an unknown envelope (event only). */
+  async recordClashDelta(projectId: string, envelopeId: string, pairs: ClashPairRow[]): Promise<boolean> {
+    const client = await this.db.connect();
+    try {
+      await client.query("BEGIN");
+      const res = await client.query(
+        `SELECT clash_pairs FROM envelopes WHERE envelope_id = $1 AND project_id = $2 FOR UPDATE`,
+        [envelopeId, projectId],
+      );
+      if (!res.rowCount) {
+        await client.query("ROLLBACK");
+        return false;
+      }
+      const existing = Array.isArray(res.rows[0].clash_pairs) ? (res.rows[0].clash_pairs as ClashPairRow[]) : [];
+      const merged = mergeClashPairs(existing, pairs);
+      await client.query(`UPDATE envelopes SET clash_pairs = $2 WHERE envelope_id = $1`, [
+        envelopeId, merged.length ? JSON.stringify(merged) : null,
+      ]);
+      await this.logEvent(client, projectId, "gateway", "clash_delta", {
+        envelope_id: envelopeId,
+        pairs: merged.length,
+      });
+      await client.query("COMMIT");
+      return true;
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  /** The newest envelope issued under a review's approval_ref (any status). */
+  async latestEnvelopeForReview(reviewId: string): Promise<EnvelopeRow | null> {
+    const res = await this.db.query(
+      `SELECT * FROM envelopes WHERE approval_ref->>'review_id' = $1
+       ORDER BY issued_at DESC LIMIT 1`,
+      [reviewId],
+    );
+    return res.rowCount ? envelopeRow.parse(res.rows[0]) : null;
+  }
+
+  async envelopeCountForReview(reviewId: string): Promise<number> {
+    const res = await this.db.query(
+      `SELECT count(*)::int AS n FROM envelopes WHERE approval_ref->>'review_id' = $1`,
+      [reviewId],
+    );
+    return res.rows[0].n as number;
+  }
+
+  /** The project's in-flight envelope (issued | ack_accepted), if any. */
+  async inflightEnvelope(projectId: string): Promise<EnvelopeRow | null> {
+    const res = await this.db.query(
+      `SELECT * FROM envelopes WHERE project_id = $1 AND status IN ('issued', 'ack_accepted')
+       ORDER BY issued_at DESC LIMIT 1`,
+      [projectId],
+    );
+    return res.rowCount ? envelopeRow.parse(res.rows[0]) : null;
+  }
+
+  async listReviewsOfKind(projectId: string, kind: string): Promise<ReviewRow[]> {
+    const res = await this.db.query(
+      `SELECT * FROM reviews WHERE project_id = $1 AND kind = $2 ORDER BY created_at ASC, id ASC`,
+      [projectId, kind],
+    );
+    return res.rows.map((r) => reviewRow.parse(r));
+  }
+
+  async pendingReviewOfKind(projectId: string, kind: string): Promise<ReviewRow | null> {
+    const res = await this.db.query(
+      `SELECT * FROM reviews WHERE project_id = $1 AND kind = $2 AND status = 'pending'
+       ORDER BY created_at DESC LIMIT 1`,
+      [projectId, kind],
+    );
+    return res.rowCount ? reviewRow.parse(res.rows[0]) : null;
+  }
+
+  /** The Phase 6 merge chain (PIN-28); see MergeChain. */
+  async mergeChain(projectId: string): Promise<MergeChain> {
+    const interior = await this.latestReviewOfKind(projectId, "interior_plan");
+    const mep = await this.latestReviewOfKind(projectId, "mep_plan");
+    const empty: MergeChain = {
+      interior, mep, merges: [], latest: null, envelope: null, failed: false, exhausted: false,
+    };
+    if (!interior || !mep) return empty;
+    const chainOf = (content: unknown): { i?: string; m?: string } => {
+      const c = content as {
+        interior?: { review_id?: string }; mep?: { review_id?: string };
+        chain?: { interior_review_id?: string; mep_review_id?: string };
+      };
+      return {
+        i: c.interior?.review_id ?? c.chain?.interior_review_id,
+        m: c.mep?.review_id ?? c.chain?.mep_review_id,
+      };
+    };
+    const merges = (await this.listReviewsOfKind(projectId, "commit2_merge")).filter((r) => {
+      const c = chainOf(r.content);
+      return c.i === interior.id && c.m === mep.id;
+    });
+    const latest = merges.length ? merges[merges.length - 1]! : null;
+    const envelope = latest ? await this.latestEnvelopeForReview(latest.id) : null;
+    const failed = (await this.listReviewsOfKind(projectId, "commit2_failure")).some((r) => {
+      const c = chainOf(r.content);
+      return c.i === interior.id && c.m === mep.id && (r.content as { hard?: boolean }).hard === true;
+    });
+    const used = latest ? ((latest.content as { iterations_used?: number }).iterations_used ?? 0) : 0;
+    const exhausted = latest !== null && used >= MERGE_BUDGET && envelopeHasInterference(envelope);
+    return { interior, mep, merges, latest, envelope, failed, exhausted };
   }
 
   /** Freeze a layout snapshot (same transaction as the commit result). Frozen by
@@ -415,35 +645,48 @@ export class Repos {
     content: unknown,
     autoApprove: boolean,
   ): Promise<ReviewRow> {
-    const id = randomUUID();
-    const doc = canonicalize(content);
-    if (doc === undefined) throw new Error("uncanonicalizable review content");
     const client = await this.db.connect();
     try {
       await client.query("BEGIN");
-      const res = await client.query(
-        `INSERT INTO reviews (id, project_id, kind, content, content_hash, status, decided_at, decided_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-        [
-          id, projectId, kind, JSON.stringify(content), sha256hex(doc),
-          autoApprove ? "approved" : "pending",
-          autoApprove ? new Date() : null,
-          autoApprove ? "auto:ci" : null,
-        ],
-      );
-      await this.logEvent(client, projectId, autoApprove ? "auto:ci" : "gateway", "review_created", {
-        review_id: id,
-        kind,
-        auto_approved: autoApprove,
-      });
+      const review = await this.createReviewWith(client, projectId, kind, content, autoApprove);
       await client.query("COMMIT");
-      return reviewRow.parse(res.rows[0]);
+      return review;
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
     } finally {
       client.release();
     }
+  }
+
+  /** Review insert inside the caller's transaction (commit2_failure rides in the
+   *  same transaction as the rollback that caused it). */
+  async createReviewWith(
+    client: pg.PoolClient,
+    projectId: string,
+    kind: string,
+    content: unknown,
+    autoApprove: boolean,
+  ): Promise<ReviewRow> {
+    const id = randomUUID();
+    const doc = canonicalize(content);
+    if (doc === undefined) throw new Error("uncanonicalizable review content");
+    const res = await client.query(
+      `INSERT INTO reviews (id, project_id, kind, content, content_hash, status, decided_at, decided_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [
+        id, projectId, kind, JSON.stringify(content), sha256hex(doc),
+        autoApprove ? "approved" : "pending",
+        autoApprove ? new Date() : null,
+        autoApprove ? "auto:ci" : null,
+      ],
+    );
+    await this.logEvent(client, projectId, autoApprove ? "auto:ci" : "gateway", "review_created", {
+      review_id: id,
+      kind,
+      auto_approved: autoApprove,
+    });
+    return reviewRow.parse(res.rows[0]);
   }
 
   async listReviews(projectId: string): Promise<ReviewRow[]> {
@@ -624,4 +867,18 @@ export class Repos {
     );
     return res.rows.map((r) => envelopeRow.parse(r));
   }
+}
+
+/** Union of clash pairs by (a_id, b_id), first-seen order, clamped to 256. */
+export function mergeClashPairs(existing: ClashPairRow[], incoming: ClashPairRow[]): ClashPairRow[] {
+  const seen = new Set<string>();
+  const out: ClashPairRow[] = [];
+  for (const p of [...existing, ...incoming]) {
+    const key = `${p.a_id}~${p.b_id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ a_id: p.a_id, b_id: p.b_id, kind: p.kind ?? "hard_interference" });
+    if (out.length >= 256) break;
+  }
+  return out;
 }

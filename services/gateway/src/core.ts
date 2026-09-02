@@ -4,13 +4,19 @@ import type { WebSocket } from "ws";
 import { wssMessageSchema } from "@chapter/contracts";
 import type { Config } from "./config.js";
 import type { Repos } from "./db/repos.js";
+import { clashPairSchema } from "./layout/merge-client.js";
 
 export interface ExecutorSession {
   ws: WebSocket;
   projectId: string;
   workstationId: string;
   helloDone: boolean;
+  /** Phase 6: frames from one executor are processed in arrival order (a
+   *  commit_result and its clash_delta must not race), handlers stay idempotent. */
+  queue?: Promise<void>;
 }
+
+const CLASH_DELTA_MAX_PAIRS = 256;
 
 type Logger = { info: (o: object, msg: string) => void; warn: (o: object, msg: string) => void };
 
@@ -42,9 +48,12 @@ export class GatewayCore {
       if (this.sessions.get(session.projectId) === session) this.sessions.delete(session.projectId);
     });
     session.ws.on("message", (data) => {
-      void this.onMessage(session, data.toString()).catch((err) => {
-        this.log.warn({ err: String(err), project: session.projectId }, "wss message handling failed");
-      });
+      const raw = data.toString();
+      session.queue = (session.queue ?? Promise.resolve()).then(() =>
+        this.onMessage(session, raw).catch((err) => {
+          this.log.warn({ err: String(err), project: session.projectId }, "wss message handling failed");
+        }),
+      );
     });
   }
 
@@ -98,9 +107,27 @@ export class GatewayCore {
         });
         break;
       }
+      case "clash_delta": {
+        // supplementary to the commit_result interference errors: merge the pairs
+        // into the executor's OWN project's envelope (clamped, ids shape-checked);
+        // an unknown envelope is event-only
+        const m = msg as unknown as { envelope_id: string; pairs: unknown[] };
+        const pairs = m.pairs
+          .slice(0, CLASH_DELTA_MAX_PAIRS)
+          .map((p) => clashPairSchema.safeParse(p))
+          .filter((p) => p.success)
+          .map((p) => p.data);
+        const applied = await this.repos.recordClashDelta(session.projectId, m.envelope_id, pairs);
+        if (!applied) {
+          await this.repos.logEventDirect(
+            session.projectId, `workstation:${session.workstationId}`, "clash_delta_unknown_envelope",
+            { envelope_id: m.envelope_id, pairs: pairs.length },
+          );
+        }
+        break;
+      }
       case "progress":
       case "export_ready":
-      case "clash_delta":
         await this.repos.logEventDirect(
           session.projectId, `workstation:${session.workstationId}`, msg.type, msg,
         );

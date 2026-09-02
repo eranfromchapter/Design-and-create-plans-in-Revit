@@ -128,6 +128,129 @@ function interiorPlanCard(r: ReviewRow): string {
     }`;
 }
 
+function svgFigure(s: string | undefined, caption: string): string {
+  if (!s) return "";
+  const uri = `data:image/svg+xml;base64,${Buffer.from(s, "utf8").toString("base64")}`;
+  return `<figure style="margin:0;flex:1;min-width:0">
+      <img src="${uri}" alt="${esc(caption)}" style="width:100%;border:1px solid #ddd">
+      <figcaption style="text-align:center">${esc(caption)}</figcaption>
+    </figure>`;
+}
+
+function countsLine(counts: Record<string, unknown> | undefined): string {
+  return Object.entries(counts ?? {})
+    .filter(([, v]) => typeof v !== "object")
+    .map(([k, v]) => `${esc(k)}: ${esc(String(v))}`)
+    .join(" · ");
+}
+
+/** mep_plan cards (Phase 6): the furnished branch vs the MEP proposal, the stack
+ *  table, every review item (blocking rows highlighted) and — while blocking items
+ *  remain — the human-suppliable confirmations form (panel, slab-to-slab) that
+ *  re-runs plan-mep. */
+function mepPlanCard(r: ReviewRow, projectId: string, tokenQuery: string): string {
+  if (r.kind !== "mep_plan") return "";
+  const content = r.content as {
+    svgs?: { furnished?: string; mep?: string };
+    stacks?: { id: string; wall_id: string; offset: number; diameter: number; fixtures?: string[]; snapped?: boolean }[];
+    review_items?: { code: string; severity: string; refs?: string[]; message?: string }[];
+    counts?: Record<string, unknown>;
+    blocking?: string[];
+    confirmations?: { panel?: [number, number]; slab_to_slab_mm?: number };
+  };
+  const stacks = (content.stacks ?? [])
+    .map(
+      (s) =>
+        `<tr><td><code>${esc(s.id)}</code></td><td>${esc(s.wall_id)}</td><td>${esc(String(s.offset))}</td>` +
+        `<td>${esc(String(s.diameter))}</td><td>${esc((s.fixtures ?? []).join(", "))}</td>` +
+        `<td>${s.snapped ? "snapped" : ""}</td></tr>`,
+    )
+    .join("");
+  const items = (content.review_items ?? [])
+    .map(
+      (i) =>
+        `<tr${i.severity === "blocking" ? ' style="background:#fdd"' : ""}><td>${esc(i.severity)}</td>` +
+        `<td><code>${esc(i.code)}</code></td><td>${esc((i.refs ?? []).join(", "))}</td><td>${esc(i.message ?? "")}</td></tr>`,
+    )
+    .join("");
+  const blocking = content.blocking ?? [];
+  const panel = content.confirmations?.panel;
+  const form =
+    blocking.length && r.status === "pending"
+      ? `<form method="post" action="/ui/projects/${esc(projectId)}/plan-mep?${tokenQuery}" style="margin:8px 0">
+           <strong>Confirm and re-plan</strong> (${blocking.map(esc).join(", ")}):
+           panel x <input name="panel_x" type="number" step="0.1" value="${panel ? esc(String(panel[0])) : ""}">
+           panel y <input name="panel_y" type="number" step="0.1" value="${panel ? esc(String(panel[1])) : ""}">
+           slab-to-slab mm <input name="slab_to_slab_mm" type="number" step="1" value="${esc(String(content.confirmations?.slab_to_slab_mm ?? ""))}">
+           <button type="submit">Re-plan MEP</button>
+         </form>`
+      : "";
+  return `<div style="display:flex;gap:12px;margin:8px 0">
+      ${svgFigure(content.svgs?.furnished, "Furnished (interior branch)")}
+      ${svgFigure(content.svgs?.mep, "MEP proposal (stacks, branches, devices, raceways)")}
+    </div>
+    <p>${countsLine(content.counts)}</p>
+    ${form}
+    <details open><summary>Stacks (${(content.stacks ?? []).length})</summary>
+      <table border="1" cellpadding="4"><tr><th>id</th><th>wall</th><th>offset</th><th>Ø</th><th>fixtures</th><th></th></tr>${stacks}</table></details>
+    <details ${blocking.length ? "open" : ""}><summary>Review items (${(content.review_items ?? []).length}, ${blocking.length} blocking)</summary>
+      <table border="1" cellpadding="4"><tr><th>severity</th><th>code</th><th>refs</th><th>message</th></tr>${items}</table></details>`;
+}
+
+/** commit2_merge cards (Phase 6): Commit #1 vs the merged Commit #2, the shared
+ *  budget, the clash report and every re-plan action — the decision surface for the
+ *  merged envelope (each rebuilt plan is a NEW card). */
+function commit2MergeCard(r: ReviewRow): string {
+  if (r.kind !== "commit2_merge") return "";
+  const content = r.content as {
+    svgs?: { commit1?: string; merged?: string };
+    iteration?: number;
+    iterations_used?: number;
+    clash_report?: { budget?: { limit: number; used: number; remaining: number }; open_clashes?: unknown[];
+      phase_a?: { rounds?: unknown[] }; phase_b?: { replans?: unknown[] }; prisms?: Record<string, number> };
+    actions?: { iteration: number; trigger: string; action: string; lower: string; higher: string; changed: boolean }[];
+    replan_deltas?: { id: string; kind: string; reason?: string }[];
+    dropped?: string[];
+    interior?: { ops_verbatim?: boolean };
+    counts?: Record<string, unknown>;
+  };
+  const budget = content.clash_report?.budget;
+  const actions = (content.actions ?? [])
+    .map(
+      (a) =>
+        `<tr><td>${esc(String(a.iteration))}</td><td>${esc(a.trigger)}</td><td>${esc(a.action)}</td>` +
+        `<td><code>${esc(a.lower)}</code></td><td><code>${esc(a.higher)}</code></td><td>${a.changed ? "yes" : "no"}</td></tr>`,
+    )
+    .join("");
+  const deltas = (content.replan_deltas ?? [])
+    .map((d) => `<li><code>${esc(d.id)}</code> (${esc(d.kind)}) — ${esc(d.reason ?? "")}</li>`)
+    .join("");
+  const verbatim = content.interior?.ops_verbatim
+    ? '<span style="background:#dfd;padding:2px 6px">interior ops verbatim</span>'
+    : '<span style="background:#fdd;padding:2px 6px">interior ops re-planned</span>';
+  return `<div style="display:flex;gap:12px;margin:8px 0">
+      ${svgFigure(content.svgs?.commit1, "Commit #1 (approved plan)")}
+      ${svgFigure(content.svgs?.merged, "Merged Commit #2 (interior + MEP)")}
+    </div>
+    <p>iteration ${esc(String(content.iteration ?? "?"))} · budget used ${esc(String(budget?.used ?? content.iterations_used ?? 0))}/${esc(String(budget?.limit ?? 3))} · ${verbatim}</p>
+    <p>${countsLine(content.counts)}</p>
+    <details open><summary>Clash report — open ${(content.clash_report?.open_clashes ?? []).length}, Phase A rounds ${(content.clash_report?.phase_a?.rounds ?? []).length}, Phase B re-plans ${(content.clash_report?.phase_b?.replans ?? []).length}</summary>
+      <p>prisms: ${countsLine(content.clash_report?.prisms)}</p>
+      ${actions ? `<table border="1" cellpadding="4"><tr><th>iteration</th><th>trigger</th><th>action</th><th>lower (moved)</th><th>higher</th><th>changed</th></tr>${actions}</table>` : "<p>No re-plans: the branches merged clean.</p>"}
+      ${deltas ? `<ul>${deltas}</ul>` : ""}
+      ${(content.dropped ?? []).length ? `<p style="color:#b00">Dropped: ${(content.dropped ?? []).map((d) => `<code>${esc(d)}</code>`).join(", ")}</p>` : ""}
+    </details>`;
+}
+
+function failureBanner(r: ReviewRow): string {
+  if (!/_failure$/.test(r.kind)) return "";
+  const content = r.content as { reason?: string; error?: string; message?: string; detail?: string; blocked_reason?: string | null };
+  const text = [content.reason ?? content.error, content.message ?? content.detail ?? content.blocked_reason]
+    .filter((x): x is string => typeof x === "string" && x.length > 0)
+    .join(" — ");
+  return `<p style="background:#fdd;padding:6px 8px;border-radius:4px"><strong>REVIEW</strong> ${esc(text || r.kind)}</p>`;
+}
+
 export function renderReviewsPage(
   projectName: string,
   projectId: string,
@@ -150,7 +273,7 @@ export function renderReviewsPage(
           : `<em>${esc(r.status)} by ${esc(r.decided_by ?? "?")}</em>`;
       return `<section style="border:1px solid #ccc;border-radius:6px;padding:12px;margin:12px 0">
         <strong>${esc(r.kind)}</strong> · <code>${esc(r.id)}</code> · ${esc(r.status)}
-        ${layoutCommit1Card(r)}${interiorPlanCard(r)}
+        ${failureBanner(r)}${layoutCommit1Card(r)}${interiorPlanCard(r)}${mepPlanCard(r, projectId, tokenQuery)}${commit2MergeCard(r)}
         <pre style="background:#f6f6f6;padding:8px;overflow-x:auto">${content}</pre>
         ${actions}
       </section>`;
