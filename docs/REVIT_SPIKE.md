@@ -5,25 +5,45 @@ the AUTOM8LABS MCP Connector for Revit attached. Nothing in CI ever touches live
 (CLAUDE.md hard rule); this is the one sanctioned manual path (PLAN.md Part B de-risk note:
 manually invoked, bridge bound to localhost, throwaway models only, never client files).
 
-## Setup (once, ~15 min, done by Eran)
+## Setup (once, ~15 min, done by Eran) — Windows PowerShell, exact commands
 
-1. Start Revit 2025 with a **throwaway** project based on Chapter's template (or the stock
-   architectural template with the MEP disciplines enabled). Never a client model.
-2. Install Claude Code on the workstation (`npm install -g @anthropic-ai/claude-code`) and
-   sign in with the Chapter account.
-3. Clone this repo and check out `claude/phase-6-mep`.
-4. In the AUTOM8LABS dialog (Add-Ins → AUTOM8LABS → MCP Connector) copy the stdio server
-   command, then in the repo directory register it for this project only:
-   `claude mcp add revit -- <the server command>` (stdio, localhost — no tunnel, no port).
-   The 38 free tools are read-only; creating walls/doors/devices/pipes needs the Pro licence
-   key entered in the same dialog.
-5. Run `claude` in the repo and paste: **"Follow docs/REVIT_SPIKE.md stage 1."**
+Two Revit MCP servers are already configured in Claude Desktop on the workstation:
+**AUTOM8LABS_Revit** (create/modify tools need the Pro licence key; 38 free read-only tools)
+and **Revit** (Autodesk's Revit 2027 Public MCP Server, read-only technical preview —
+the authoritative way to read back locations, orientations, parameters). Stage 1 CREATES
+through AUTOM8LABS and VERIFIES through the Autodesk server.
+
+1. Start Revit 2027 with a **throwaway** project (never a client model), MEP disciplines
+   enabled. Revit must be running before the Claude session starts.
+2. Open Windows PowerShell and run, one line at a time:
+
+   ```powershell
+   Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force   # lets npm's .ps1 shim run
+   npm install -g @anthropic-ai/claude-code                     # (or: npm.cmd install -g ...)
+   cd $HOME; mkdir chapter -Force; cd chapter
+   git clone https://github.com/eranfromchapter/Design-and-create-plans-in-Revit.git
+   cd Design-and-create-plans-in-Revit
+   git checkout claude/phase-6-mep                              # a branch name, not a command
+   claude mcp add-from-claude-desktop                           # imports BOTH Revit servers
+   claude
+   ```
+
+   If `git` is not recognised: `winget install --id Git.Git -e`, then reopen PowerShell.
+   `claude mcp add-from-claude-desktop` lists the servers found in
+   `%APPDATA%\Claude\claude_desktop_config.json`; tick both Revit entries. If it finds
+   nothing, add them by hand: `claude mcp add revit-autom8 -- <server command shown in the
+   AUTOM8LABS dialog>` and `claude mcp add-json revit-autodesk '<the "Revit" entry from the
+   Claude Desktop config>'`.
+3. Inside `claude`, type `/mcp` and confirm both Revit servers show **connected**.
+4. Paste: **"Follow docs/REVIT_SPIKE.md stage 1."**
 
 ## Stage 1 — API conventions through the MCP bridge (no plugin needed, ~30 min)
 
 Work in a fresh throwaway model. Use mm everywhere (Revit internal units are feet; the
 bridge converts or report both). Record every observation in `docs/REVIT_SPIKE_RESULTS.md`
-(create it; one heading per item below; paste the raw numbers Revit returns).
+(create it; one heading per item below; paste the raw numbers Revit returns). Create
+elements with the AUTOM8LABS tools; read every result back with the Autodesk `Revit`
+server's query tools as well, and note when the two disagree.
 
 1. **Wall face convention.** Create a wall `W-001` from (0,0) to (4000,0) on Level 1 with a
    generic 200 mm type. Ask Revit for the wall's exterior face (`HostObjectUtils.GetSideFaces`
