@@ -179,7 +179,7 @@ Finish chain: `render_review` approved ∧ `content.render_id === latest job` �
 
 | file | sole writer | pinned by |
 |---|---|---|
-| `fixtures/goldens/phase7_2br_section.svg`, `phase7_2br_axon.svg` | `tools/revit-sim` test generator (the Phase 6 golden model) | sim tests (byte) |
+| `fixtures/goldens/phase7_2br_section.svg`, `phase7_2br_axon.svg` | `services/aidm-bridge/scripts/gen_golden_render.py` (the sim's `render_section` / `render_axon` over the Phase 6 golden model, rebuilt through the layout-compiler chain — the dev-only dep D-1) | bridge `test_goldens.py` (byte; the sim tests pin invariants + re-render identity, not these files) |
 | `fixtures/renders/phase7_2br_{plan,section,3d_hidden}_2048.png` | `services/aidm-bridge/scripts/gen_golden_render.py` (`rasterize(svg, 2048)`; the plan PNG is the rasterisation of `phase6_2br_mep.svg`) | bridge drift test |
 | `fixtures/goldens/phase7_2br_{canny,lines}_{plan,section,3d_hidden}.png` | same | bridge byte tests; e2e by sha256 |
 | `fixtures/goldens/phase7_2br_render.json` (response with PNGs → sha256, timings dropped) | same | bridge + e2e |
