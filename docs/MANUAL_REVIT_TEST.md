@@ -30,6 +30,8 @@ plugin version, and outcome for each run.
       re-upload refused (`commit0_already_done`).
 
 ## Pre-Phase-6 spike (before the MEP agent is built)
+Runner for a Claude Code session on the workstation: `docs/REVIT_SPIKE.md` (stage 1 answers the
+convention rows below through the AUTOM8LABS MCP bridge; stage 2 is the add-in itself).
 - [ ] One `create_pipe` envelope (two segments + one 90° elbow) executes; tee case emits REVIEW.
 - [ ] One `create_door` + `place_device` envelope: door lands at offset-centerline convention;
       receptacle is face-hosted at 380 mm AFF on the ROOM-side face named by `args.face`

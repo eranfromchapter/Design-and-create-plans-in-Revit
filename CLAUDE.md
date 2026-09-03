@@ -309,7 +309,9 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   connect the real vocabulary through knowledge later (mep_types.json, clash_prisms.json
   heights/device box, counter casework family); (3) deviations (a)–(g) signed off; (4) the
   human Pre-Phase-6 Revit spike + Phase 6 checklist (docs/MANUAL_REVIT_TEST.md) stays OPEN —
-  it needs a person at a Revit workstation, like the Phase 1–2 checklists; (5) v1 scope =
+  it needs a person at a Revit workstation, like the Phase 1–2 checklists — Eran offers his
+  dev-only Revit workstation via the AUTOM8LABS MCP bridge; runner: docs/REVIT_SPIKE.md (a
+  local Claude Code session, bridge on localhost, throwaway models); (5) v1 scope =
   sanitary DWV only confirmed; registry prose amendment for sim_behavior (Q5) folded into the
   Phase 7 contracts commit. Standing asks unchanged (catalog vocabulary via knowledge,
   ANTHROPIC_API_KEY, MANUAL_REVIT_TEST Phases 1–2 and 6).
