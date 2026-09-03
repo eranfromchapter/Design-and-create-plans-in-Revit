@@ -100,3 +100,24 @@ def test_preview_is_512_wide():
     cmap = build_control_map("plan", "plan", FILES["png_plan"].read_bytes())
     img = cv2.imdecode(np.frombuffer(cmap.preview_png, np.uint8), cv2.IMREAD_COLOR)
     assert img.shape[1] == PREVIEW_PX
+
+
+def test_ihdr_dims_are_checked_before_decoding_and_16_bit_is_accepted():
+    from aidm_bridge.control_maps import PNG_SIGNATURE, png_header_dims
+
+    # a "decompression bomb" header: 100000 x 100000 declared, no image data at all
+    ihdr = (100000).to_bytes(4, "big") + (100000).to_bytes(4, "big") + b"\x08\x06\x00\x00\x00"
+    bomb = PNG_SIGNATURE + (13).to_bytes(4, "big") + b"IHDR" + ihdr + b"\x00" * 8
+    assert png_header_dims(bomb) == (100000, 100000)
+    with pytest.raises(MapError) as err:
+        decode_png(bomb)
+    assert err.value.code == "view_dims_invalid"
+    # a 16-bit grayscale PNG decodes to 8-bit and runs the whole pipeline
+    deep = np.zeros((96, 96), np.uint16)
+    cv2.rectangle(deep, (16, 16), (79, 79), 65535, 3)
+    ok, buf = cv2.imencode(".png", deep)
+    assert ok
+    img = decode_png(buf.tobytes())
+    assert img.dtype == np.uint8 and img.max() == 255
+    cmap = build_control_map("deep", "plan", buf.tobytes())
+    assert cmap.stats["edge_px"] > 0

@@ -5,6 +5,7 @@ import copy
 import json
 
 import pytest
+from chapter_contracts.generated.chapter_layout import ChapterLayout
 from helpers import GOLDEN_LAYOUT, layout_ids
 
 from aidm_bridge import selection as sel
@@ -177,9 +178,8 @@ def test_casework_targets_synthetic():
     layout["casework"] = [
         {
             "id": "K-001",
-            "room_id": "R-009",
             "host_wall_id": "W-026",
-            "start_offset": 0,
+            "offset": 0,
             "length": 1800,
             "depth": 600,
             "height": 900,
@@ -188,6 +188,7 @@ def test_casework_targets_synthetic():
             "is_counter": True,
         }
     ]
+    ChapterLayout.model_validate(layout)  # the server's gate accepts this fixture
     out = run(
         empty(casework=[{"id": "K-001", "sku": "CHPT-CASE-SHAKER-STD_PLACEHOLDER"}]),
         ids=IDS + ["K-001"],
@@ -256,3 +257,25 @@ def test_param_constants_are_in_the_allowlist_and_validate_ops_rejects_junk():
     assert err.value.code == "selection_internal"
     with pytest.raises(SelectionError):
         validate_ops([{"op": "set_parameter", "args": {"target_id": "W-001", "param": PARAM_SKU}}])
+
+
+def test_appliance_entries_still_validate_sku_and_duplicates():
+    out = run(empty(plumbing_fixtures=[{"id": DW_IDS[0], "sku": "NOT-A-SKU"}]))
+    assert out["blocking"] == ["unknown_sku"] and out["ops"] == []
+    assert DW_IDS[0] not in out["diagnostics"]["per_target"]  # nothing unvalidated reaches the card
+    out = run(empty(plumbing_fixtures=[{"id": DW_IDS[0], "sku": DW}, {"id": DW_IDS[0], "sku": DW}]))
+    assert out["blocking"] == ["duplicate_target"]
+
+
+def test_unused_override_on_a_selected_target_is_reported():
+    # the pick already matches the tier: the override is never applied -> info, not silence
+    out = run(
+        empty(
+            rooms=[{"room_id": "R-001", "wall_sku": STD_PAINT}],
+            overrides=[{"target": "R-001", "sku": LUX_TILE, "reason": "wanted tile"}],
+        )
+    )
+    assert out["blocking"] == []
+    assert [i["code"] for i in out["review_items"] if i["code"] == "override_unused"] == [
+        "override_unused"
+    ]

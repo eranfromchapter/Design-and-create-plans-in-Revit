@@ -33,6 +33,9 @@ export const COMMIT_CLASS_OPS = new Set([
   "delete_element",
   "update_wall",
 ]);
+// the review kinds whose content.ops are MEANT to be committed under approval_ref; branch
+// deltas (interior_plan, mep_plan) only ever reach the model through the merge gate
+export const COMMITTABLE_REVIEW_KINDS = new Set(["scan_commit0", "layout_commit1", "commit2_merge", "finish_commit"]);
 const enrollBody = z.object({
   workstation_id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/),
 });
@@ -182,10 +185,20 @@ export function registerRoutes(
       throw err;
     }
 
-    // Phase 7: state that must exist before the executor can answer (the render job)
-    if (spec.beforeDispatch) await spec.beforeDispatch(built.envelopeId, seq);
+    // Phase 7: state that must exist before the executor can answer (the render job). An
+    // issued row that will never be dispatched must not hold the one-in-flight slot for a
+    // TTL: abandon it (resolved as expired now) and surface the failure
+    if (spec.beforeDispatch) {
+      try {
+        await spec.beforeDispatch(built.envelopeId, seq);
+      } catch (err) {
+        await repos.abandonIssuedEnvelope(built.envelopeId, "before_dispatch_failed");
+        throw err;
+      }
+    }
 
     if (!core.sendEnvelope(projectId, built.payload, built.sig)) {
+      await repos.abandonIssuedEnvelope(built.envelopeId, "no_executor_connected");
       return { code: 409, body: { error: "no_executor_connected" } };
     }
     return { code: 202, body: { envelope_id: built.envelopeId, seq } };
@@ -209,10 +222,13 @@ export function registerRoutes(
     const commitClass =
       /^Commit #/.test(body.commit_label ?? "") ||
       body.ops.some((o) => COMMIT_CLASS_OPS.has(o.op));
-    if (commitClass) {
-      if (!body.approval_ref) return reply.code(422).send({ error: "approval_ref_required" });
-      // SI-2: the ref must name THIS project's approved review whose content ops are
-      // exactly the ops being signed — a well-formed ref alone is not a human gate
+    if (commitClass && !body.approval_ref) return reply.code(422).send({ error: "approval_ref_required" });
+    if (body.approval_ref) {
+      // SI-2: EVERY approval_ref on the wire is verified, not only on commit-class ops —
+      // recordCommitResult's completion writers (commit0/1/2 snapshots, Phase 7
+      // finish_selections) trust the ref of a committed envelope. The ref must name THIS
+      // project's approved review, of a committable kind, with the hash and exactly these
+      // ops — a well-formed ref alone is not a human gate
       const review = await repos.getReview(body.approval_ref.review_id);
       if (
         !review ||
@@ -221,6 +237,9 @@ export function registerRoutes(
         review.content_hash !== body.approval_ref.content_hash
       ) {
         return reply.code(422).send({ error: "approval_ref_mismatch", detail: "no approved review with that id/hash" });
+      }
+      if (!COMMITTABLE_REVIEW_KINDS.has(review.kind)) {
+        return reply.code(422).send({ error: "approval_ref_kind", detail: `${review.kind} reviews are not committable by approval_ref` });
       }
       const approvedOps = (review.content as { ops?: unknown }).ops;
       if (canonicalize(approvedOps) !== canonicalize(body.ops)) {

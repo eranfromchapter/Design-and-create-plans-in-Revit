@@ -230,6 +230,20 @@ def validate_selection(
             )
             continue
         if item.get("kind") in APPLIANCE_KINDS:
+            # P7-14: no v1 surface — but the entry is still a selection: the SKU must exist
+            # (unknown_sku) and the target is selected once (duplicate_target); nothing
+            # unvalidated reaches the card
+            if sel["id"] in seen_targets:
+                items.append(_item("duplicate_target", "blocking", [sel["id"]], "selected twice"))
+                continue
+            seen_targets.add(sel["id"])
+            if sel["sku"] not in skus:
+                items.append(
+                    _item(
+                        "unknown_sku", "blocking", [sel["id"], sel["sku"]], "not in products.json"
+                    )
+                )
+                continue
             items.append(
                 _item(
                     "appliance_not_selectable", "info", [sel["id"]], "appliances have no v1 surface"
@@ -247,9 +261,14 @@ def validate_selection(
         add_target(sel["id"], "plumbing", "plumbing_fixture", sel["sku"], [])
 
     for target in overrides:
-        if target not in overrides_used and target not in seen_targets:
+        if target not in overrides_used:
             items.append(
-                _item("override_unused", "info", [target], "override names no selected target")
+                _item(
+                    "override_unused",
+                    "info",
+                    [target],
+                    "override not applied: target not selected, or its pick did not need one",
+                )
             )
 
     # ---- walls: resolve per-room picks onto wall elements -----------------------------

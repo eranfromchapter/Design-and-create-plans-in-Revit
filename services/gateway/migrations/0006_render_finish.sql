@@ -32,6 +32,9 @@ CREATE TABLE finish_selections (
   committed_at    timestamptz NOT NULL DEFAULT now(),
   UNIQUE (project_id, review_id)
 );
--- One pending finish_commit per project at a time (every rebuilt selection is a NEW card).
+-- One pending finish_commit per project at a time (every rebuilt selection is a NEW card),
+-- and one pending render_review (two overlapping compose-render calls cannot both file a card).
 CREATE UNIQUE INDEX reviews_one_pending_finish_commit ON reviews(project_id)
   WHERE kind = 'finish_commit' AND status = 'pending';
+CREATE UNIQUE INDEX reviews_one_pending_render_review ON reviews(project_id)
+  WHERE kind = 'render_review' AND status = 'pending';

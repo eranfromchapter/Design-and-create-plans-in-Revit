@@ -917,9 +917,13 @@ describe.skipIf(!DATABASE_URL)("gateway Phase 7 flow (DB-backed)", () => {
       const rebuilt = await finishSelection(projectId, SELECTION);
       expect(rebuilt.statusCode).toBe(201); // every rebuilt selection is a NEW card
       expect(rebuilt.json().review_id).not.toBe(review.id);
+      // an APPROVED selection that can still be issued is never shadowed by a newer card
+      await approve(rebuilt.json().review_id as string);
+      expect((await finishSelection(projectId, SELECTION)).json()).toEqual({ error: "finish_review_awaiting_issue", review_id: rebuilt.json().review_id });
+      await reject((await finishSelection(projectId, SELECTION)).json().review_id ?? rebuilt.json().review_id).catch(() => {});
       const s = await state(projectId);
-      expect(s.finish).toMatchObject({ finish_review_id: rebuilt.json().review_id, status: "pending", envelope_status: null, reissues: 0, hard_failed: false });
-      expect(s.finish_ready).toBe(false);
+      expect(s.finish).toMatchObject({ finish_review_id: rebuilt.json().review_id, status: "approved", envelope_status: null, reissues: 0, hard_failed: false });
+      expect(s.finish_ready).toBe(true);
       expect(s.finish_done).toBe(false);
     } finally {
       await executor.close();
@@ -1009,9 +1013,11 @@ describe.skipIf(!DATABASE_URL)("gateway Phase 7 flow (DB-backed)", () => {
       }
       const issuedEvents = (await events(projectId, "envelope_issued")).filter((e) => e["seq"] === 4);
       expect(issuedEvents.filter((e) => e["reissue_of"]).length).toBe(FINISH_REISSUE_CAP - 1);
+      expect((await state(projectId)).finish_ready).toBe(false); // the cap is visible before anyone asks to issue
       const capped = await issueFinish(projectId);
       expect(capped.json()).toEqual({ error: "finish_reissue_exhausted", reissues: FINISH_REISSUE_CAP });
-      expect((await issueFinish(projectId)).json().error).toBe("finish_reissue_exhausted");
+      // the exhausted card is itself a hard finish_failure naming the review: spent
+      expect((await issueFinish(projectId)).json()).toEqual({ error: "finish_review_failed", review_id: reviewId });
       const exhausted = (await gw.repos.listReviewsOfKind(projectId, "finish_failure")).filter(
         (r) => (r.content as { reason: string }).reason === "finish_reissue_exhausted",
       );
@@ -1068,6 +1074,133 @@ describe.skipIf(!DATABASE_URL)("gateway Phase 7 flow (DB-backed)", () => {
       expect(mismatch.json().error).toBe("approval_ref_mismatch");
     } finally {
       await executor.close();
+    }
+  });
+
+  // ---- review fixes: approval_ref on every op, compose guards, stale exports, lost frames ----
+
+  it("POST /envelopes verifies EVERY approval_ref, not only on commit-class ops; branch-delta kinds are refused", async () => {
+    const projectId = await chainToCommit1();
+    const finish = await gw.repos.createReview(projectId, "finish_commit", { ops: [{ op: "set_parameter", args: { target_id: "W-001", param: "CHPT_Product_SKU", value: "x" } }] }, true);
+    const executor = await connectExecutor(projectId);
+    try {
+      // a non-commit-class op carrying an approved finish_commit ref: the ops differ -> refused
+      // (before the fix it was signed, committed, and recordCommitResult wrote finish_selections)
+      const res = await inject({ method: "POST", url: `/projects/${projectId}/envelopes`, headers: svc,
+        payload: { ops: [{ op: "create_level", args: { name: "Level 9", elevation: 3000 } }], approval_ref: { review_id: finish.id, content_hash: finish.content_hash } } });
+      expect(res.statusCode).toBe(422);
+      expect(res.json().error).toBe("approval_ref_mismatch");
+      expect(await gw.repos.finishSelectionForProject(projectId)).toBeNull();
+      // an approved branch delta (interior_plan) can never back an envelope directly
+      const interior = await gw.repos.createReview(projectId, "interior_plan", { ops: INTERIOR_OPS, layout: {}, brief_version: 1 }, true);
+      const branch = await inject({ method: "POST", url: `/projects/${projectId}/envelopes`, headers: svc,
+        payload: { ops: INTERIOR_OPS, approval_ref: { review_id: interior.id, content_hash: interior.content_hash } } });
+      expect(branch.statusCode).toBe(422);
+      expect(branch.json().error).toBe("approval_ref_kind");
+      expect(executor.delivered).toHaveLength(0);
+    } finally {
+      await executor.close();
+    }
+  });
+
+  it("compose guards: one pending render_review per project (index), a card for the export blocks any job status", async () => {
+    const projectId = await chainToCommit1();
+    const { renderId, executor } = await exported(projectId);
+    try {
+      // a pending render_review already exists for another export -> the open card decides first
+      // (the ladder refuses before the bridge is paid; the unique index is the backstop)
+      const other = await gw.repos.createReview(projectId, "render_review", { render_id: randomUUID(), brief_version: 1 }, false);
+      const res = await compose(projectId);
+      expect(res.statusCode).toBe(409);
+      expect(res.json()).toEqual({ error: "render_review_pending", review_id: other.id });
+      expect((await gw.repos.getRenderJob(renderId))!.status).toBe("exported"); // not flipped
+      await expect(
+        gw.repos.createReview(projectId, "render_review", { render_id: renderId, brief_version: 1 }, false),
+      ).rejects.toThrow(/reviews_one_pending_render_review/);
+      // a card for THIS export exists while the job still says exported (crash between insert and flip)
+      await gw.pool.query("DELETE FROM reviews WHERE project_id = $1 AND kind = 'render_review'", [projectId]);
+      const pending = await gw.repos.createReview(projectId, "render_review", { render_id: renderId, brief_version: 1 }, false);
+      expect((await compose(projectId)).json()).toEqual({ error: "render_review_pending", review_id: pending.id });
+      await approve(pending.id);
+      expect((await compose(projectId)).json()).toEqual({ error: "render_already_composed", review_id: pending.id });
+      expect(renderRequests).toHaveLength(0);
+    } finally {
+      await executor.close();
+    }
+  });
+
+  it("a Commit #2 after the export makes it stale (re-export); the review pins the frozen layout it was about", async () => {
+    const projectId = await chainToCommit1();
+    const executor = await connectExecutor(projectId);
+    try {
+      const { renderId } = await exported(projectId, executor);
+      // Commit #2 lands after the export (seq 4 > export seq 3)
+      const furnish = await inject({ method: "POST", url: `/projects/${projectId}/furnish-layout`, headers: svc });
+      await approve(furnish.json().review_id as string);
+      const mep = await inject({ method: "POST", url: `/projects/${projectId}/plan-mep`, headers: svc, payload: { confirmations: { panel: [50, 3000], slab_to_slab_mm: 3000 } } });
+      await approve(mep.json().review_id as string);
+      const merge = await inject({ method: "POST", url: `/projects/${projectId}/merge-commit2`, headers: svc });
+      expect(merge.statusCode, merge.body).toBe(201);
+      await approve(merge.json().review_id as string);
+      await commitEnvelope(await issueFor(projectId, merge.json().review_id as string, 4, "Commit #2"));
+      const stale = await compose(projectId);
+      expect(stale.statusCode).toBe(409);
+      expect(stale.json()).toMatchObject({ error: "render_export_stale", render_id: renderId, export_seq: 3, commit2_seq: 4 });
+      // re-export -> the card is about commit2
+      await exported(projectId, executor);
+      const res = await compose(projectId);
+      expect(res.statusCode, res.body).toBe(201);
+      expect(((await gw.repos.getReview(res.json().review_id as string))!.content as { layout_snapshot: string }).layout_snapshot).toBe("commit2");
+    } finally {
+      await executor.close();
+    }
+  });
+
+  it("a review approved against commit1 goes stale when Commit #2 lands: render_review_ready false, finish-selection refused", async () => {
+    const projectId = await chainToCommit1();
+    const { executor } = await approvedRender(projectId);
+    try {
+      expect((await state(projectId)).render_review_ready).toBe(true);
+      const furnish = await inject({ method: "POST", url: `/projects/${projectId}/furnish-layout`, headers: svc });
+      await approve(furnish.json().review_id as string);
+      const mep = await inject({ method: "POST", url: `/projects/${projectId}/plan-mep`, headers: svc, payload: { confirmations: { panel: [50, 3000], slab_to_slab_mm: 3000 } } });
+      await approve(mep.json().review_id as string);
+      const merge = await inject({ method: "POST", url: `/projects/${projectId}/merge-commit2`, headers: svc });
+      await approve(merge.json().review_id as string);
+      await commitEnvelope(await issueFor(projectId, merge.json().review_id as string, 4, "Commit #2"));
+      expect((await state(projectId)).render_review_ready).toBe(false);
+      expect((await finishSelection(projectId, SELECTION)).json().error).toBe("render_review_stale");
+      expect(validateRequests).toHaveLength(0);
+    } finally {
+      await executor.close();
+    }
+  });
+
+  it("frames that never arrive: a newer committed envelope fails the stranded job instead of feeding it a stranger's frame", async () => {
+    const projectId = await chainToCommit1();
+    const silent = await connectExecutor(projectId, async (body) => [
+      { type: "ack", envelope_id: body.envelope_id, status: "accepted" },
+      { type: "commit_result", envelope_id: body.envelope_id, status: "committed", id_map_delta: [], errors: [] },
+    ]);
+    try {
+      const res = await renderViews(projectId);
+      expect(res.statusCode, res.body).toBe(202);
+      const renderId = res.json().render_id as string;
+      await waitFor(async () => (await state(projectId)).render?.envelope_status === "committed", "export committed");
+      expect((await gw.repos.getRenderJob(renderId))!.status).toBe("exporting");
+      expect((await compose(projectId)).json()).toMatchObject({ error: "render_export_in_progress", attached: 0 });
+      // another envelope commits: the stranded job can never complete -> terminal
+      const other = await inject({ method: "POST", url: `/projects/${projectId}/envelopes`, headers: svc,
+        payload: { ops: [{ op: "create_level", args: { name: "Level 9", elevation: 3000 } }] } });
+      expect(other.statusCode, other.body).toBe(202);
+      await waitFor(async () => (await gw.repos.getRenderJob(renderId))!.status === "failed", "stranded job failed");
+      expect((await events(projectId, "render_export_failed")).at(-1)).toMatchObject({ render_id: renderId, cause: "frames_lost" });
+      // a late frame now finds no exporting job
+      silent.send({ type: "export_ready", kind: "view", blob_ref: sha256(pngVariant(3)) });
+      await waitFor(async () => (await events(projectId, "export_ready_unmatched")).length === 1, "late frame unmatched");
+      expect((await compose(projectId)).json()).toEqual({ error: "render_export_failed", render_id: renderId });
+    } finally {
+      await silent.close();
     }
   });
 

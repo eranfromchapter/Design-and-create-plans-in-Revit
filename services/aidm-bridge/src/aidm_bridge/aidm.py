@@ -18,14 +18,16 @@ import cv2
 import httpx
 import numpy as np
 
-from aidm_bridge.control_maps import decode_png, encode_png
+from aidm_bridge.control_maps import MAX_PNG_BYTES, MapError, decode_png, encode_png
 
 MAX_ATTEMPTS = 3
 RETRY_SLEEPS_S = (0.5, 1.0, 2.0)  # sleep k-1 before retry k: 3 attempts sleep 0.5 and 1.0
 POLL_INTERVAL_S = 1.0
 MAX_POLLS = 120
 HTTP_TIMEOUT_S = 10.0
+MIN_CALL_TIMEOUT_S = 0.05
 RETRYABLE_STATUSES = frozenset({429, 500, 502, 503, 504})
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 REF_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
 # a flat tint per tier so the mock "render" is visibly a render, not the line map (BGR)
@@ -127,6 +129,10 @@ class HttpRenderer:
         self._clock = clock
         self._sleep = sleep
 
+    def _call_timeout(self, deadline: float) -> float:
+        """No HTTP call ever starts with more time than the request has left."""
+        return max(MIN_CALL_TIMEOUT_S, min(HTTP_TIMEOUT_S, deadline - self._clock()))
+
     def render(self, job: RenderJob, deadline_remaining_s: float) -> RenderOutcome:
         deadline = self._clock() + deadline_remaining_s
         body = {
@@ -144,16 +150,27 @@ class HttpRenderer:
         attempts = 0
         last_error = "not submitted"
         while attempts < MAX_ATTEMPTS and job_id is None:
+            # the caller's deadline binds the submit loop too: no sleep or call past it
             if attempts:
-                self._sleep(RETRY_SLEEPS_S[attempts - 1])
+                self._sleep(max(0.0, min(RETRY_SLEEPS_S[attempts - 1], deadline - self._clock())))
+            if self._clock() >= deadline:
+                return RenderOutcome(
+                    "timeout", None, "", attempts, "deadline reached before submit"
+                )
             attempts += 1
             try:
-                response = self._client.post("/v1/renders", json=body)
-            except httpx.TransportError as err:
+                response = self._client.post(
+                    "/v1/renders", json=body, timeout=self._call_timeout(deadline)
+                )
+            except httpx.HTTPError as err:
                 last_error = f"transport: {err.__class__.__name__}"
                 continue
             if response.status_code == 202:
-                job_id = str(response.json().get("job_id", ""))
+                try:
+                    payload = response.json()
+                except ValueError:
+                    return RenderOutcome("failed", None, "", attempts, "202 without JSON")
+                job_id = str(payload.get("job_id", "")) if isinstance(payload, dict) else ""
                 if not job_id:
                     return RenderOutcome("failed", None, "", attempts, "202 without job_id")
                 break
@@ -172,25 +189,46 @@ class HttpRenderer:
                 )
             polls += 1
             try:
-                response = self._client.get(f"/v1/jobs/{job_id}")
-                payload: dict[str, Any] = response.json() if response.status_code == 200 else {}
-            except (httpx.TransportError, ValueError):
-                payload = {}
+                response = self._client.get(
+                    f"/v1/jobs/{job_id}", timeout=self._call_timeout(deadline)
+                )
+                decoded = response.json() if response.status_code == 200 else {}
+            except (httpx.HTTPError, ValueError):
+                decoded = {}
+            payload: dict[str, Any] = decoded if isinstance(decoded, dict) else {}
             status = payload.get("status")
             if status == "succeeded":
                 images = payload.get("images") or []
-                if not images or "png_base64" not in images[0]:
+                first = images[0] if isinstance(images, list) and images else None
+                if not isinstance(first, dict) or not isinstance(first.get("png_base64"), str):
                     return RenderOutcome(
                         "failed", None, ref, attempts, "succeeded without an image"
                     )
                 try:
-                    png = base64.b64decode(images[0]["png_base64"], validate=True)
+                    png = base64.b64decode(first["png_base64"], validate=True)
                 except ValueError:
                     return RenderOutcome("failed", None, ref, attempts, "image is not base64")
+                problem = validate_render_png(png)
+                if problem is not None:
+                    return RenderOutcome("failed", None, ref, attempts, problem)
                 return RenderOutcome("ok", png, ref, attempts)
             if status == "failed":
                 return RenderOutcome(
-                    "failed", None, ref, attempts, str(payload.get("error", "failed"))
+                    "failed", None, ref, attempts, str(payload.get("error", "failed"))[:300]
                 )
-            self._sleep(POLL_INTERVAL_S)
+            self._sleep(max(0.0, min(POLL_INTERVAL_S, deadline - self._clock())))
         return RenderOutcome("timeout", None, ref, attempts, f"no result after {MAX_POLLS} polls")
+
+
+def validate_render_png(png: bytes) -> str | None:
+    """A renderer's image must be a decodable PNG within the control-map limits — a bad
+    image is a per-view `failed`, never an ok result the gateway then rejects whole."""
+    if len(png) > MAX_PNG_BYTES:
+        return f"image is {len(png)} bytes > {MAX_PNG_BYTES}"
+    if not png.startswith(PNG_MAGIC):
+        return "image is not a PNG"
+    try:
+        decode_png(png)
+    except MapError as err:
+        return f"image rejected: {err.code}"
+    return None

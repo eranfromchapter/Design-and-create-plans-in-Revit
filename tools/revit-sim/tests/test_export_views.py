@@ -59,6 +59,9 @@ def test_export_views_rolled_back_emits_nothing_and_writes_no_debug_png(make_exe
     assert [m["type"] for m in messages] == ["ack", "commit_result"]
     assert messages[1]["status"] == "rolled_back"
     assert list(ex.blob_dir.glob("export_*.png")) == []
+    # nor a content-addressed blob: in CI/e2e this directory IS the gateway's blob store
+    stored = list(ex.blob_dir.iterdir()) if ex.blob_dir.exists() else []
+    assert [p.name for p in stored if len(p.name) == 64] == []
 
 
 def test_export_parameters_unchanged(make_executor):

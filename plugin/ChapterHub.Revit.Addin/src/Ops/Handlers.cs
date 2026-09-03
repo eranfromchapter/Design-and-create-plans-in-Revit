@@ -590,7 +590,16 @@ public sealed class ExportViewsHandler : IOpHandler
                 using (var create = new Transaction(doc, $"HUB export {frame.Index}"))
                 {
                     create.Start();
-                    viewId = CreateTemporaryView(doc, frame, box, level);
+                    try
+                    {
+                        viewId = CreateTemporaryView(doc, frame, box, level);
+                    }
+                    catch (Autodesk.Revit.Exceptions.ApplicationException ex)
+                    {
+                        // e.g. a view type whose default template owns the display style
+                        create.RollBack();
+                        throw new OpFailure("view_export_failed", $"{frame.Name}: {ex.Message}");
+                    }
                     create.Commit();
                 }
                 byte[] png;
@@ -618,9 +627,10 @@ public sealed class ExportViewsHandler : IOpHandler
             {
                 Directory.Delete(tempDir, recursive: true);
             }
-            catch (IOException)
+            catch (Exception)
             {
-                // best effort: a locked temp file must not fail a committed export
+                // best effort: a locked or access-denied temp file must not fail an export
+                // whose blobs are already stored
             }
         }
         foreach (var blobRef in refs) context.Emit(ExportPlan.ReadyMessage(blobRef));
@@ -665,9 +675,13 @@ public sealed class ExportViewsHandler : IOpHandler
         };
     }
 
+    /// <summary>A view family type of the family, preferring one WITHOUT a default view
+    /// template (a template that owns Model Display would refuse DisplayStyle.HLR).</summary>
     private static ElementId ViewFamilyTypeId(Document doc, ViewFamily family) =>
         new FilteredElementCollector(doc).OfClass(typeof(ViewFamilyType)).Cast<ViewFamilyType>()
-            .FirstOrDefault(t => t.ViewFamily == family)?.Id
+            .Where(t => t.ViewFamily == family)
+            .OrderBy(t => t.DefaultTemplateId == ElementId.InvalidElementId ? 0 : 1)
+            .FirstOrDefault()?.Id
         ?? throw new OpFailure("view_export_failed", $"the model has no {family} view family type");
 
     private static ElementId CreateTemporaryView(Document doc, ExportPlan.Frame frame, BoundingBoxXYZ box, Level level)
@@ -680,16 +694,19 @@ public sealed class ExportViewsHandler : IOpHandler
                 break;
             case "section":
             {
-                // an elevation through the framed centre looking +Y: view direction = +Y, up = +Z,
-                // right = -X (right-handed); the near plane sits at the cut, the far plane past
-                // the model (the sim's render_section draws the same half)
+                // an elevation through the framed centre looking +Y (the sim's render_section law):
+                // ViewSection.CreateSection reads the VIEW DIRECTION from Transform.BasisZ and up
+                // from BasisY, computes the right-hand direction itself so (right, up, view) is
+                // left-handed (right = +X here: x grows to the right of the image, as in the sim),
+                // crops to the Min/Max projection on the cut plane and sets the far clip to
+                // Max.Z - Min.Z — so Min.Z = 0 is the cut and Max.Z reaches past the model
                 var centre = (box.Min + box.Max) / 2.0;
                 var halfWidth = Math.Max((box.Max.X - box.Min.X) / 2.0 + MmToFt(FrameMarginMm), MmToFt(MinHalfExtentMm));
                 var halfHeight = Math.Max((box.Max.Z - box.Min.Z) / 2.0 + MmToFt(FrameMarginMm), MmToFt(MinHalfExtentMm));
                 var depth = Math.Max((box.Max.Y - box.Min.Y) / 2.0 + MmToFt(FrameMarginMm), MmToFt(MinHalfExtentMm));
                 var transform = Transform.Identity;
                 transform.Origin = centre;
-                transform.BasisX = new XYZ(-1, 0, 0);
+                transform.BasisX = XYZ.BasisX;
                 transform.BasisY = XYZ.BasisZ;
                 transform.BasisZ = XYZ.BasisY;
                 var section = new BoundingBoxXYZ

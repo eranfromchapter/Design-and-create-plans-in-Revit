@@ -107,6 +107,11 @@ question G2).
       `commit_result committed`, in views order (plan, section, 3d_hidden); no temporary view is
       left in the Project Browser; `/state.render` shows `exported` with 3 refs. Record each PNG's
       pixel width (expect 2048 — Revit fits horizontally; the height differs from the sim's).
+      Open the section PNG: it must be the elevation seen looking towards +Y (the wall with the
+      greater y is the far one, x increases to the RIGHT of the image as in the sim's
+      `render_section`; per the API docs `ViewSection.CreateSection` takes the view direction from
+      the box transform's BasisZ). If it is the mirror image, record it — the section box in
+      `ExportViewsHandler.CreateTemporaryView` is the place to flip.
 - [ ] Gateway unreachable over HTTPS (block the port) → the export envelope rolls back
       `blob_upload_failed`, no frames, temporary views gone, `/state.render.status = failed`.
 - [ ] `compose-render` → the `render_review` card shows the three source views, the Canny + line

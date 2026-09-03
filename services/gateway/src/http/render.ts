@@ -81,6 +81,13 @@ export function registerRenderRoutes(
   const { config, repos, blobs } = deps;
   const serviceAuth = requireService(config);
   const send = (reply: FastifyReply, out: Outcome): FastifyReply => reply.code(out.code).send(out.body);
+  // one compose per project at a time (the bridge call is long; two overlapping calls
+  // would both pay for a render) — the DB's one-pending render_review index is the backstop
+  const composing = new Set<string>();
+
+  /** The layout the pipeline is currently about: commit2 once Commit #2 landed, else commit1. */
+  const currentSnapshotLabel = async (projectId: string): Promise<"commit1" | "commit2"> =>
+    (await repos.hasSnapshot(projectId, "commit2")) ? "commit2" : "commit1";
 
   async function latestRenderReviewFor(projectId: string, renderId: string): Promise<ReviewRow | null> {
     const reviews = await repos.listReviewsOfKind(projectId, "render_review");
@@ -125,8 +132,26 @@ export function registerRenderRoutes(
     if (!(await repos.getProject(projectId))) return { code: 404, body: { error: "unknown_project" } };
     if (!config.aidmBridgeUrl) return { code: 503, body: { error: "aidm_bridge_unavailable" } };
     if (!blobs) return { code: 503, body: { error: "blob_store_unavailable" } };
+    if (composing.has(projectId)) return { code: 409, body: { error: "render_compose_in_progress" } };
+    composing.add(projectId);
+    try {
+      return await composeLocked(projectId, blobs, config.aidmBridgeUrl);
+    } finally {
+      composing.delete(projectId);
+    }
+  }
+
+  async function composeLocked(projectId: string, blobs: BlobStore, bridgeUrl: string): Promise<Outcome> {
     const job = await repos.latestRenderJob(projectId);
     if (!job) return { code: 409, body: { error: "no_render_job" } };
+    // one pending render_review per project (a human decides the open card first — the DB
+    // index enforces it, this check just saves the bridge call); a card for THIS export
+    // blocks whatever the job status says (a crash between the review insert and the status
+    // flip must not yield a second card): re-compose only after a rejection
+    const anyPending = await repos.pendingReviewOfKind(projectId, "render_review");
+    if (anyPending) return { code: 409, body: { error: "render_review_pending", review_id: anyPending.id } };
+    const existing = await latestRenderReviewFor(projectId, job.render_id);
+    if (existing?.status === "approved") return { code: 409, body: { error: "render_already_composed", review_id: existing.id } };
     if (job.status === "failed") return { code: 409, body: { error: "render_export_failed", render_id: job.render_id } };
     if (job.status === "exporting") {
       return {
@@ -137,11 +162,13 @@ export function registerRenderRoutes(
         },
       };
     }
-    if (job.status === "composed") {
-      // re-compose only after a rejection (a fresh card with fresh renders)
-      const existing = await latestRenderReviewFor(projectId, job.render_id);
-      if (existing?.status === "pending") return { code: 409, body: { error: "render_review_pending", review_id: existing.id } };
-      if (existing?.status === "approved") return { code: 409, body: { error: "render_already_composed", review_id: existing.id } };
+    // the export must picture the CURRENT model: a Commit #2 that landed after the export
+    // makes the PNGs stale (re-export); the layout the card and the selection are about
+    // is the newest frozen snapshot
+    const exportEnvelope = await repos.getEnvelope(job.envelope_id);
+    const commit2 = await repos.getSnapshot(projectId, "commit2");
+    if (commit2 && exportEnvelope && commit2.seq > exportEnvelope.seq) {
+      return { code: 409, body: { error: "render_export_stale", render_id: job.render_id, export_seq: exportEnvelope.seq, commit2_seq: commit2.seq } };
     }
     const pngs: Buffer[] = [];
     for (let i = 0; i < job.expected_views; i++) {
@@ -154,8 +181,9 @@ export function registerRenderRoutes(
     const brief = await repos.latestConfirmedBrief(projectId);
     if (!brief) return { code: 409, body: { error: "brief_not_confirmed" } };
     const finishTier = finishTierOf(brief.content);
-    const snapshotLabel: "commit1" | "commit2" = (await repos.hasSnapshot(projectId, "commit2")) ? "commit2" : "commit1";
-    const snapshot = (await repos.getSnapshot(projectId, snapshotLabel))!;
+    const snapshotLabel: "commit1" | "commit2" = commit2 ? "commit2" : "commit1";
+    const snapshot = commit2 ?? (await repos.getSnapshot(projectId, "commit1"));
+    if (!snapshot) return { code: 409, body: { error: "commit1_not_done" } };
     const layout = snapshot.layout as {
       constraints?: { style_tags?: unknown };
       rooms?: { id: string; name: string; program: string }[];
@@ -165,7 +193,8 @@ export function registerRenderRoutes(
     const styleTags = Array.isArray(rawTags)
       ? rawTags.filter((t): t is string => typeof t === "string" && t.length > 0).map((t) => t.slice(0, 40)).slice(0, 12)
       : [];
-    const rooms = (layout.rooms ?? []).slice(0, 60).map((r) => ({ id: r.id, name: r.name, program: r.program }));
+    // bounded like the bridge's RoomIn (name ≤ 120): a long name must never wedge compose
+    const rooms = (layout.rooms ?? []).slice(0, 60).map((r) => ({ id: r.id, name: String(r.name).slice(0, 120), program: r.program }));
 
     const failure = async (content: Record<string, unknown>, hard: boolean): Promise<void> => {
       // one card per (job, error): a polling client never piles up duplicates
@@ -180,7 +209,7 @@ export function registerRenderRoutes(
       );
     };
 
-    const outcome = await bridgeRender(config.aidmBridgeUrl, {
+    const outcome = await bridgeRender(bridgeUrl, {
       project_id: projectId,
       render_id: job.render_id,
       views: job.views.map((v, i) => ({ name: v.name, kind: v.kind, px: v.px, png_base64: pngs[i]!.toString("base64") })),
@@ -261,7 +290,15 @@ export function registerRenderRoutes(
         tags_dropped: result.prompt.tags_dropped.length,
       },
     };
-    const review = await repos.createReview(projectId, "render_review", content, config.autoApprove);
+    let review: ReviewRow;
+    try {
+      review = await repos.createReview(projectId, "render_review", content, config.autoApprove);
+    } catch (err) {
+      if (String(err).includes("reviews_one_pending_render_review")) {
+        return { code: 409, body: { error: "render_review_pending" } };
+      }
+      throw err;
+    }
     await repos.setRenderJobStatus(job.render_id, "composed");
     return {
       code: 201,
@@ -291,19 +328,32 @@ export function registerRenderRoutes(
       const rc = render.content as RenderReviewContent;
       const job = await repos.latestRenderJob(projectId);
       const confirmed = await repos.latestConfirmedBrief(projectId);
-      // the approval must be about the CURRENT export and the CURRENT confirmed brief
-      if (!job || job.render_id !== rc.render_id || !confirmed || confirmed.brief_version !== rc.brief_version) {
+      // the approval must be about the CURRENT export, the CURRENT confirmed brief and the
+      // CURRENT frozen layout (a Commit #2 after the compose changes what the selection targets)
+      if (
+        !job || job.render_id !== rc.render_id || !confirmed || confirmed.brief_version !== rc.brief_version ||
+        rc.layout_snapshot !== (await currentSnapshotLabel(projectId))
+      ) {
         return reply.code(409).send({ error: "render_review_stale", review_id: render.id });
       }
       if (await repos.finishSelectionForProject(projectId)) {
         return reply.code(409).send({ error: "finish_already_done" });
       }
-      const pending = await repos.pendingReviewOfKind(projectId, "finish_commit");
-      if (pending) return reply.code(409).send({ error: "finish_review_pending", review_id: pending.id });
+      const latestFinish = await repos.latestReviewOfKind(projectId, "finish_commit");
+      if (latestFinish?.status === "pending") {
+        return reply.code(409).send({ error: "finish_review_pending", review_id: latestFinish.id });
+      }
+      if (
+        latestFinish?.status === "approved" &&
+        !(await repos.finishHardFailure(projectId, latestFinish.id)) &&
+        (await repos.envelopeCountForReview(latestFinish.id)) < FINISH_REISSUE_CAP
+      ) {
+        // an approved selection that can still be issued must not be shadowed by a newer card
+        return reply.code(409).send({ error: "finish_review_awaiting_issue", review_id: latestFinish.id });
+      }
       const selection = selectionBody.parse(req.body ?? {});
 
-      const snapshotLabel = rc.layout_snapshot === "commit2" && (await repos.hasSnapshot(projectId, "commit2")) ? "commit2" : "commit1";
-      const snapshot = await repos.getSnapshot(projectId, snapshotLabel);
+      const snapshot = await repos.getSnapshot(projectId, rc.layout_snapshot);
       if (!snapshot) return reply.code(409).send({ error: "commit1_not_done" });
       const idMap = await repos.idMapEntries(projectId);
       const okRender = rc.renders.find((r) => r.status === "ok" && r.ref && REF_RE.test(r.ref));
@@ -393,6 +443,9 @@ export function registerRenderRoutes(
     if (env && (env.status === "issued" || env.status === "ack_accepted")) {
       return reply.code(409).send({ error: "envelope_in_flight", envelope_id: env.envelope_id });
     }
+    if (await repos.finishHardFailure(projectId, review.id)) {
+      return reply.code(409).send({ error: "finish_review_failed", review_id: review.id });
+    }
     const reissues = await repos.envelopeCountForReview(review.id);
     if (reissues >= FINISH_REISSUE_CAP) {
       // three transient failures of the same selection: spent (hard) — a new selection
@@ -408,9 +461,6 @@ export function registerRenderRoutes(
         );
       }
       return reply.code(409).send({ error: "finish_reissue_exhausted", reissues });
-    }
-    if (await repos.finishHardFailure(projectId, review.id)) {
-      return reply.code(409).send({ error: "finish_review_failed", review_id: review.id });
     }
     const content = review.content as { ops: OpInput[] };
     return issue.reply(reply, projectId, {
@@ -436,16 +486,19 @@ export async function renderState(repos: Repos, projectId: string): Promise<{
   const rc = renderReview?.content as RenderReviewContent | undefined;
   const confirmed = await repos.latestConfirmedBrief(projectId);
   const envelope = job ? await repos.getEnvelope(job.envelope_id) : null;
+  const snapshotLabel = (await repos.hasSnapshot(projectId, "commit2")) ? "commit2" : "commit1";
   const renderReviewReady =
     renderReview?.status === "approved" &&
     job !== null &&
     rc?.render_id === job.render_id &&
     confirmed !== null &&
-    rc?.brief_version === confirmed.brief_version;
+    rc?.brief_version === confirmed.brief_version &&
+    rc?.layout_snapshot === snapshotLabel;
   const finish = await repos.latestReviewOfKind(projectId, "finish_commit");
   const done = await repos.finishSelectionForProject(projectId);
   const finishEnv = finish ? await repos.latestEnvelopeForReview(finish.id) : null;
   const hardFailed = finish ? (await repos.finishHardFailure(projectId, finish.id)) !== null : false;
+  const reissues = finish ? await repos.envelopeCountForReview(finish.id) : 0;
   return {
     render: job
       ? {
@@ -467,11 +520,11 @@ export async function renderState(repos: Repos, projectId: string): Promise<{
           status: finish.status,
           envelope_status: finishEnv?.status ?? null,
           catalog_version: (finish.content as { catalog_version?: string }).catalog_version ?? null,
-          reissues: await repos.envelopeCountForReview(finish.id),
+          reissues,
           hard_failed: hardFailed,
         }
       : null,
-    finish_ready: finish !== null && finish.status === "approved" && done === null && !hardFailed,
+    finish_ready: finish !== null && finish.status === "approved" && done === null && !hardFailed && reissues < FINISH_REISSUE_CAP,
     finish_done: done !== null,
   };
 }

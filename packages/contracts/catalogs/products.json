@@ -1,7 +1,7 @@
 {
   "catalog_version": "0.1.0-placeholder",
   "requires_human_input": true,
-  "note": "PLACEHOLDER — the 14 rows below exist ONLY so Phase 7 fixtures, goldens and e2e have data; every sku ends in _PLACEHOLDER and the aidm-bridge finish-selection validator refuses them unless allow_placeholders (set by the gateway only under AUTO_APPROVE, i.e. CI). Replace with the 30 real Chapter SKUs (ask Eran; critical path for Phase 8). Fields per SKU: sku, manufacturer, model, description, finish_tier, csi_section, unit. The surface class (wall | casework | door | plumbing_fixture) is DERIVED from csi_section by the bridge's CSI table — nothing is invented per SKU; the 11 31 13 appliance row is deliberately unmapped.",
+  "note": "PLACEHOLDER — the 14 rows below exist ONLY so Phase 7 fixtures, goldens and e2e have data; every sku ends in _PLACEHOLDER and the aidm-bridge finish-selection validator refuses them unless allow_placeholders (set by the gateway only under ALLOW_PLACEHOLDER_SKUS=1, which like AUTO_APPROVE boots only with CI=true). Replace with the 30 real Chapter SKUs (ask Eran; critical path for Phase 8). Fields per SKU: sku, manufacturer, model, description, finish_tier, csi_section, unit. The surface class (wall | casework | door | plumbing_fixture) is DERIVED from csi_section by the bridge's CSI table — nothing is invented per SKU; the 11 31 13 appliance row is deliberately unmapped.",
   "skus": [
     {
       "sku": "CHPT-WALL-PAINT-ECO_PLACEHOLDER",

@@ -112,21 +112,24 @@ def render_views(
         if remaining <= 0:
             outcome = RenderOutcome("skipped_deadline", None, ref, 0, "request deadline exhausted")
         else:
-            outcome = renderer.render(
-                RenderJob(
-                    render_id=req["render_id"],
-                    view_name=view["name"],
-                    view_kind=view["kind"],
-                    prompt=text,
-                    finish_tier=finish_tier,
-                    canny_png=cmap.canny_png,
-                    lines_png=cmap.lines_png,
-                    width=cmap.stats["width"],
-                    height=cmap.stats["height"],
-                    seed=job_seed(req["render_id"], view["name"]),
-                ),
-                remaining,
+            job = RenderJob(
+                render_id=req["render_id"],
+                view_name=view["name"],
+                view_kind=view["kind"],
+                prompt=text,
+                finish_tier=finish_tier,
+                canny_png=cmap.canny_png,
+                lines_png=cmap.lines_png,
+                width=cmap.stats["width"],
+                height=cmap.stats["height"],
+                seed=job_seed(req["render_id"], view["name"]),
             )
+            try:
+                outcome = renderer.render(job, remaining)
+            except Exception as err:  # a renderer bug is this view's failure, never a 500
+                outcome = RenderOutcome(
+                    "failed", None, ref, 0, f"renderer error: {type(err).__name__}: {err}"[:300]
+                )
         renders.append(
             {
                 "name": view["name"],

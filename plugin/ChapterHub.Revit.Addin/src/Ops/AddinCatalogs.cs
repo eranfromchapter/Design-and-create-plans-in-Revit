@@ -17,17 +17,26 @@ public sealed class AddinCatalogs
 
     public static readonly AddinCatalogs Empty = new();
 
-    public static AddinCatalogs Load(string directory)
+    /// <summary>Each file is parsed on its own: a malformed param_allowlist.json leaves the
+    /// MEP catalogs usable (and vice versa) — the affected ops fail catalog_missing, nothing else.</summary>
+    public static AddinCatalogs Load(string directory) => new()
     {
-        var mep = Path.Combine(directory, "mep_types.json");
-        var clash = Path.Combine(directory, "clash_prisms.json");
-        var allowlist = Path.Combine(directory, "param_allowlist.json");
-        return new AddinCatalogs
+        MepTypes = LoadOne(Path.Combine(directory, "mep_types.json"), MepTypes.FromJson),
+        Clash = LoadOne(Path.Combine(directory, "clash_prisms.json"), ClashExemptions.FromJson),
+        Params = LoadOne(Path.Combine(directory, "param_allowlist.json"), ParamAllowlist.FromJson),
+    };
+
+    private static T? LoadOne<T>(string path, Func<string, T> parse) where T : class
+    {
+        if (!File.Exists(path)) return null;
+        try
         {
-            MepTypes = File.Exists(mep) ? MepTypes.FromJson(File.ReadAllText(mep)) : null,
-            Clash = File.Exists(clash) ? ClashExemptions.FromJson(File.ReadAllText(clash)) : null,
-            Params = File.Exists(allowlist) ? ParamAllowlist.FromJson(File.ReadAllText(allowlist)) : null,
-        };
+            return parse(File.ReadAllText(path));
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     public MepTypes RequireMepTypes() =>

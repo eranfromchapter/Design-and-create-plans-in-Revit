@@ -12,7 +12,8 @@ from typing import Annotated, Any, Literal
 import cv2
 from chapter_contracts.generated.brief import FinishTier
 from chapter_contracts.generated.chapter_layout import ChapterLayout, Program
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 
@@ -41,6 +42,12 @@ def _error(code: str, message: str) -> JSONResponse:
     return JSONResponse(
         status_code=422, content={"error": code, "message": message, "raw_outputs": []}
     )
+
+
+@app.exception_handler(RequestValidationError)
+async def _request_invalid(_request: Request, exc: RequestValidationError) -> JSONResponse:
+    # the gateway parses {error, message, raw_outputs}: a shape refusal must speak it too
+    return _error("request_invalid", str(exc.errors()[:8])[:2000])
 
 
 class ViewIn(BaseModel):
@@ -87,7 +94,8 @@ class Override(BaseModel):
     model_config = ConfigDict(extra="forbid")
     target: str = Field(pattern=r"^[A-Z]{1,2}-[0-9]{2,4}$")
     sku: str = Field(min_length=1, max_length=80)
-    reason: str = Field(min_length=3, max_length=300)
+    # a reason is a justification, not whitespace
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=300)]
 
 
 class Selection(BaseModel):
@@ -126,6 +134,8 @@ def render(req: RenderRequest) -> JSONResponse:
         )
     except RenderError as err:
         return _error(err.code, err.message)
+    except Exception as err:  # a bridge bug is a 422 the gateway files as a hard card
+        return _error("render_internal", f"{type(err).__name__}: {err}"[:500])
     return JSONResponse(status_code=200, content=result)
 
 

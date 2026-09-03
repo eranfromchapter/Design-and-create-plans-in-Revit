@@ -62,15 +62,36 @@ def decode_base64_png(data_b64: str) -> bytes:
     return data
 
 
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+
+def png_header_dims(data: bytes) -> tuple[int, int]:
+    """(width, height) from the IHDR chunk — checked BEFORE decoding so a tiny, highly
+    compressible PNG cannot make imdecode allocate gigabytes (a decompression bomb)."""
+    if len(data) < 33 or not data.startswith(PNG_SIGNATURE) or data[12:16] != b"IHDR":
+        raise MapError("png_invalid", "not a PNG (signature/IHDR)")
+    return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+
+
+def _check_dims(w: int, h: int) -> None:
+    if min(h, w) < MIN_DIM_PX or max(h, w) > MAX_DIM_PX:
+        raise MapError("view_dims_invalid", f"{w}x{h} outside {MIN_DIM_PX}..{MAX_DIM_PX}")
+
+
 def decode_png(data: bytes) -> np.ndarray:
     if len(data) > MAX_PNG_BYTES:
         raise MapError("png_too_large", f"{len(data)} bytes > {MAX_PNG_BYTES}")
+    _check_dims(*png_header_dims(data))
     img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_UNCHANGED)
     if img is None or img.ndim not in (2, 3):
         raise MapError("png_invalid", "not a decodable PNG")
     h, w = img.shape[:2]
-    if min(h, w) < MIN_DIM_PX or max(h, w) > MAX_DIM_PX:
-        raise MapError("view_dims_invalid", f"{w}x{h} outside {MIN_DIM_PX}..{MAX_DIM_PX}")
+    _check_dims(w, h)
+    if img.dtype == np.uint16:
+        # 16-bit PNGs: keep the high byte (Canny and the composite are 8-bit laws)
+        img = (img >> 8).astype(np.uint8)
+    elif img.dtype != np.uint8:
+        raise MapError("png_invalid", f"unsupported sample type {img.dtype}")
     return img
 
 

@@ -263,7 +263,8 @@ def _plan_extents(model: SimModel) -> tuple[list[float], list[float]]:
 
 
 def _run_polyline_xz(run_id: str, cls: str, run: dict, extra: str) -> str:
-    pts = " ".join(f"{_f(x)},{_f(-z)}" for x, _y, z in run["path"])
+    # 0.0 - z (not -z): a z == 0 vertex prints "0.0" whether the op carried 0 or 0.0
+    pts = " ".join(f"{_f(x)},{_f(0.0 - z)}" for x, _y, z in run["path"])
     return f'<polyline class="{cls}" data-id="{run_id}" points="{pts}" fill="none" {extra}/>'
 
 
@@ -445,7 +446,7 @@ def render_section(model: SimModel, catalogs: Catalogs) -> str:
 
 def _project(x: float, y: float, z: float) -> tuple[float, float]:
     """30-degree axonometric: viewer at (-inf, -inf, +inf); +x right, +y left, +z up."""
-    return (x - y) * AXON_COS, -((x + y) * AXON_SIN + z)
+    return (x - y) * AXON_COS, 0.0 - ((x + y) * AXON_SIN + z)
 
 
 def render_axon(model: SimModel, catalogs: Catalogs) -> str:

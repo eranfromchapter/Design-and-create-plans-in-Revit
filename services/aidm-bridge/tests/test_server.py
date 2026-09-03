@@ -98,3 +98,28 @@ def test_validate_happy_and_layout_invalid():
 
 def test_tiny_png_is_a_png():
     assert tiny_png()[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def test_request_shape_refusals_use_the_documented_error_body():
+    res = client.post("/render", json={"project_id": PROJECT_ID})
+    assert res.status_code == 422
+    assert res.json()["error"] == "request_invalid" and res.json()["raw_outputs"] == []
+    body = {
+        "project_id": PROJECT_ID,
+        "layout": GOLDEN_LAYOUT,
+        "id_map_ids": layout_ids(GOLDEN_LAYOUT),
+        "finish_tier": "standard",
+        "catalog_version": catalog_version(),
+        "render_ref": None,
+        "selection": {
+            "rooms": [{"room_id": "R-003", "wall_sku": "CHPT-WALL-TILE-LUX_PLACEHOLDER"}],
+            "overrides": [
+                {"target": "R-003", "sku": "CHPT-WALL-TILE-LUX_PLACEHOLDER", "reason": "     "}
+            ],
+        },
+        "allow_placeholders": True,
+    }
+    res = client.post("/finish-selection/validate", json=body)
+    assert (
+        res.status_code == 422 and res.json()["error"] == "request_invalid"
+    )  # a reason is not whitespace

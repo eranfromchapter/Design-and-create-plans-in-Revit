@@ -169,7 +169,18 @@ export class GatewayCore {
       return;
     }
     const hint = m.envelope_id || m.name ? { envelopeId: m.envelope_id, name: m.name } : undefined;
-    const outcome = await this.repos.attachExportBlob(session.projectId, m.blob_ref, hint);
+    let outcome: Awaited<ReturnType<Repos["attachExportBlob"]>>;
+    try {
+      outcome = await this.repos.attachExportBlob(session.projectId, m.blob_ref, hint);
+    } catch (err) {
+      // a lost frame would silently shift every later frame into the wrong slot: fail the
+      // job instead (compose says render_export_failed; a new render-views recovers)
+      await this.repos.failExportingJobs(session.projectId, "attach_error");
+      await this.repos.logEventDirect(session.projectId, actor, "export_ready_attach_error", {
+        blob_ref: m.blob_ref, error: String(err).slice(0, 500),
+      });
+      return;
+    }
     if (outcome.attached) {
       await this.repos.logEventDirect(session.projectId, actor, "export_ready", {
         blob_ref: m.blob_ref, render_id: outcome.renderId, index: outcome.index, complete: outcome.complete,

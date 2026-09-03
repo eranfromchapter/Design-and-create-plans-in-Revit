@@ -110,7 +110,7 @@ export type FinishSelectionRow = z.infer<typeof finishSelectionRow>;
 
 export type AttachOutcome =
   | { attached: true; renderId: string; index: number; complete: boolean }
-  | { attached: false; reason: "no_exporting_job" | "envelope_not_committed" | "job_full" | "unknown_view_name" };
+  | { attached: false; reason: "no_exporting_job" | "envelope_not_committed" | "stale_job" | "job_full" | "unknown_view_name" };
 
 export interface ClashPairRow {
   a_id: string;
@@ -417,6 +417,21 @@ export class Repos {
             iterations_used: content.iterations_used ?? 0,
           });
         }
+        // Phase 7: an OLDER export whose frames never all arrived can no longer complete
+        // (frames follow their own commit_result; a newer envelope just committed) —
+        // terminal instead of stuck. This envelope's own job stays exporting.
+        const stale = await client.query(
+          `UPDATE render_jobs j SET status = 'failed' FROM envelopes e
+           WHERE j.envelope_id = e.envelope_id AND j.project_id = $1 AND j.status = 'exporting'
+             AND j.envelope_id <> $2 AND e.status = 'committed'
+           RETURNING j.render_id, j.envelope_id`,
+          [projectId, r.envelopeId],
+        );
+        for (const row of stale.rows) {
+          await this.logEvent(client, projectId, "gateway", "render_export_failed", {
+            render_id: row.render_id, envelope_id: row.envelope_id, cause: "frames_lost",
+          });
+        }
         // Commit #3 finishes (Phase 7): the committed finish envelope records the approved
         // selection + its set_parameter ops verbatim — the row IS finish_done (Phase 8 reads
         // it for Division 09). One row per (project, review).
@@ -709,6 +724,49 @@ export class Repos {
     return res.rowCount ?? 0;
   }
 
+  /** An issued envelope that was never dispatched (a dispatch precondition failed, or the
+   *  executor vanished between insert and send): resolved as expired NOW so the
+   *  one-in-flight slot frees; any export job it opened fails with it. */
+  async abandonIssuedEnvelope(envelopeId: string, reason: string): Promise<void> {
+    const client = await this.db.connect();
+    try {
+      await client.query("BEGIN");
+      const res = await client.query(
+        `UPDATE envelopes SET status = 'expired', resolved_at = now(), reject_reason = $2
+         WHERE envelope_id = $1 AND status = 'issued' RETURNING project_id`,
+        [envelopeId, reason],
+      );
+      if (res.rowCount) {
+        await this.logEvent(client, res.rows[0].project_id, "gateway", "envelope_abandoned", {
+          envelope_id: envelopeId, reason,
+        });
+        await this.failExportJobs(client, envelopeId, reason);
+      }
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  /** Phase 7: fail every exporting job of a project (a frame could not be attached — the
+   *  slot order is no longer trustworthy). */
+  async failExportingJobs(projectId: string, cause: string): Promise<number> {
+    const res = await this.db.query(
+      `UPDATE render_jobs SET status = 'failed'
+       WHERE project_id = $1 AND status = 'exporting' RETURNING render_id, envelope_id`,
+      [projectId],
+    );
+    for (const row of res.rows) {
+      await this.logEvent(this.db, projectId, "gateway", "render_export_failed", {
+        render_id: row.render_id, envelope_id: row.envelope_id, cause,
+      });
+    }
+    return res.rowCount ?? 0;
+  }
+
   /** Phase 7: an export envelope that will never commit strands its exporting job. */
   private async failExportJobs(client: pg.PoolClient | Db, envelopeId: string, cause: string): Promise<void> {
     const res = await client.query(
@@ -819,6 +877,22 @@ export class Repos {
         return { attached: false, reason: "envelope_not_committed" };
       }
       const job = renderJobRow.parse(row);
+      // frames follow THEIR envelope's commit_result on the same per-session queue, so the
+      // project's newest committed envelope is the frame's envelope; a job whose envelope
+      // is older can never complete — terminal, and never a slot for someone else's frame
+      const latest = await client.query(
+        `SELECT envelope_id FROM envelopes WHERE project_id = $1 AND status = 'committed'
+         ORDER BY seq DESC LIMIT 1`,
+        [projectId],
+      );
+      if (latest.rows[0]?.envelope_id !== job.envelope_id) {
+        await client.query(`UPDATE render_jobs SET status = 'failed' WHERE render_id = $1`, [job.render_id]);
+        await this.logEvent(client, projectId, "gateway", "render_export_failed", {
+          render_id: job.render_id, envelope_id: job.envelope_id, cause: "frames_lost",
+        });
+        await client.query("COMMIT");
+        return { attached: false, reason: "stale_job" };
+      }
       const refs = [...job.blob_refs];
       while (refs.length < job.expected_views) refs.push(null);
       let index: number;
