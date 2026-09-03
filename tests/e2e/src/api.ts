@@ -27,6 +27,33 @@ const stateSchema = z.object({
     failed: z.boolean(),
     merge_current: z.boolean(),
   }),
+  // Phase 7
+  render: z
+    .object({
+      render_id: z.string(),
+      status: z.enum(["exporting", "exported", "composed", "failed"]),
+      envelope_id: z.string(),
+      envelope_status: z.string().nullable(),
+      expected_views: z.number(),
+      blob_refs: z.number(),
+      render_review_id: z.string().nullable(),
+      render_review_status: z.string().nullable(),
+    })
+    .nullable(),
+  render_exported: z.boolean(),
+  render_review_ready: z.boolean(),
+  finish: z
+    .object({
+      finish_review_id: z.string(),
+      status: z.string(),
+      envelope_status: z.string().nullable(),
+      catalog_version: z.string().nullable(),
+      reissues: z.number(),
+      hard_failed: z.boolean(),
+    })
+    .nullable(),
+  finish_ready: z.boolean(),
+  finish_done: z.boolean(),
   executor_connected: z.boolean(),
   last_committed_seq: z.number(),
   id_map: z.record(z.string(), z.number()),
@@ -156,6 +183,41 @@ export class GatewayApi {
 
   async issueCommit2(projectId: string) {
     return this.request("POST", `/projects/${projectId}/issue-commit2`, SERVICE_TOKEN, {});
+  }
+
+  // ---- Phase 7 -------------------------------------------------------------------
+
+  async renderViews(projectId: string) {
+    return this.request("POST", `/projects/${projectId}/render-views`, SERVICE_TOKEN, {});
+  }
+
+  async composeRender(projectId: string) {
+    return this.request("POST", `/projects/${projectId}/compose-render`, SERVICE_TOKEN, {});
+  }
+
+  /** The bridge's selection shape: {rooms, casework, doors, plumbing_fixtures, overrides}. */
+  async finishSelection(projectId: string, selection: Record<string, unknown>, token: string = SERVICE_TOKEN) {
+    return this.request("POST", `/projects/${projectId}/finish-selection`, token, selection);
+  }
+
+  async issueFinish(projectId: string) {
+    return this.request("POST", `/projects/${projectId}/issue-finish`, SERVICE_TOKEN, {});
+  }
+
+  async getBlob(projectId: string, ref: string, token: string = ACTOR_TOKEN) {
+    const res = await fetch(`${this.baseUrl}/projects/${projectId}/blobs/${ref}`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    return { status: res.status, contentType: res.headers.get("content-type"), bytes: Buffer.from(await res.arrayBuffer()) };
+  }
+
+  async putBlob(projectId: string, ref: string, bytes: Buffer, token: string, contentType = "image/png") {
+    const res = await fetch(`${this.baseUrl}/projects/${projectId}/blobs/${ref}`, {
+      method: "PUT",
+      headers: { authorization: `Bearer ${token}`, "content-type": contentType },
+      body: new Uint8Array(bytes),
+    });
+    return { status: res.status, json: await res.json().catch(() => null) };
   }
 
   /** Every review row (kind/status/content) for chain assertions. */

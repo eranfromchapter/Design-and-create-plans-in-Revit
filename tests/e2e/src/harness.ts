@@ -16,6 +16,7 @@ const SIM_PYTHON = join(REPO_ROOT, "tools", "revit-sim", ".venv", "bin", "python
 const CONVERTER_PYTHON = join(REPO_ROOT, "services", "scan-converter", ".venv", "bin", "python");
 const BRIEF_PYTHON = join(REPO_ROOT, "services", "brief-extractor", ".venv", "bin", "python");
 const LAYOUT_PYTHON = join(REPO_ROOT, "services", "layout-compiler", ".venv", "bin", "python");
+const AIDM_PYTHON = join(REPO_ROOT, "services", "aidm-bridge", ".venv", "bin", "python");
 
 export const SERVICE_TOKEN = "service-token-0123456789";
 export const ACTOR_TOKEN = "actor-token-eran";
@@ -173,10 +174,28 @@ export async function startLayoutCompiler(): Promise<ConverterProc> {
   return { port, url: `http://127.0.0.1:${port}`, proc };
 }
 
+/** Phase 7 child process: the real AIDM bridge with the deterministic mock renderer
+ *  (AIDM_ENDPOINT empty — CI never calls an external renderer). */
+export async function startAidmBridge(): Promise<ConverterProc> {
+  const proc = spawn(AIDM_PYTHON, ["-m", "aidm_bridge", "--serve", "--port", "0"], {
+    cwd: join(REPO_ROOT, "services", "aidm-bridge"),
+    env: {
+      ...process.env,
+      PYTHONPATH: join(REPO_ROOT, "services", "aidm-bridge", "src"),
+      AIDM_ENDPOINT: "",
+    },
+    stdio: ["ignore", "pipe", "inherit"],
+  });
+  const output = new Output(proc);
+  const line = await output.waitForLine("LISTENING ", proc);
+  const port = Number(line.split(" ")[1]);
+  return { port, url: `http://127.0.0.1:${port}`, proc };
+}
+
 export function startSim(
   gatewayPort: number,
   token: string,
-  opts: { stateDir?: string; controlPort?: boolean; workstationId?: string } = {},
+  opts: { stateDir?: string; controlPort?: boolean; workstationId?: string; blobDir?: string } = {},
 ): SimProc {
   const stateDir = opts.stateDir ?? mkdtempSync(join(tmpdir(), "sim-"));
   const args = [
@@ -185,7 +204,9 @@ export function startSim(
     "--token", token,
     "--workstation-id", opts.workstationId ?? "ws-design-01",
     "--state-dir", join(stateDir, "state"),
-    "--blob-dir", join(stateDir, "blobs"),
+    // Phase 7: the gateway's BLOB_DIR may be handed in — the sim's content-addressed
+    // blobs ARE the gateway's (shared FS, no upload path in CI)
+    "--blob-dir", opts.blobDir ?? join(stateDir, "blobs"),
   ];
   if (opts.controlPort) args.push("--control-port", "0");
   const proc = spawn(SIM_PYTHON, args, {
