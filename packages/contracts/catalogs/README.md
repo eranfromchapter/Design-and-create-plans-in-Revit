@@ -8,7 +8,7 @@ consume them** (Part J: never invent catalog vocabulary; placeholders are marked
 |---|---|---|
 | `asbuilt_types.json` | Phase 2 Lane A wall-type resolution (thickness → type) | **PLACEHOLDER — ask Eran** for the as-built wall type names + thicknesses from Chapter's Revit template |
 | `new_construction_types.json` | Phase 4 layout-compiler closed vocabulary; validator + sim enforce membership for `source="generated"` elements | **PLACEHOLDER — ask Eran** for the wall/door/window type vocabulary from Chapter's template |
-| `products.json` | Phase 7 finish selection, Phase 8 spec compiler | **PLACEHOLDER — ask Eran** for the 30 real Chapter SKUs (critical path for Phase 8) |
+| `products.json` | Phase 7 finish selection (per-room / per-element SKUs filtered by the brief's `finish_tier`; the render is illustrative, the selection is the data), Phase 8 spec compiler (Division 09) | **PLACEHOLDER — ask Eran** for the 30 real Chapter SKUs (critical path for Phase 8). 14 `_PLACEHOLDER` rows exist only for Phase 7 fixtures/e2e and are refused by the validator outside CI. Fields `sku, manufacturer, model, description, finish_tier, csi_section, unit`; the surface class (wall / casework / door / plumbing_fixture) is DERIVED from `csi_section` by the bridge's CSI table (`09 91/93/30/72/29` → wall, `06 41` / `12 35` → casework, `08 14/11/16` → door, `22 41/42` → plumbing fixture) — nothing is invented per SKU |
 | `plumbing.json` | Phase 6 MEP rules P-1/P-3/P-4 (fixture units, drain sizes, fitting allowances) | Engineering defaults (IPC-derived); reviewable, not placeholders |
 | `mep_types.json` | Phase 6 MEP op emission (`create_pipe.pipe_type` + `system`), sim catalog membership (pipe types), plugin symbol lookup (PipingSystemType names, the conduit type, the device family per `place_device.kind` — the registry ops carry no conduit type or device family) | **PLACEHOLDER — ask Eran** for pipe/conduit types, PipingSystemType names and device families from Chapter's template |
 | `clash_prisms.json` | Phase 6 clash law shared by the merge gate (Phase A), revit-sim `run_interference_check` and the plugin: element classes/priorities, kind heights, exemption pairs | Engineering defaults; reviewable, not placeholders |
@@ -34,3 +34,13 @@ Observations to help fill the placeholders; none of these values is written into
   (leaf hinged at the family's −X jamb, swinging to family +Y = Exterior). A family authored the
   other way fails `door_flip_failed`; tell us which families hinge at +X and a per-type flag
   becomes a catalog item.
+
+## Phase 7 notes
+
+- `products.json` rows are consumed by `services/aidm-bridge` (candidates per surface class, filtered
+  by `finish_tier`; deterministic finish-selection validation). `catalog_version` is pinned into every
+  `finish_commit` review and `finish_selections` row so Phase 8 re-generates specs reproducibly.
+- `ops/param_allowlist.json` (not a catalog, but enrolled beside them on the Revit machine as of
+  Phase 7) names the ONLY parameters `set_parameter` may write and the categories each may touch;
+  the five `CHPT_*` parameters must exist as shared parameters in Chapter's template
+  (`docs/REVIT_TEMPLATE_CONTENT.md`).

@@ -5,6 +5,7 @@ using ChapterHub.Core.Contracts;
 using ChapterHub.Core.Execution;
 using ChapterHub.Revit.Addin.IdMap;
 using ChapterHub.Revit.Addin.Ops;
+using ChapterHub.Revit.Addin.Transport;
 
 namespace ChapterHub.Revit.Addin.Execution;
 
@@ -15,6 +16,10 @@ namespace ChapterHub.Revit.Addin.Execution;
 /// verified before anything runs; re-Raise drains the queue one envelope at a time.
 /// Phase 6: errors carry op_index; an `interference` rollback is followed by a
 /// `clash_delta` frame naming the clashing pair in logical ids (the sim's frame order).
+/// Phase 7: handlers that need their own transactions (export_views creates and deletes
+/// temporary views) run between the committed batch transactions, still inside the group;
+/// their side messages (export_ready) are sent ONLY after a committed commit_result, in
+/// emission order — a rolled-back envelope announces nothing.
 /// </summary>
 public sealed class EnvelopeHandler : IExternalEventHandler
 {
@@ -22,13 +27,18 @@ public sealed class EnvelopeHandler : IExternalEventHandler
     private readonly IReadOnlyDictionary<string, IOpHandler> _handlers = OpHandlerRegistry.Build();
     private readonly Action<object> _send;
     private readonly AddinCatalogs _catalogs;
+    private readonly IBlobUploader _uploader;
     private ExternalEvent? _event;
 
-    public EnvelopeHandler(Action<object> sendMessage, AddinCatalogs? catalogs = null)
+    public EnvelopeHandler(Action<object> sendMessage, AddinCatalogs? catalogs = null, IBlobUploader? uploader = null)
     {
         _send = sendMessage;
         _catalogs = catalogs ?? AddinCatalogs.Empty;
+        _uploader = uploader ?? NullBlobUploader.Instance;
     }
+
+    /// <summary>Batches of up to this many ops share one Transaction (progress granularity).</summary>
+    private const int BatchSize = 200;
 
     /// <summary>Must be created in a valid Revit API context (IExternalApplication.OnStartup).</summary>
     public void Attach(ExternalEvent externalEvent) => _event = externalEvent;
@@ -83,26 +93,50 @@ public sealed class EnvelopeHandler : IExternalEventHandler
                 return;
             }
 
-            var context = new OpContext(doc, store, _catalogs);
+            var context = new OpContext(doc, store, _catalogs, body, _uploader);
             var done = 0;
-            foreach (var batch in body.Ops.Chunk(200))
+            Transaction? batch = null;
+            var inBatch = 0;
+            void CommitBatch()
             {
-                using var transaction = new Transaction(doc, $"HUB batch {done}");
-                transaction.Start();
-                foreach (var call in batch)
+                if (batch is null) return;
+                batch.Commit();
+                batch.Dispose();
+                batch = null;
+                inBatch = 0;
+                _send(new { type = "progress", envelope_id = body.EnvelopeId, ops_done = done, ops_total = body.Ops.Count });
+            }
+            try
+            {
+                foreach (var call in body.Ops)
                 {
+                    var handler = _handlers[call.Op];
+                    if (handler.NeedsOwnTransactions)
+                    {
+                        // close the running batch first: the handler owns its transactions
+                        CommitBatch();
+                    }
+                    else if (batch is null)
+                    {
+                        batch = new Transaction(doc, $"HUB batch {done}");
+                        batch.Start();
+                    }
                     try
                     {
-                        _handlers[call.Op].Execute(context, call.Args);
+                        handler.Execute(context, call.Args);
                     }
                     catch (OpFailure failure)
                     {
                         throw new IndexedOpFailure(failure, done);
                     }
                     done++;
+                    if (!handler.NeedsOwnTransactions && ++inBatch >= BatchSize) CommitBatch();
                 }
-                transaction.Commit();
-                _send(new { type = "progress", envelope_id = body.EnvelopeId, ops_done = done, ops_total = body.Ops.Count });
+                CommitBatch();
+            }
+            finally
+            {
+                batch?.Dispose(); // a started, uncommitted batch rolls back here (the group follows)
             }
 
             using (var transaction = new Transaction(doc, "HUB state"))
@@ -117,6 +151,8 @@ public sealed class EnvelopeHandler : IExternalEventHandler
             SendCommitResult(body, committed: true,
                 delta: context.Delta.Select(d => new { logical_id = d.LogicalId, element_id = d.ElementId }).ToArray(),
                 errors: []);
+            // Phase 7: export_ready frames follow the commit_result, in views order
+            foreach (var message in context.DrainSideMessages()) _send(message);
         }
         catch (IndexedOpFailure indexed)
         {

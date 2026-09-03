@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import canonicalize from "canonicalize";
 import type { Config } from "../config.js";
@@ -6,7 +6,7 @@ import type { Repos, ReviewRow } from "../db/repos.js";
 import type { GatewayCore } from "../core.js";
 import { buildEnvelope, type OpInput } from "../envelope/builder.js";
 import { newProjectKeypair } from "../crypto/keystore.js";
-import { requireActor, requireService, resolveActor } from "./auth.js";
+import { actorOrService, requireActor, requireService, resolveActor } from "./auth.js";
 import { renderReviewsPage } from "../ui/reviews.js";
 import { convertScanBundle, type ReviewPayload } from "../scan/converter-client.js";
 import { opsFromScanLayout } from "../scan/ops.js";
@@ -14,16 +14,28 @@ import { extractBrief } from "../brief/extractor-client.js";
 import { compileLayout } from "../layout/compiler-client.js";
 import { furnishLayout } from "../layout/furnish-client.js";
 import { commit0LayoutFromReview } from "../layout/snapshot.js";
-import { commit2State, registerCommit2Routes, type IssueSpec } from "./commit2.js";
+import { commit2State, registerCommit2Routes, type IssueSpec, type Outcome } from "./commit2.js";
+import { registerRenderRoutes, renderState } from "./render.js";
+import { registerBlobRoutes } from "./blobs.js";
+import type { BlobStore } from "../blobs/store.js";
 
 const createProjectBody = z.object({ name: z.string().min(1).max(200) });
-const COMMIT_CLASS_OPS = new Set([
+// ops only an approved review may carry: the Phase 6 merge ops and — Phase 7 (SI-2/SI-4
+// hardening) — every op that writes the model outside the Commit #0/#1 create path
+export const COMMIT_CLASS_OPS = new Set([
   "run_interference_check",
   "place_family",
   "place_device",
   "create_pipe",
   "create_conduit",
+  "set_parameter",
+  "set_phase_demolished",
+  "delete_element",
+  "update_wall",
 ]);
+// the review kinds whose content.ops are MEANT to be committed under approval_ref; branch
+// deltas (interior_plan, mep_plan) only ever reach the model through the merge gate
+export const COMMITTABLE_REVIEW_KINDS = new Set(["scan_commit0", "layout_commit1", "commit2_merge", "finish_commit"]);
 const enrollBody = z.object({
   workstation_id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/),
 });
@@ -84,9 +96,9 @@ const transcriptsBody = z.object({
 
 export function registerRoutes(
   app: FastifyInstance,
-  deps: { config: Config; repos: Repos; core: GatewayCore },
+  deps: { config: Config; repos: Repos; core: GatewayCore; blobs: BlobStore | null },
 ): void {
-  const { config, repos, core } = deps;
+  const { config, repos, core, blobs } = deps;
   const serviceAuth = requireService(config);
   const actorAuth = requireActor(config);
 
@@ -109,23 +121,20 @@ export function registerRoutes(
   });
 
   /** Shared envelope-issuing path: drift gate -> executor -> build/sign -> persist
-   *  (one-in-flight) -> dispatch. Used by POST /envelopes and POST /issue-commit0. */
-  async function issueEnvelope(
-    reply: FastifyReply,
-    projectId: string,
-    spec: IssueSpec,
-  ): Promise<FastifyReply> {
+   *  (one-in-flight) -> [beforeDispatch] -> dispatch. Used by POST /envelopes, the
+   *  issue-commit routes and the Phase 7 export/finish routes. */
+  async function issueEnvelopeOutcome(projectId: string, spec: IssueSpec): Promise<Outcome> {
     const project = await repos.getProject(projectId);
-    if (!project) return reply.code(404).send({ error: "unknown_project" });
+    if (!project) return { code: 404, body: { error: "unknown_project" } };
 
     // Drift gate: a dirty project (or one with a pending drift review) issues nothing
     // until a human clears it (PLAN.md Part B "Trust and drift").
     if (project.drift_state === "dirty") {
-      return reply.code(409).send({ error: "drift_review_pending" });
+      return { code: 409, body: { error: "drift_review_pending" } };
     }
 
     if (!core.executorReady(projectId)) {
-      return reply.code(409).send({ error: "no_executor_connected" });
+      return { code: 409, body: { error: "no_executor_connected" } };
     }
 
     const workstationId = core.workstationFor(projectId) ?? "";
@@ -150,7 +159,11 @@ export function registerRoutes(
       project.signing_seed_enc,
       config.masterKey,
     );
-    if (!built.ok) return reply.code(422).send({ error: "invalid_ops", detail: built.error });
+    if (!built.ok) {
+      // SI-4 (Phase 7): an off-allowlist set_parameter is its own refusal code
+      const error = built.error.reason === "param_not_allowlisted" ? "param_not_allowlisted" : "invalid_ops";
+      return { code: 422, body: { error, detail: built.error } };
+    }
 
     try {
       await repos.insertIssuedEnvelope({
@@ -167,15 +180,37 @@ export function registerRoutes(
       });
     } catch (err) {
       if (String(err).includes("envelopes_one_inflight")) {
-        return reply.code(409).send({ error: "envelope_in_flight" });
+        return { code: 409, body: { error: "envelope_in_flight" } };
       }
       throw err;
     }
 
-    if (!core.sendEnvelope(projectId, built.payload, built.sig)) {
-      return reply.code(409).send({ error: "no_executor_connected" });
+    // Phase 7: state that must exist before the executor can answer (the render job). An
+    // issued row that will never be dispatched must not hold the one-in-flight slot for a
+    // TTL: abandon it (resolved as expired now) and surface the failure
+    if (spec.beforeDispatch) {
+      try {
+        await spec.beforeDispatch(built.envelopeId, seq);
+      } catch (err) {
+        await repos.abandonIssuedEnvelope(built.envelopeId, "before_dispatch_failed");
+        throw err;
+      }
     }
-    return reply.code(202).send({ envelope_id: built.envelopeId, seq });
+
+    if (!core.sendEnvelope(projectId, built.payload, built.sig)) {
+      await repos.abandonIssuedEnvelope(built.envelopeId, "no_executor_connected");
+      return { code: 409, body: { error: "no_executor_connected" } };
+    }
+    return { code: 202, body: { envelope_id: built.envelopeId, seq } };
+  }
+
+  async function issueEnvelope(
+    reply: FastifyReply,
+    projectId: string,
+    spec: IssueSpec,
+  ): Promise<FastifyReply> {
+    const out = await issueEnvelopeOutcome(projectId, spec);
+    return reply.code(out.code).send(out.body);
   }
 
   app.post("/projects/:id/envelopes", { preHandler: serviceAuth }, async (req, reply) => {
@@ -187,10 +222,13 @@ export function registerRoutes(
     const commitClass =
       /^Commit #/.test(body.commit_label ?? "") ||
       body.ops.some((o) => COMMIT_CLASS_OPS.has(o.op));
-    if (commitClass) {
-      if (!body.approval_ref) return reply.code(422).send({ error: "approval_ref_required" });
-      // SI-2: the ref must name THIS project's approved review whose content ops are
-      // exactly the ops being signed — a well-formed ref alone is not a human gate
+    if (commitClass && !body.approval_ref) return reply.code(422).send({ error: "approval_ref_required" });
+    if (body.approval_ref) {
+      // SI-2: EVERY approval_ref on the wire is verified, not only on commit-class ops —
+      // recordCommitResult's completion writers (commit0/1/2 snapshots, Phase 7
+      // finish_selections) trust the ref of a committed envelope. The ref must name THIS
+      // project's approved review, of a committable kind, with the hash and exactly these
+      // ops — a well-formed ref alone is not a human gate
       const review = await repos.getReview(body.approval_ref.review_id);
       if (
         !review ||
@@ -199,6 +237,9 @@ export function registerRoutes(
         review.content_hash !== body.approval_ref.content_hash
       ) {
         return reply.code(422).send({ error: "approval_ref_mismatch", detail: "no approved review with that id/hash" });
+      }
+      if (!COMMITTABLE_REVIEW_KINDS.has(review.kind)) {
+        return reply.code(422).send({ error: "approval_ref_kind", detail: `${review.kind} reviews are not committable by approval_ref` });
       }
       const approvedOps = (review.content as { ops?: unknown }).ops;
       if (canonicalize(approvedOps) !== canonicalize(body.ops)) {
@@ -554,6 +595,7 @@ export function registerRoutes(
         );
       })(),
       ...(await commit2State(repos, projectId)),
+      ...(await renderState(repos, projectId)),
       executor_connected: core.executorReady(projectId),
       last_committed_seq: await repos.lastCommittedSeq(projectId),
       id_map: await repos.idMapEntries(projectId),
@@ -569,6 +611,8 @@ export function registerRoutes(
   });
 
   registerCommit2Routes(app, { config, repos }, issueEnvelope);
+  registerRenderRoutes(app, { config, repos, blobs }, { outcome: issueEnvelopeOutcome, reply: issueEnvelope });
+  registerBlobRoutes(app, { config, repos, blobs });
 
   app.get("/projects/:id/reviews", { preHandler: actorOrService(config) }, async (req, reply) => {
     const projectId = (req.params as { id: string }).id;
@@ -704,16 +748,5 @@ function confirmationProblem(
     };
   }
   return null;
-}
-
-function actorOrService(config: Config) {
-  const service = requireService(config);
-  const actor = requireActor(config);
-  return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    // accept either credential kind; try actor first so review pages work with actor tokens
-    if (resolveActor(config, req)) return;
-    if (req.headers.authorization) return service(req, reply);
-    return actor(req, reply);
-  };
 }
 

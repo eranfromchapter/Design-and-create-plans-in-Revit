@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -24,7 +25,7 @@ from chapter_contracts import verify_envelope
 
 from revit_sim.model import Catalogs, OpError, SimModel
 from revit_sim.render.png import rasterize
-from revit_sim.render.svg import render_plan
+from revit_sim.render.svg import render_axon, render_plan, render_section
 from revit_sim.state import SimState
 
 Clock = Callable[[], datetime]
@@ -32,6 +33,11 @@ Clock = Callable[[], datetime]
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+def _safe_name(name: str) -> str:
+    """Debug-file name for an exported view (never on the wire): safe charset, <= 80 chars."""
+    return re.sub(r"[^A-Za-z0-9_-]", "_", name)[:80]
 
 
 @dataclass
@@ -104,10 +110,14 @@ class Executor:
         working = self.model.clone()
         created: list[str] = []
         side_messages: list[dict[str, Any]] = []
+        debug_files: list[tuple[str, bytes]] = []
+        pending_blobs: list[tuple[str, bytes]] = []
         try:
             for index, op_call in enumerate(body["ops"]):
                 try:
-                    side = self._apply(working, op_call["op"], op_call["args"], created)
+                    side = self._apply(
+                        working, op_call["op"], op_call["args"], created, debug_files, pending_blobs
+                    )
                     side_messages.extend(side)
                 except OpError as err:
                     raise _EnvelopeFailure(index, err) from err
@@ -151,6 +161,13 @@ class Executor:
         # `make demo-phase1` and the e2e golden comparison read this file directly.
         self.blob_dir.mkdir(parents=True, exist_ok=True)
         (self.blob_dir / "current_plan.svg").write_text(render_plan(self.model))
+        # Content-addressed blobs and the Phase 7 debug artifacts (export_<name>.png, not a
+        # wire contract) are written only when the envelope commits — a rolled-back export
+        # leaves nothing behind (in CI/e2e this directory IS the gateway's blob store).
+        for ref, content in pending_blobs:
+            (self.blob_dir / ref).write_bytes(content)
+        for name, content in debug_files:
+            (self.blob_dir / name).write_bytes(content)
 
         messages.append(self._commit_result(body, committed=True, delta=delta))
         messages.extend(side_messages)
@@ -164,44 +181,51 @@ class Executor:
         op: str,
         args: dict[str, Any],
         created: list[str],
+        debug_files: list[tuple[str, bytes]] | None = None,
+        pending_blobs: list[tuple[str, bytes]] | None = None,
     ) -> list[dict[str, Any]]:
-        """Apply one op to the working model; returns side messages (exports)."""
+        """Apply one op to the working model; returns side messages (exports). Blob bytes go
+        to `pending_blobs` (written at commit) — refs are content hashes, so they are known
+        before the bytes are stored."""
         if op == "export_views":
+            # Phase 7: one PNG per view IN views ORDER (the gateway correlates export_ready
+            # frames by order; `name` is never on the wire). plan = the canonical plan;
+            # section = elevation through the bbox centre looking +Y; 3d_hidden = the
+            # axonometric boxes (docs/PHASE7_DESIGN.md P7-11).
             out: list[dict[str, Any]] = []
             for view in args["views"]:
                 if view["kind"] == "plan":
                     svg = render_plan(working)
-                    png = rasterize(svg, view["px"])
+                elif view["kind"] == "section":
+                    svg = render_section(working, self.catalogs)
                 else:
-                    # section/3d_hidden: not modeled in the Phase 1 sim; a 1x1 placeholder
-                    # keeps the export contract exercised without pretending geometry.
-                    png = rasterize('<svg xmlns="http://www.w3.org/2000/svg"/>', 1)
+                    svg = render_axon(working, self.catalogs)
+                png = rasterize(svg, view["px"])
+                if debug_files is not None:
+                    debug_files.append((f"export_{_safe_name(view['name'])}.png", png))
                 out.append(
                     {
                         "type": "export_ready",
                         "kind": "view",
-                        "blob_ref": self._store_blob(png),
+                        "blob_ref": self._store_blob(png, pending_blobs),
                     }
                 )
             return out
         if op == "export_parameters":
             doc = json.dumps(working.parameters, sort_keys=True).encode()
-            return [
-                {"type": "export_ready", "kind": "parameters", "blob_ref": self._store_blob(doc)}
-            ]
+            ref = self._store_blob(doc, pending_blobs)
+            return [{"type": "export_ready", "kind": "parameters", "blob_ref": ref}]
         if op == "verify_deviation":
             doc = json.dumps({"walls": args["wall_ids"], "pass": True}, sort_keys=True).encode()
-            return [
-                {"type": "export_ready", "kind": "deviation", "blob_ref": self._store_blob(doc)}
-            ]
+            ref = self._store_blob(doc, pending_blobs)
+            return [{"type": "export_ready", "kind": "deviation", "blob_ref": ref}]
         if op == "verify_model_state":
             doc = json.dumps(
                 {"id_map_hash": self.state.hash(), "elements": sorted(working.all_ids())},
                 sort_keys=True,
             ).encode()
-            return [
-                {"type": "export_ready", "kind": "model_state", "blob_ref": self._store_blob(doc)}
-            ]
+            ref = self._store_blob(doc, pending_blobs)
+            return [{"type": "export_ready", "kind": "model_state", "blob_ref": ref}]
 
         if op == "run_interference_check":
             # scope the law to THIS envelope's created set (the plugin's created-set filter)
@@ -218,9 +242,13 @@ class Executor:
             created.append(logical_id)
         return []
 
-    def _store_blob(self, content: bytes) -> str:
-        """Content-addressed local blob store (Azure Blob in later phases)."""
+    def _store_blob(self, content: bytes, pending: list[tuple[str, bytes]] | None) -> str:
+        """Content-addressed local blob store (Azure Blob in later phases). With a pending
+        list the bytes are written at commit; without one (no envelope context) immediately."""
         ref = hashlib.sha256(content).hexdigest()
+        if pending is not None:
+            pending.append((ref, content))
+            return ref
         self.blob_dir.mkdir(parents=True, exist_ok=True)
         (self.blob_dir / ref).write_bytes(content)
         return ref

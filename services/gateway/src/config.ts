@@ -10,6 +10,9 @@ const envSchema = z.object({
   // Human actors for the approvals surface: "token:email,token:email".
   ACTOR_TOKENS: z.string().default(""),
   AUTO_APPROVE: z.enum(["0", "1"]).default("0"),
+  // Phase 7: let _PLACEHOLDER SKUs through the bridge validator (goldens/e2e). CI-only,
+  // like AUTO_APPROVE — placeholders are never shipped (catalogs/README.md).
+  ALLOW_PLACEHOLDER_SKUS: z.enum(["0", "1"]).default("0"),
   CI: z.string().optional(),
   ENVELOPE_TTL_DEFAULT_S: z.coerce.number().int().min(10).max(3600).default(600),
   // Lane A converter base URL (Phase 2); scan routes 503 when unset.
@@ -18,6 +21,11 @@ const envSchema = z.object({
   BRIEF_EXTRACTOR_URL: z.url().optional(),
   // Layout compiler base URL (Phase 4); compile-layout routes 503 when unset.
   LAYOUT_COMPILER_URL: z.url().optional(),
+  // AIDM bridge base URL (Phase 7); compose-render / finish-selection 503 when unset.
+  AIDM_BRIDGE_URL: z.url().optional(),
+  // Content-addressed blob root (Phase 7): exports, control maps, renders. Blob routes and
+  // compose-render 503 when unset. In e2e this is the sim's --blob-dir (shared FS).
+  BLOB_DIR: z.string().min(1).optional(),
 });
 
 export interface Config {
@@ -27,10 +35,13 @@ export interface Config {
   serviceToken: string;
   actors: Map<string, string>; // token -> email
   autoApprove: boolean;
+  allowPlaceholders: boolean;
   envelopeTtlDefaultS: number;
   scanConverterUrl: string | null;
   briefExtractorUrl: string | null;
   layoutCompilerUrl: string | null;
+  aidmBridgeUrl: string | null;
+  blobDir: string | null;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -41,6 +52,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const autoApprove = parsed.AUTO_APPROVE === "1";
   if (autoApprove && env.CI !== "true") {
     throw new Error("AUTO_APPROVE=1 is CI-only: refusing to boot without CI=true");
+  }
+
+  const allowPlaceholders = parsed.ALLOW_PLACEHOLDER_SKUS === "1";
+  if (allowPlaceholders && env.CI !== "true") {
+    throw new Error("ALLOW_PLACEHOLDER_SKUS=1 is CI-only: refusing to boot without CI=true");
   }
 
   const actors = new Map<string, string>();
@@ -57,9 +73,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     serviceToken: parsed.SERVICE_TOKEN,
     actors,
     autoApprove,
+    allowPlaceholders,
     envelopeTtlDefaultS: parsed.ENVELOPE_TTL_DEFAULT_S,
     scanConverterUrl: parsed.SCAN_CONVERTER_URL ?? null,
     briefExtractorUrl: parsed.BRIEF_EXTRACTOR_URL ?? null,
     layoutCompilerUrl: parsed.LAYOUT_COMPILER_URL ?? null,
+    aidmBridgeUrl: parsed.AIDM_BRIDGE_URL ?? null,
+    blobDir: parsed.BLOB_DIR ?? null,
   };
 }

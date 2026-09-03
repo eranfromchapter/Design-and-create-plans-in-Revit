@@ -1,0 +1,3282 @@
+{
+  "request": {
+    "allow_placeholders": true,
+    "catalog_version": "0.1.0-placeholder",
+    "finish_tier": "standard",
+    "id_map_ids": [
+      "D-001",
+      "D-002",
+      "D-003",
+      "D-004",
+      "D-005",
+      "D-006",
+      "D-007",
+      "D-008",
+      "D-009",
+      "D-010",
+      "D-011",
+      "D-012",
+      "D-013",
+      "E-001",
+      "E-002",
+      "E-003",
+      "E-004",
+      "E-005",
+      "E-006",
+      "E-007",
+      "E-008",
+      "E-009",
+      "E-010",
+      "E-011",
+      "E-012",
+      "E-013",
+      "E-014",
+      "E-015",
+      "E-016",
+      "E-017",
+      "E-018",
+      "E-019",
+      "E-020",
+      "E-021",
+      "E-022",
+      "E-023",
+      "E-024",
+      "E-025",
+      "E-026",
+      "E-027",
+      "E-028",
+      "E-029",
+      "E-030",
+      "E-031",
+      "E-032",
+      "E-033",
+      "E-034",
+      "E-035",
+      "E-036",
+      "E-037",
+      "E-038",
+      "E-039",
+      "E-040",
+      "E-041",
+      "E-042",
+      "E-043",
+      "E-044",
+      "E-045",
+      "F-001",
+      "F-002",
+      "F-003",
+      "F-004",
+      "F-005",
+      "F-006",
+      "F-007",
+      "F-008",
+      "F-009",
+      "F-010",
+      "F-011",
+      "F-012",
+      "F-014",
+      "F-015",
+      "F-016",
+      "F-017",
+      "F-018",
+      "F-019",
+      "N-001",
+      "N-002",
+      "N-003",
+      "P-001",
+      "P-002",
+      "P-003",
+      "P-004",
+      "P-005",
+      "P-006",
+      "P-007",
+      "P-008",
+      "P-009",
+      "P-010",
+      "Q-001",
+      "Q-002",
+      "Q-003",
+      "Q-004",
+      "Q-005",
+      "Q-006",
+      "Q-007",
+      "Q-008",
+      "Q-009",
+      "Q-010",
+      "Q-011",
+      "Q-012",
+      "Q-013",
+      "Q-014",
+      "Q-015",
+      "Q-016",
+      "Q-017",
+      "Q-018",
+      "Q-019",
+      "Q-020",
+      "Q-021",
+      "Q-022",
+      "Q-023",
+      "Q-024",
+      "Q-025",
+      "Q-026",
+      "Q-027",
+      "Q-028",
+      "Q-029",
+      "Q-030",
+      "Q-031",
+      "Q-032",
+      "Q-033",
+      "Q-034",
+      "Q-035",
+      "Q-036",
+      "Q-037",
+      "Q-038",
+      "Q-039",
+      "Q-040",
+      "Q-041",
+      "Q-042",
+      "Q-043",
+      "Q-044",
+      "Q-045",
+      "Q-046",
+      "Q-047",
+      "Q-048",
+      "Q-049",
+      "Q-050",
+      "Q-051",
+      "Q-052",
+      "Q-053",
+      "Q-054",
+      "Q-055",
+      "Q-056",
+      "Q-057",
+      "Q-058",
+      "Q-059",
+      "Q-060",
+      "Q-061",
+      "Q-062",
+      "Q-063",
+      "Q-064",
+      "Q-065",
+      "Q-066",
+      "Q-067",
+      "Q-068",
+      "Q-069",
+      "Q-070",
+      "Q-071",
+      "Q-072",
+      "Q-073",
+      "Q-074",
+      "Q-075",
+      "Q-076",
+      "Q-077",
+      "Q-078",
+      "Q-079",
+      "Q-080",
+      "Q-081",
+      "W-001",
+      "W-002",
+      "W-003",
+      "W-004",
+      "W-005",
+      "W-006",
+      "W-007",
+      "W-008",
+      "W-009",
+      "W-010",
+      "W-011",
+      "W-012",
+      "W-013",
+      "W-014",
+      "W-015",
+      "W-016",
+      "W-017",
+      "W-018",
+      "W-019",
+      "W-020",
+      "W-021",
+      "W-022",
+      "W-023",
+      "W-024",
+      "W-025",
+      "W-026",
+      "W-027"
+    ],
+    "layout": {
+      "constraints": {
+        "circulation_min": 900,
+        "style_tags": [
+          "modern",
+          "warm minimalism",
+          "light wood"
+        ]
+      },
+      "doors": [
+        {
+          "confidence": 0.8,
+          "height": 2040.0,
+          "host_wall_id": "W-004",
+          "id": "D-001",
+          "offset": 8600.0,
+          "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+          "swing": "L",
+          "width": 915.0
+        },
+        {
+          "confidence": 0.8,
+          "height": 2040.0,
+          "host_wall_id": "W-005",
+          "id": "D-003",
+          "offset": 4212.0,
+          "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+          "swing": "L",
+          "width": 711.0
+        },
+        {
+          "confidence": 0.8,
+          "height": 2040.0,
+          "host_wall_id": "W-006",
+          "id": "D-004",
+          "offset": 850.0,
+          "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+          "swing": "L",
+          "width": 711.0
+        },
+        {
+          "height": 2040.0,
+          "host_wall_id": "W-024",
+          "id": "D-006",
+          "offset": 3200.0,
+          "revit_type": "CHPT_Door_Pocket_PLACEHOLDER",
+          "swing": "L",
+          "width": 1700.0
+        },
+        {
+          "height": 2040.0,
+          "host_wall_id": "W-021",
+          "id": "D-007",
+          "offset": 1500.0,
+          "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+          "swing": "L",
+          "width": 915.0
+        },
+        {
+          "height": 2040.0,
+          "host_wall_id": "W-022",
+          "id": "D-008",
+          "offset": 1200.0,
+          "revit_type": "CHPT_Door_Pocket_PLACEHOLDER",
+          "swing": "L",
+          "width": 1700.0
+        },
+        {
+          "height": 2040.0,
+          "host_wall_id": "W-025",
+          "id": "D-009",
+          "offset": 1600.0,
+          "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+          "swing": "L",
+          "width": 711.0
+        },
+        {
+          "height": 2040.0,
+          "host_wall_id": "W-023",
+          "id": "D-010",
+          "offset": 1200.0,
+          "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+          "swing": "L",
+          "width": 711.0
+        },
+        {
+          "height": 2040.0,
+          "host_wall_id": "W-026",
+          "id": "D-011",
+          "offset": 600.0,
+          "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+          "swing": "L",
+          "width": 711.0
+        },
+        {
+          "height": 2040.0,
+          "host_wall_id": "W-005",
+          "id": "D-012",
+          "offset": 3300.0,
+          "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+          "swing": "L",
+          "width": 762.0
+        },
+        {
+          "height": 2040.0,
+          "host_wall_id": "W-020",
+          "id": "D-013",
+          "offset": 500.0,
+          "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+          "swing": "L",
+          "width": 762.0
+        }
+      ],
+      "furniture": [
+        {
+          "items": [
+            {
+              "center": [
+                1800.0,
+                1166.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                1524.0,
+                2032.0
+              ],
+              "id": "F-001",
+              "kind": "bed",
+              "revit_family": "CHPT_Bed_PLACEHOLDER",
+              "revit_type": "Queen_1524x2032_PLACEHOLDER",
+              "rotation_deg": 0.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                1800.0,
+                3475.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                1200.0,
+                600.0
+              ],
+              "id": "F-002",
+              "kind": "wardrobe",
+              "revit_family": "CHPT_Wardrobe_PLACEHOLDER",
+              "revit_type": "Wardrobe_1200x600_PLACEHOLDER",
+              "rotation_deg": 0.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                425.0,
+                1900.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                1200.0,
+                600.0
+              ],
+              "id": "F-003",
+              "kind": "desk",
+              "revit_family": "CHPT_Desk_PLACEHOLDER",
+              "revit_type": "Desk_1200x600_PLACEHOLDER",
+              "rotation_deg": 90.0,
+              "wall_seeking": true
+            }
+          ],
+          "room_id": "R-001"
+        },
+        {
+          "items": [
+            {
+              "center": [
+                2836.0,
+                5947.5
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                1372.0,
+                1905.0
+              ],
+              "id": "F-004",
+              "kind": "bed",
+              "revit_family": "CHPT_Bed_PLACEHOLDER",
+              "revit_type": "Double_1372x1905_PLACEHOLDER",
+              "rotation_deg": 0.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                1576.0,
+                6300.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                1000.0,
+                600.0
+              ],
+              "id": "F-005",
+              "kind": "wardrobe",
+              "revit_family": "CHPT_Wardrobe_PLACEHOLDER",
+              "revit_type": "Wardrobe_1000x600_PLACEHOLDER",
+              "rotation_deg": 90.0,
+              "wall_seeking": true
+            }
+          ],
+          "room_id": "R-002"
+        },
+        {
+          "items": [
+            {
+              "center": [
+                600.0,
+                4225.0
+              ],
+              "clearance_front": 500.0,
+              "fixture_units": 4.0,
+              "footprint": [
+                400.0,
+                700.0
+              ],
+              "hookups": [
+                "sanitary",
+                "supply_c",
+                "vent"
+              ],
+              "id": "F-006",
+              "kind": "wc",
+              "revit_family": "CHPT_WC_PLACEHOLDER",
+              "revit_type": "WC_400x700_PLACEHOLDER",
+              "rotation_deg": 0.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                600.0,
+                6675.0
+              ],
+              "clearance_front": 0.0,
+              "fixture_units": 1.0,
+              "footprint": [
+                500.0,
+                450.0
+              ],
+              "hookups": [
+                "sanitary",
+                "supply_h",
+                "supply_c",
+                "vent"
+              ],
+              "id": "F-007",
+              "kind": "lav",
+              "revit_family": "CHPT_Lav_PLACEHOLDER",
+              "revit_type": "Lav_500x450_PLACEHOLDER",
+              "rotation_deg": 0.0,
+              "wall_seeking": true
+            }
+          ],
+          "room_id": "R-003"
+        },
+        {
+          "items": [
+            {
+              "center": [
+                4654.5,
+                6404.5
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                991.0,
+                1905.0
+              ],
+              "id": "F-008",
+              "kind": "bed",
+              "revit_family": "CHPT_Bed_PLACEHOLDER",
+              "revit_type": "Twin_991x1905_PLACEHOLDER",
+              "rotation_deg": 90.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                3875.0,
+                5650.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                450.0,
+                450.0
+              ],
+              "id": "F-009",
+              "kind": "table",
+              "revit_family": "CHPT_Nightstand_PLACEHOLDER",
+              "revit_type": "Nightstand_450x450_PLACEHOLDER",
+              "rotation_deg": 90.0,
+              "wall_seeking": true
+            }
+          ],
+          "room_id": "R-004"
+        },
+        {
+          "items": [
+            {
+              "center": [
+                6698.5,
+                6000.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                991.0,
+                1905.0
+              ],
+              "id": "F-010",
+              "kind": "bed",
+              "revit_family": "CHPT_Bed_PLACEHOLDER",
+              "revit_type": "Twin_991x1905_PLACEHOLDER",
+              "rotation_deg": 90.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                5971.0,
+                5250.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                450.0,
+                450.0
+              ],
+              "id": "F-011",
+              "kind": "table",
+              "revit_family": "CHPT_Nightstand_PLACEHOLDER",
+              "revit_type": "Nightstand_450x450_PLACEHOLDER",
+              "rotation_deg": 90.0,
+              "wall_seeking": true
+            }
+          ],
+          "room_id": "R-005"
+        },
+        {
+          "items": [
+            {
+              "center": [
+                10800.0,
+                4996.0
+              ],
+              "clearance_front": 500.0,
+              "fixture_units": 4.0,
+              "footprint": [
+                400.0,
+                700.0
+              ],
+              "hookups": [
+                "sanitary",
+                "supply_c",
+                "vent"
+              ],
+              "id": "F-012",
+              "kind": "wc",
+              "revit_family": "CHPT_WC_PLACEHOLDER",
+              "revit_type": "WC_400x700_PLACEHOLDER",
+              "rotation_deg": 0.0,
+              "wall_seeking": true
+            }
+          ],
+          "room_id": "R-007"
+        },
+        {
+          "items": [
+            {
+              "center": [
+                10825.0,
+                2250.0
+              ],
+              "clearance_front": 450.0,
+              "footprint": [
+                2100.0,
+                900.0
+              ],
+              "id": "F-014",
+              "kind": "sofa",
+              "revit_family": "CHPT_Sofa_PLACEHOLDER",
+              "revit_type": "Sofa_2100x900_PLACEHOLDER",
+              "rotation_deg": 90.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                9425.0,
+                1900.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                900.0,
+                1800.0
+              ],
+              "id": "F-015",
+              "kind": "table",
+              "revit_family": "CHPT_DiningTable_PLACEHOLDER",
+              "revit_type": "Dining_900x1800_PLACEHOLDER",
+              "rotation_deg": 0.0,
+              "wall_seeking": false
+            }
+          ],
+          "room_id": "R-008"
+        },
+        {
+          "items": [
+            {
+              "center": [
+                4025.0,
+                1800.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                750.0,
+                750.0
+              ],
+              "hookups": [
+                "electrical_120"
+              ],
+              "id": "F-016",
+              "kind": "refrigerator",
+              "revit_family": "CHPT_Refrigerator_PLACEHOLDER",
+              "revit_type": "Fridge_750x750_PLACEHOLDER",
+              "rotation_deg": 90.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                6110.0,
+                450.0
+              ],
+              "clearance_front": 0.0,
+              "fixture_units": 2.0,
+              "footprint": [
+                900.0,
+                600.0
+              ],
+              "hookups": [
+                "sanitary",
+                "supply_h",
+                "supply_c",
+                "vent"
+              ],
+              "id": "F-017",
+              "kind": "kitchen_sink",
+              "revit_family": "CHPT_KitchenSink_PLACEHOLDER",
+              "revit_type": "Sink_900x600_PLACEHOLDER",
+              "rotation_deg": 0.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                6860.0,
+                450.0
+              ],
+              "clearance_front": 0.0,
+              "fixture_units": 2.0,
+              "footprint": [
+                600.0,
+                600.0
+              ],
+              "hookups": [
+                "sanitary",
+                "supply_h",
+                "electrical_120"
+              ],
+              "id": "F-018",
+              "kind": "dishwasher",
+              "revit_family": "CHPT_Dishwasher_PLACEHOLDER",
+              "revit_type": "DW_600x600_PLACEHOLDER",
+              "rotation_deg": 0.0,
+              "wall_seeking": true
+            },
+            {
+              "center": [
+                7573.0,
+                480.0
+              ],
+              "clearance_front": 0.0,
+              "footprint": [
+                762.0,
+                660.0
+              ],
+              "hookups": [
+                "electrical_240"
+              ],
+              "id": "F-019",
+              "kind": "range",
+              "revit_family": "CHPT_Range_PLACEHOLDER",
+              "revit_type": "Range_762x660_PLACEHOLDER",
+              "rotation_deg": 180.0,
+              "wall_seeking": true
+            }
+          ],
+          "room_id": "R-009"
+        }
+      ],
+      "meta": {
+        "brief_version": 1,
+        "level": "Level 1",
+        "origin": "revit_internal_origin",
+        "phase": "new",
+        "project_id": "1f6b3c58-7a2d-4e90-9c41-2b8f5d6a7e01",
+        "schema_version": "2.3",
+        "units": "mm"
+      },
+      "rooms": [
+        {
+          "boundary": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              3600.0,
+              0.0
+            ],
+            [
+              3600.0,
+              3825.0
+            ],
+            [
+              0.0,
+              3825.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-001",
+            "W-002",
+            "W-005",
+            "W-003"
+          ],
+          "id": "R-001",
+          "name": "Bedroom 1",
+          "program": "bedroom"
+        },
+        {
+          "boundary": [
+            [
+              1200.0,
+              3825.0
+            ],
+            [
+              3600.0,
+              3825.0
+            ],
+            [
+              3600.0,
+              7000.0
+            ],
+            [
+              1200.0,
+              7000.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-025",
+            "W-003",
+            "W-005",
+            "W-004"
+          ],
+          "id": "R-002",
+          "name": "Bedroom 2",
+          "program": "bedroom"
+        },
+        {
+          "boundary": [
+            [
+              0.0,
+              3825.0
+            ],
+            [
+              1200.0,
+              3825.0
+            ],
+            [
+              1200.0,
+              7000.0
+            ],
+            [
+              0.0,
+              7000.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-001",
+            "W-003",
+            "W-025",
+            "W-004"
+          ],
+          "id": "R-003",
+          "name": "Bath 1",
+          "program": "bathroom",
+          "wet_zone": true
+        },
+        {
+          "boundary": [
+            [
+              3600.0,
+              4600.0
+            ],
+            [
+              5700.0,
+              4600.0
+            ],
+            [
+              5700.0,
+              7000.0
+            ],
+            [
+              3600.0,
+              7000.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-005",
+            "W-006",
+            "W-018",
+            "W-004"
+          ],
+          "id": "R-004",
+          "name": "Bedroom 3",
+          "program": "bedroom"
+        },
+        {
+          "boundary": [
+            [
+              5700.0,
+              4600.0
+            ],
+            [
+              8000.0,
+              4600.0
+            ],
+            [
+              8000.0,
+              7000.0
+            ],
+            [
+              5700.0,
+              7000.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-018",
+            "W-006",
+            "W-020",
+            "W-019",
+            "W-004"
+          ],
+          "id": "R-005",
+          "name": "Bedroom 4",
+          "program": "bedroom"
+        },
+        {
+          "boundary": [
+            [
+              8000.0,
+              4600.0
+            ],
+            [
+              10200.0,
+              4600.0
+            ],
+            [
+              10200.0,
+              7000.0
+            ],
+            [
+              8000.0,
+              7000.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-019",
+            "W-021",
+            "W-023",
+            "W-004"
+          ],
+          "id": "R-006",
+          "name": "Foyer",
+          "program": "corridor"
+        },
+        {
+          "boundary": [
+            [
+              10200.0,
+              4600.0
+            ],
+            [
+              11400.0,
+              4600.0
+            ],
+            [
+              11400.0,
+              7000.0
+            ],
+            [
+              10200.0,
+              7000.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-023",
+            "W-021",
+            "W-017",
+            "W-004"
+          ],
+          "id": "R-007",
+          "name": "Bath 2",
+          "program": "bathroom",
+          "wet_zone": true
+        },
+        {
+          "boundary": [
+            [
+              8000.0,
+              4600.0
+            ],
+            [
+              8000.0,
+              0.0
+            ],
+            [
+              8258.1,
+              -168.1
+            ],
+            [
+              8543.6,
+              -283.7
+            ],
+            [
+              8846.0,
+              -342.6
+            ],
+            [
+              9154.0,
+              -342.6
+            ],
+            [
+              9456.4,
+              -283.7
+            ],
+            [
+              9741.9,
+              -168.1
+            ],
+            [
+              10000.0,
+              0.0
+            ],
+            [
+              11400.0,
+              0.0
+            ],
+            [
+              11400.0,
+              4600.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-022",
+            "W-009",
+            "W-010",
+            "W-011",
+            "W-012",
+            "W-013",
+            "W-014",
+            "W-015",
+            "W-016",
+            "W-017",
+            "W-021"
+          ],
+          "id": "R-008",
+          "name": "Living Room",
+          "program": "living"
+        },
+        {
+          "boundary": [
+            [
+              4800.0,
+              0.0
+            ],
+            [
+              8000.0,
+              0.0
+            ],
+            [
+              8000.0,
+              2800.0
+            ],
+            [
+              3600.0,
+              2800.0
+            ],
+            [
+              3600.0,
+              1200.0
+            ],
+            [
+              4800.0,
+              1200.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-002",
+            "W-022",
+            "W-024",
+            "W-005",
+            "W-027",
+            "W-026"
+          ],
+          "id": "R-009",
+          "name": "Kitchen / Dining (open)",
+          "program": "kitchen"
+        },
+        {
+          "boundary": [
+            [
+              3600.0,
+              2800.0
+            ],
+            [
+              8000.0,
+              2800.0
+            ],
+            [
+              8000.0,
+              4600.0
+            ],
+            [
+              3600.0,
+              4600.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-024",
+            "W-022",
+            "W-006",
+            "W-020",
+            "W-005"
+          ],
+          "id": "R-010",
+          "name": "Hall",
+          "program": "corridor"
+        },
+        {
+          "boundary": [
+            [
+              3600.0,
+              0.0
+            ],
+            [
+              4800.0,
+              0.0
+            ],
+            [
+              4800.0,
+              1200.0
+            ],
+            [
+              3600.0,
+              1200.0
+            ]
+          ],
+          "boundary_wall_ids": [
+            "W-002",
+            "W-026",
+            "W-027",
+            "W-005"
+          ],
+          "id": "R-011",
+          "name": "Laundry",
+          "program": "laundry",
+          "wet_zone": true
+        }
+      ],
+      "walls": [
+        {
+          "as_built_thickness": 250.0,
+          "confidence": 0.85,
+          "end": [
+            0.0,
+            7000.0
+          ],
+          "height": 2700.0,
+          "id": "W-001",
+          "revit_type": "CHPT_AsBuilt_250mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "as_built_thickness": 300.0,
+          "confidence": 0.85,
+          "end": [
+            8000.0,
+            0.0
+          ],
+          "height": 2700.0,
+          "id": "W-002",
+          "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "as_built_thickness": 100.0,
+          "confidence": 0.85,
+          "end": [
+            3600.0,
+            3825.0
+          ],
+          "height": 2700.0,
+          "id": "W-003",
+          "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            0.0,
+            3825.0
+          ]
+        },
+        {
+          "as_built_thickness": 200.0,
+          "confidence": 0.85,
+          "end": [
+            11400.0,
+            7000.0
+          ],
+          "height": 2700.0,
+          "id": "W-004",
+          "revit_type": "CHPT_AsBuilt_200mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            0.0,
+            7000.0
+          ]
+        },
+        {
+          "as_built_thickness": 100.0,
+          "confidence": 0.85,
+          "end": [
+            3600.0,
+            7000.0
+          ],
+          "height": 2700.0,
+          "id": "W-005",
+          "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            3600.0,
+            0.0
+          ]
+        },
+        {
+          "as_built_thickness": 100.0,
+          "confidence": 0.85,
+          "end": [
+            7000.0,
+            4600.0
+          ],
+          "height": 2700.0,
+          "id": "W-006",
+          "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            3600.0,
+            4600.0
+          ]
+        },
+        {
+          "as_built_thickness": 300.0,
+          "confidence": 0.6,
+          "curved_approximation": true,
+          "end": [
+            8258.1,
+            -168.1
+          ],
+          "height": 2700.0,
+          "id": "W-009",
+          "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            8000.0,
+            0.0
+          ]
+        },
+        {
+          "as_built_thickness": 300.0,
+          "confidence": 0.6,
+          "curved_approximation": true,
+          "end": [
+            8543.6,
+            -283.7
+          ],
+          "height": 2700.0,
+          "id": "W-010",
+          "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            8258.1,
+            -168.1
+          ]
+        },
+        {
+          "as_built_thickness": 300.0,
+          "confidence": 0.6,
+          "curved_approximation": true,
+          "end": [
+            8846.0,
+            -342.6
+          ],
+          "height": 2700.0,
+          "id": "W-011",
+          "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            8543.6,
+            -283.7
+          ]
+        },
+        {
+          "as_built_thickness": 300.0,
+          "confidence": 0.6,
+          "curved_approximation": true,
+          "end": [
+            9154.0,
+            -342.6
+          ],
+          "height": 2700.0,
+          "id": "W-012",
+          "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            8846.0,
+            -342.6
+          ]
+        },
+        {
+          "as_built_thickness": 300.0,
+          "confidence": 0.6,
+          "curved_approximation": true,
+          "end": [
+            9456.4,
+            -283.7
+          ],
+          "height": 2700.0,
+          "id": "W-013",
+          "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            9154.0,
+            -342.6
+          ]
+        },
+        {
+          "as_built_thickness": 300.0,
+          "confidence": 0.6,
+          "curved_approximation": true,
+          "end": [
+            9741.9,
+            -168.1
+          ],
+          "height": 2700.0,
+          "id": "W-014",
+          "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            9456.4,
+            -283.7
+          ]
+        },
+        {
+          "as_built_thickness": 300.0,
+          "confidence": 0.6,
+          "curved_approximation": true,
+          "end": [
+            10000.0,
+            0.0
+          ],
+          "height": 2700.0,
+          "id": "W-015",
+          "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            9741.9,
+            -168.1
+          ]
+        },
+        {
+          "as_built_thickness": 300.0,
+          "confidence": 0.85,
+          "end": [
+            11400.0,
+            0.0
+          ],
+          "height": 2700.0,
+          "id": "W-016",
+          "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            10000.0,
+            0.0
+          ]
+        },
+        {
+          "as_built_thickness": 250.0,
+          "confidence": 0.85,
+          "end": [
+            11400.0,
+            7000.0
+          ],
+          "height": 2700.0,
+          "id": "W-017",
+          "revit_type": "CHPT_AsBuilt_250mm_PLACEHOLDER",
+          "source": "scan",
+          "start": [
+            11400.0,
+            0.0
+          ]
+        },
+        {
+          "end": [
+            5700.0,
+            7000.0
+          ],
+          "height": 2700.0,
+          "id": "W-018",
+          "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            5700.0,
+            4600.0
+          ]
+        },
+        {
+          "end": [
+            8000.0,
+            7000.0
+          ],
+          "height": 2700.0,
+          "id": "W-019",
+          "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            8000.0,
+            4600.0
+          ]
+        },
+        {
+          "end": [
+            8000.0,
+            4600.0
+          ],
+          "height": 2700.0,
+          "id": "W-020",
+          "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            7000.0,
+            4600.0
+          ]
+        },
+        {
+          "end": [
+            11400.0,
+            4600.0
+          ],
+          "height": 2700.0,
+          "id": "W-021",
+          "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            8000.0,
+            4600.0
+          ]
+        },
+        {
+          "end": [
+            8000.0,
+            4600.0
+          ],
+          "height": 2700.0,
+          "id": "W-022",
+          "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            8000.0,
+            0.0
+          ]
+        },
+        {
+          "end": [
+            10200.0,
+            7000.0
+          ],
+          "height": 2700.0,
+          "id": "W-023",
+          "is_wet_wall": true,
+          "revit_type": "CHPT_Partition_Wet_152mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            10200.0,
+            4600.0
+          ]
+        },
+        {
+          "end": [
+            8000.0,
+            2800.0
+          ],
+          "height": 2700.0,
+          "id": "W-024",
+          "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            3600.0,
+            2800.0
+          ]
+        },
+        {
+          "end": [
+            1200.0,
+            7000.0
+          ],
+          "height": 2700.0,
+          "id": "W-025",
+          "is_wet_wall": true,
+          "revit_type": "CHPT_Partition_Wet_152mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            1200.0,
+            3825.0
+          ]
+        },
+        {
+          "end": [
+            4800.0,
+            1200.0
+          ],
+          "height": 2700.0,
+          "id": "W-026",
+          "is_wet_wall": true,
+          "revit_type": "CHPT_Partition_Wet_152mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            4800.0,
+            0.0
+          ]
+        },
+        {
+          "end": [
+            4800.0,
+            1200.0
+          ],
+          "height": 2700.0,
+          "id": "W-027",
+          "is_wet_wall": true,
+          "revit_type": "CHPT_Partition_Wet_152mm_PLACEHOLDER",
+          "source": "generated",
+          "start": [
+            3600.0,
+            1200.0
+          ]
+        }
+      ],
+      "windows": [
+        {
+          "confidence": 0.8,
+          "height": 1400.0,
+          "host_wall_id": "W-002",
+          "id": "N-001",
+          "offset": 1800.0,
+          "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+          "sill_height": 900.0,
+          "width": 1067.0
+        },
+        {
+          "confidence": 0.8,
+          "height": 1400.0,
+          "host_wall_id": "W-002",
+          "id": "N-002",
+          "offset": 6800.0,
+          "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+          "sill_height": 900.0,
+          "width": 1067.0
+        },
+        {
+          "confidence": 0.8,
+          "height": 1400.0,
+          "host_wall_id": "W-016",
+          "id": "N-003",
+          "offset": 700.0,
+          "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+          "sill_height": 900.0,
+          "width": 915.0
+        }
+      ]
+    },
+    "project_id": "1f6b3c58-7a2d-4e90-9c41-2b8f5d6a7e01",
+    "render_ref": "mock-phase7-2br-golden-plan",
+    "selection": {
+      "casework": [],
+      "doors": [
+        {
+          "id": "D-001",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-003",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-004",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-006",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-007",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-008",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-009",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-010",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-011",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-012",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "D-013",
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        }
+      ],
+      "overrides": [
+        {
+          "reason": "wet-room tile (demo of tier_override)",
+          "sku": "CHPT-WALL-TILE-LUX_PLACEHOLDER",
+          "target": "R-003"
+        },
+        {
+          "reason": "wet-room tile (demo of tier_override)",
+          "sku": "CHPT-WALL-TILE-LUX_PLACEHOLDER",
+          "target": "R-007"
+        }
+      ],
+      "plumbing_fixtures": [
+        {
+          "id": "F-006",
+          "sku": "CHPT-WC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "F-007",
+          "sku": "CHPT-LAV-STD_PLACEHOLDER"
+        },
+        {
+          "id": "F-012",
+          "sku": "CHPT-WC-STD_PLACEHOLDER"
+        },
+        {
+          "id": "F-017",
+          "sku": "CHPT-SINK-STD_PLACEHOLDER"
+        }
+      ],
+      "rooms": [
+        {
+          "room_id": "R-001",
+          "wall_sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-002",
+          "wall_sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-003",
+          "wall_sku": "CHPT-WALL-TILE-LUX_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-004",
+          "wall_sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-005",
+          "wall_sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-006",
+          "wall_sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-007",
+          "wall_sku": "CHPT-WALL-TILE-LUX_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-008",
+          "wall_sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-009",
+          "wall_sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-010",
+          "wall_sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        {
+          "room_id": "R-011",
+          "wall_sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        }
+      ]
+    }
+  },
+  "response": {
+    "blocking": [],
+    "diagnostics": {
+      "counts": {
+        "blocking": 0,
+        "info": 9,
+        "ops": 109,
+        "targets": 51,
+        "walls_applied": 18,
+        "walls_conflict": 7
+      },
+      "per_target": {
+        "D-001": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-003": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-004": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-006": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-007": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-008": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-009": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-010": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-011": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-012": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "D-013": {
+          "category": "doors",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "door"
+        },
+        "F-006": {
+          "category": "plumbing",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-WC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "plumbing_fixture"
+        },
+        "F-007": {
+          "category": "plumbing",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-LAV-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "plumbing_fixture"
+        },
+        "F-012": {
+          "category": "plumbing",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-WC-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "plumbing_fixture"
+        },
+        "F-017": {
+          "category": "plumbing",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section"
+          ],
+          "rooms": [],
+          "sku": "CHPT-SINK-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "plumbing_fixture"
+        },
+        "R-001": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-001"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-002": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-002"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-003": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-003"
+          ],
+          "sku": "CHPT-WALL-TILE-LUX_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-004": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-004"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-005": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-005"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-006": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-006"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-007": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-007"
+          ],
+          "sku": "CHPT-WALL-TILE-LUX_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-008": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-008"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-009": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-009"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-010": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-010"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "R-011": {
+          "category": "walls",
+          "params": [],
+          "rooms": [
+            "R-011"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-001": {
+          "category": "walls",
+          "params": [
+            "Comments"
+          ],
+          "rooms": [
+            "R-001",
+            "R-003"
+          ],
+          "sku": null,
+          "status": "conflict",
+          "surface": "wall"
+        },
+        "W-002": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-001",
+            "R-009",
+            "R-011"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-003": {
+          "category": "walls",
+          "params": [
+            "Comments"
+          ],
+          "rooms": [
+            "R-001",
+            "R-002",
+            "R-003"
+          ],
+          "sku": null,
+          "status": "conflict",
+          "surface": "wall"
+        },
+        "W-004": {
+          "category": "walls",
+          "params": [
+            "Comments"
+          ],
+          "rooms": [
+            "R-002",
+            "R-003",
+            "R-004",
+            "R-005",
+            "R-006",
+            "R-007"
+          ],
+          "sku": null,
+          "status": "conflict",
+          "surface": "wall"
+        },
+        "W-005": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-001",
+            "R-002",
+            "R-004",
+            "R-009",
+            "R-010",
+            "R-011"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-006": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-004",
+            "R-005",
+            "R-010"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-009": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-008"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-010": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-008"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-011": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-008"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-012": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-008"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-013": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-008"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-014": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-008"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-015": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-008"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-016": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-008"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-017": {
+          "category": "walls",
+          "params": [
+            "Comments"
+          ],
+          "rooms": [
+            "R-007",
+            "R-008"
+          ],
+          "sku": null,
+          "status": "conflict",
+          "surface": "wall"
+        },
+        "W-018": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-004",
+            "R-005"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-019": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-005",
+            "R-006"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-020": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-005",
+            "R-010"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-021": {
+          "category": "walls",
+          "params": [
+            "Comments"
+          ],
+          "rooms": [
+            "R-006",
+            "R-007",
+            "R-008"
+          ],
+          "sku": null,
+          "status": "conflict",
+          "surface": "wall"
+        },
+        "W-022": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-008",
+            "R-009",
+            "R-010"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-023": {
+          "category": "walls",
+          "params": [
+            "Comments"
+          ],
+          "rooms": [
+            "R-006",
+            "R-007"
+          ],
+          "sku": null,
+          "status": "conflict",
+          "surface": "wall"
+        },
+        "W-024": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-009",
+            "R-010"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-025": {
+          "category": "walls",
+          "params": [
+            "Comments"
+          ],
+          "rooms": [
+            "R-002",
+            "R-003"
+          ],
+          "sku": null,
+          "status": "conflict",
+          "surface": "wall"
+        },
+        "W-026": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-009",
+            "R-011"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        },
+        "W-027": {
+          "category": "walls",
+          "params": [
+            "CHPT_Product_SKU",
+            "CHPT_Spec_Section",
+            "CHPT_Finish_Material",
+            "CHPT_Render_Ref"
+          ],
+          "rooms": [
+            "R-009",
+            "R-011"
+          ],
+          "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+          "status": "applied",
+          "surface": "wall"
+        }
+      }
+    },
+    "ops": [
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-001",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-001",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-003",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-003",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-004",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-004",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-006",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-006",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-007",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-007",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-008",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-008",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-009",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-009",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-010",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-010",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-011",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-011",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-012",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-012",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "D-013",
+          "value": "CHPT-DOOR-SC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "D-013",
+          "value": "08 14 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "F-006",
+          "value": "CHPT-WC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "F-006",
+          "value": "22 41 13"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "F-007",
+          "value": "CHPT-LAV-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "F-007",
+          "value": "22 41 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "F-012",
+          "value": "CHPT-WC-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "F-012",
+          "value": "22 41 13"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "F-017",
+          "value": "CHPT-SINK-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "F-017",
+          "value": "22 41 16"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "Comments",
+          "target_id": "W-001",
+          "value": "finish conflict: R-001 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-003 CHPT-WALL-TILE-LUX_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-002",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-002",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-002",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-002",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "Comments",
+          "target_id": "W-003",
+          "value": "finish conflict: R-001 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-002 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-003 CHPT-WALL-TILE-LUX_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "Comments",
+          "target_id": "W-004",
+          "value": "finish conflict: R-002 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-003 CHPT-WALL-TILE-LUX_PLACEHOLDER / R-004 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-005 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-006 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-007 CHPT-WALL-TILE-LUX_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-005",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-005",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-005",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-005",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-006",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-006",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-006",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-006",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-009",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-009",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-009",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-009",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-010",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-010",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-010",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-010",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-011",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-011",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-011",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-011",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-012",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-012",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-012",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-012",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-013",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-013",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-013",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-013",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-014",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-014",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-014",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-014",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-015",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-015",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-015",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-015",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-016",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-016",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-016",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-016",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "Comments",
+          "target_id": "W-017",
+          "value": "finish conflict: R-007 CHPT-WALL-TILE-LUX_PLACEHOLDER / R-008 CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-018",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-018",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-018",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-018",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-019",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-019",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-019",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-019",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-020",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-020",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-020",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-020",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "Comments",
+          "target_id": "W-021",
+          "value": "finish conflict: R-006 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-007 CHPT-WALL-TILE-LUX_PLACEHOLDER / R-008 CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-022",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-022",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-022",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-022",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "Comments",
+          "target_id": "W-023",
+          "value": "finish conflict: R-006 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-007 CHPT-WALL-TILE-LUX_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-024",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-024",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-024",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-024",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "Comments",
+          "target_id": "W-025",
+          "value": "finish conflict: R-002 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-003 CHPT-WALL-TILE-LUX_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-026",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-026",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-026",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-026",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Finish_Material",
+          "target_id": "W-027",
+          "value": "Placeholder Mfg PH-02"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Product_SKU",
+          "target_id": "W-027",
+          "value": "CHPT-WALL-PAINT-STD_PLACEHOLDER"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Render_Ref",
+          "target_id": "W-027",
+          "value": "mock-phase7-2br-golden-plan"
+        },
+        "op": "set_parameter"
+      },
+      {
+        "args": {
+          "param": "CHPT_Spec_Section",
+          "target_id": "W-027",
+          "value": "09 91 23"
+        },
+        "op": "set_parameter"
+      }
+    ],
+    "review_items": [
+      {
+        "code": "tier_override",
+        "message": "luxury: wet-room tile (demo of tier_override)",
+        "refs": [
+          "R-003",
+          "CHPT-WALL-TILE-LUX_PLACEHOLDER"
+        ],
+        "severity": "info"
+      },
+      {
+        "code": "tier_override",
+        "message": "luxury: wet-room tile (demo of tier_override)",
+        "refs": [
+          "R-007",
+          "CHPT-WALL-TILE-LUX_PLACEHOLDER"
+        ],
+        "severity": "info"
+      },
+      {
+        "code": "wall_finish_conflict",
+        "message": "finish conflict: R-001 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-003 CHPT-WALL-TILE-LUX_PLACEHOLDER",
+        "refs": [
+          "W-001",
+          "R-001",
+          "R-003"
+        ],
+        "severity": "info"
+      },
+      {
+        "code": "wall_finish_conflict",
+        "message": "finish conflict: R-001 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-002 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-003 CHPT-WALL-TILE-LUX_PLACEHOLDER",
+        "refs": [
+          "W-003",
+          "R-001",
+          "R-002",
+          "R-003"
+        ],
+        "severity": "info"
+      },
+      {
+        "code": "wall_finish_conflict",
+        "message": "finish conflict: R-002 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-003 CHPT-WALL-TILE-LUX_PLACEHOLDER / R-004 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-005 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-006 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-007 CHPT-WALL-TILE-LUX_PLACEHOLDER",
+        "refs": [
+          "W-004",
+          "R-002",
+          "R-003",
+          "R-004",
+          "R-005",
+          "R-006",
+          "R-007"
+        ],
+        "severity": "info"
+      },
+      {
+        "code": "wall_finish_conflict",
+        "message": "finish conflict: R-007 CHPT-WALL-TILE-LUX_PLACEHOLDER / R-008 CHPT-WALL-PAINT-STD_PLACEHOLDER",
+        "refs": [
+          "W-017",
+          "R-007",
+          "R-008"
+        ],
+        "severity": "info"
+      },
+      {
+        "code": "wall_finish_conflict",
+        "message": "finish conflict: R-006 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-007 CHPT-WALL-TILE-LUX_PLACEHOLDER / R-008 CHPT-WALL-PAINT-STD_PLACEHOLDER",
+        "refs": [
+          "W-021",
+          "R-006",
+          "R-007",
+          "R-008"
+        ],
+        "severity": "info"
+      },
+      {
+        "code": "wall_finish_conflict",
+        "message": "finish conflict: R-006 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-007 CHPT-WALL-TILE-LUX_PLACEHOLDER",
+        "refs": [
+          "W-023",
+          "R-006",
+          "R-007"
+        ],
+        "severity": "info"
+      },
+      {
+        "code": "wall_finish_conflict",
+        "message": "finish conflict: R-002 CHPT-WALL-PAINT-STD_PLACEHOLDER / R-003 CHPT-WALL-TILE-LUX_PLACEHOLDER",
+        "refs": [
+          "W-025",
+          "R-002",
+          "R-003"
+        ],
+        "severity": "info"
+      }
+    ]
+  }
+}

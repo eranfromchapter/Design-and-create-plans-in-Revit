@@ -937,7 +937,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "chapter-contracts", editable = "../../packages/contracts/python" },
-    { name = "resvg-py", specifier = ">=0.5,<0.7" },
+    { name = "resvg-py", specifier = "==0.5.0" },
     { name = "websockets", specifier = ">=15,<16" },
 ]
 

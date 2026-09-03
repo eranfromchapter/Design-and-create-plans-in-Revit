@@ -1,6 +1,6 @@
 {
   "allowlist_version": "1.0",
-  "description": "The ONLY parameters set_parameter may touch (SI-4). Finish/material/comment/spec params only — never geometry, phase, type, or workset parameters. Enforced by gateway, revit-sim, and plugin.",
+  "description": "The ONLY parameters set_parameter may touch (SI-4). Finish/material/comment/spec params only — never geometry, phase, type, or workset parameters. Enforced by gateway, revit-sim, and plugin. Category vocabulary: walls, doors, windows, furniture, casework, plumbing (plumbing fixtures), electrical (electrical fixtures / lighting devices); \"*\" = any category.",
   "params": [
     { "name": "CHPT_Finish_Material", "kind": "finish", "categories": ["walls", "casework"] },
     { "name": "CHPT_Finish_Color", "kind": "finish", "categories": ["walls", "casework"] },

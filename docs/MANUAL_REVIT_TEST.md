@@ -66,8 +66,9 @@ conventions through the AUTOM8LABS bridge) is DONE 2026-09-03, results in
 
 ## Phase 6 gate (MEP + Commit #2)
 Prerequisite: the enrollment catalog directory `%AppData%\ChapterHub\catalogs\` holds
-`mep_types.json` and `clash_prisms.json` copied from `packages/contracts/catalogs/` (the
-add-in fails MEP ops with `catalog_missing` otherwise) — with the REAL template names, not
+`mep_types.json` and `clash_prisms.json` copied from `packages/contracts/catalogs/` (and, as of
+Phase 7, `param_allowlist.json` from `packages/contracts/ops/`; the add-in fails MEP ops with
+`catalog_missing` otherwise) — with the REAL template names, not
 the `_PLACEHOLDER` rows — and the template content listed under `docs/REVIT_SPIKE.md` stage 2
 prerequisites (door family per the Door.rft convention, one face-based fixture family per device
 kind, a PVC DWV pipe type whose routing preferences carry an elbow, trade-size diameters).
@@ -91,6 +92,49 @@ kind, a PVC DWV pipe type whose routing preferences carry an elbow, trade-size d
 - [ ] Fire-rated wall in the template → conduit route detours (compare
       `home_runs[].penetrations` against the card).
 - [ ] Ctrl+Z after Commit #2 → `state_divergence`.
+
+## Phase 7 gate (export → render review → finish selection → Commit #3)
+Prerequisites: the Phase 6 gate rows above; `docs/REVIT_TEMPLATE_CONTENT.md` done — in particular
+§5: the five `CHPT_*` shared parameters bound per `ops/param_allowlist.json` categories (the
+executor fails `unknown_param` otherwise); `param_allowlist.json` enrolled beside the MEP
+catalogs; the gateway reachable over HTTPS on the same host as the WSS (the add-in PUTs blobs to
+`https://<gateway>/projects/<id>/blobs/<sha256>` under its workstation token); the aidm-bridge
+running with `AIDM_ENDPOINT` empty (mock renderer) unless the real AIDM is configured (gate
+question G2).
+- [ ] `POST /projects/:id/render-views` on the post-Commit-#2 model: the export envelope commits
+      (`seq` +1, empty id-map delta), three PNGs appear in the gateway blob dir whose file name ==
+      `sha256(bytes)` == the `blob_ref` in three `export_ready` frames arriving AFTER
+      `commit_result committed`, in views order (plan, section, 3d_hidden); no temporary view is
+      left in the Project Browser; `/state.render` shows `exported` with 3 refs. Record each PNG's
+      pixel width (expect 2048 — Revit fits horizontally; the height differs from the sim's).
+      Open the section PNG: it must be the elevation seen looking towards +Y (the wall with the
+      greater y is the far one, x increases to the RIGHT of the image as in the sim's
+      `render_section`; per the API docs `ViewSection.CreateSection` takes the view direction from
+      the box transform's BasisZ). If it is the mirror image, record it — the section box in
+      `ExportViewsHandler.CreateTemporaryView` is the place to flip.
+- [ ] Gateway unreachable over HTTPS (block the port) → the export envelope rolls back
+      `blob_upload_failed`, no frames, temporary views gone, `/state.render.status = failed`.
+- [ ] `compose-render` → the `render_review` card shows the three source views, the Canny + line
+      maps and the (mock) renders through the blob URLs; the prompt block carries the layout's
+      `style_tags` verbatim as DATA; SKU candidates per surface (PLACEHOLDER badges until the real
+      catalog lands). Approve.
+- [ ] `POST /projects/:id/finish-selection` with a real selection (real SKUs, or placeholders with
+      `ALLOW_PLACEHOLDER_SKUS=1 CI=true` on a dev-only gateway) → `finish_commit` card lists the
+      selection and the `set_parameter` ops; approve → `issue-finish` → `Commit #3 finishes`
+      commits (`seq` +1, empty delta); in Revit the Properties palette of a selected wall shows
+      `CHPT_Product_SKU`, `CHPT_Spec_Section`, `CHPT_Finish_Material`, `CHPT_Render_Ref`; a door shows
+      SKU + Spec only; a conflict wall (two rooms, two SKUs) shows the `Comments` note and no finish
+      params. `/state.finish_done = true`; a second `issue-finish` → `finish_already_done`.
+- [ ] Negative: hand-craft an envelope (`POST /envelopes` with the approved review's `approval_ref`
+      but an added `set_parameter Mark`) → 422 `param_not_allowlisted`, nothing sent; a
+      `CHPT_Finish_Material` on a door in a directly-created review → refused by the gateway; with
+      the gateway check bypassed (dev build), the add-in itself rolls back `param_not_allowlisted`
+      (category) and revit-sim agrees — three enforcers, one file.
+- [ ] Unbind `CHPT_Render_Ref` from Walls in a throwaway copy → the finish envelope rolls back
+      `unknown_param` naming the parameter; rebind → commits. `/state.finish` shows the hard failure
+      card once; a NEW selection restarts.
+- [ ] Ctrl+Z after Commit #3 → `state_divergence`; project dirty; `issue-finish` refused
+      (`drift_review_pending`).
 
 ## Per release
 - [ ] Re-run the Phase 1 gate list plus any op handlers added in the release.

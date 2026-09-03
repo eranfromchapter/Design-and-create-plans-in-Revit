@@ -31,19 +31,14 @@ public sealed class App : IExternalApplication
             return Result.Succeeded;
         }
 
-        // MEP vocabulary + clash table enrolled beside the config (docs/MANUAL_REVIT_TEST.md).
-        // A malformed catalog must not take the whole add-in offline: MEP ops then fail
-        // cleanly with catalog_missing while everything else keeps working.
-        AddinCatalogs catalogs;
-        try
-        {
-            catalogs = AddinCatalogs.Load(Path.Combine(configDir, "catalogs"));
-        }
-        catch (Exception)
-        {
-            catalogs = AddinCatalogs.Empty;
-        }
-        _handler = new EnvelopeHandler(message => _client?.Send(message), catalogs);
+        // MEP vocabulary + clash table + set_parameter allowlist enrolled beside the config
+        // (docs/MANUAL_REVIT_TEST.md). A malformed catalog file must not take the whole
+        // add-in offline: AddinCatalogs.Load parses each file on its own, so only the ops
+        // that need the bad file fail (catalog_missing) while everything else keeps working.
+        var catalogs = AddinCatalogs.Load(Path.Combine(configDir, "catalogs"));
+        // Phase 7: exported views are PUT to the gateway's HTTPS side under the workstation token
+        var uploader = new HttpBlobUploader(new Uri(config.GatewayUrl), config.Token);
+        _handler = new EnvelopeHandler(message => _client?.Send(message), catalogs, uploader);
         _handler.Attach(ExternalEvent.Create(_handler));
 
         _client = new WssClient(new WssClientOptions

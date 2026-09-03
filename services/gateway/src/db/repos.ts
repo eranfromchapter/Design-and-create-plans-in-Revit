@@ -82,6 +82,36 @@ const envelopeRow = z.object({
 });
 export type EnvelopeRow = z.infer<typeof envelopeRow>;
 
+/** Phase 7 export/render job (migration 0006): blob_refs[i] is the ref for views[i]. */
+const renderJobRow = z.object({
+  render_id: z.string(),
+  project_id: z.string(),
+  envelope_id: z.string(),
+  status: z.enum(["exporting", "exported", "composed", "failed"]),
+  views: z.array(z.object({ name: z.string(), kind: z.enum(["plan", "section", "3d_hidden"]), px: z.number() })),
+  expected_views: z.number(),
+  blob_refs: z.array(z.string().nullable()),
+  created_at: z.date(),
+});
+export type RenderJobRow = z.infer<typeof renderJobRow>;
+export type RenderView = RenderJobRow["views"][number];
+
+const finishSelectionRow = z.object({
+  id: z.string(),
+  project_id: z.string(),
+  review_id: z.string(),
+  envelope_id: z.string(),
+  catalog_version: z.string(),
+  selection: z.unknown(),
+  ops: z.unknown(),
+  committed_at: z.date(),
+});
+export type FinishSelectionRow = z.infer<typeof finishSelectionRow>;
+
+export type AttachOutcome =
+  | { attached: true; renderId: string; index: number; complete: boolean }
+  | { attached: false; reason: "no_exporting_job" | "envelope_not_committed" | "stale_job" | "job_full" | "unknown_view_name" };
+
 export interface ClashPairRow {
   a_id: string;
   b_id: string;
@@ -272,6 +302,8 @@ export class Repos {
           accepted,
           reason,
         });
+        // Phase 7: a rejected export envelope strands its render job — fail it now
+        if (!accepted) await this.failExportJobs(client, envelopeId, "ack_rejected");
       }
       await client.query("COMMIT");
     } catch (err) {
@@ -385,6 +417,54 @@ export class Repos {
             iterations_used: content.iterations_used ?? 0,
           });
         }
+        // Phase 7: an OLDER export whose frames never all arrived can no longer complete
+        // (frames follow their own commit_result; a newer envelope just committed) —
+        // terminal instead of stuck. This envelope's own job stays exporting.
+        const stale = await client.query(
+          `UPDATE render_jobs j SET status = 'failed' FROM envelopes e
+           WHERE j.envelope_id = e.envelope_id AND j.project_id = $1 AND j.status = 'exporting'
+             AND j.envelope_id <> $2 AND e.status = 'committed'
+           RETURNING j.render_id, j.envelope_id`,
+          [projectId, r.envelopeId],
+        );
+        for (const row of stale.rows) {
+          await this.logEvent(client, projectId, "gateway", "render_export_failed", {
+            render_id: row.render_id, envelope_id: row.envelope_id, cause: "frames_lost",
+          });
+        }
+        // Commit #3 finishes (Phase 7): the committed finish envelope records the approved
+        // selection + its set_parameter ops verbatim — the row IS finish_done (Phase 8 reads
+        // it for Division 09). One row per (project, review).
+        const finish = await client.query(
+          `SELECT rv.id AS review_id, rv.content
+           FROM envelopes e JOIN reviews rv ON rv.id = (e.approval_ref->>'review_id')::uuid
+           WHERE e.envelope_id = $1 AND rv.kind = 'finish_commit'`,
+          [r.envelopeId],
+        );
+        if (finish.rowCount) {
+          const content = finish.rows[0].content as {
+            selection?: unknown; ops?: unknown[]; catalog_version?: string;
+          };
+          const inserted = await client.query(
+            `INSERT INTO finish_selections
+               (id, project_id, review_id, envelope_id, catalog_version, selection, ops)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (project_id, review_id) DO NOTHING RETURNING id`,
+            [
+              randomUUID(), projectId, finish.rows[0].review_id, r.envelopeId,
+              content.catalog_version ?? "unknown",
+              JSON.stringify(content.selection ?? {}), JSON.stringify(content.ops ?? []),
+            ],
+          );
+          if (inserted.rowCount) {
+            await this.logEvent(client, projectId, "gateway", "finish_done", {
+              envelope_id: r.envelopeId,
+              seq: Number(seq),
+              finish_review_id: finish.rows[0].review_id,
+              ops: Array.isArray(content.ops) ? content.ops.length : 0,
+            });
+          }
+        }
       } else {
         // Rolled back: keep the executor's errors verbatim and, when any of them is an
         // interference, the clash pairs parsed from "A~B" — the AUTHORITATIVE Phase B
@@ -425,6 +505,26 @@ export class Repos {
               interior_review_id: content.interior?.review_id ?? null,
               mep_review_id: content.mep?.review_id ?? null,
             },
+          }, false);
+        }
+        // Phase 7: a rolled-back export envelope emits no frames — its job is failed; a
+        // hard code on a finish envelope means the selection is wrong for this model →
+        // finish_failure {hard}, never auto-approved, never re-issued (transient codes
+        // stay re-issuable up to the cap)
+        await this.failExportJobs(client, r.envelopeId, "rolled_back");
+        const finish = await client.query(
+          `SELECT rv.id AS review_id
+           FROM envelopes e JOIN reviews rv ON rv.id = (e.approval_ref->>'review_id')::uuid
+           WHERE e.envelope_id = $1 AND rv.kind = 'finish_commit'`,
+          [r.envelopeId],
+        );
+        if (finish.rowCount && isHardRollback(r.errors)) {
+          await this.createReviewWith(client, projectId, "finish_failure", {
+            reason: "executor_rejected",
+            hard: true,
+            envelope_id: r.envelopeId,
+            finish_review_id: finish.rows[0].review_id,
+            errors: r.errors,
           }, false);
         }
       }
@@ -618,7 +718,246 @@ export class Repos {
        FROM stale WHERE e.envelope_id = stale.envelope_id
        RETURNING e.envelope_id`,
     );
+    for (const row of res.rows) {
+      await this.failExportJobs(this.db, row.envelope_id as string, "expired");
+    }
     return res.rowCount ?? 0;
+  }
+
+  /** An issued envelope that was never dispatched (a dispatch precondition failed, or the
+   *  executor vanished between insert and send): resolved as expired NOW so the
+   *  one-in-flight slot frees; any export job it opened fails with it. */
+  async abandonIssuedEnvelope(envelopeId: string, reason: string): Promise<void> {
+    const client = await this.db.connect();
+    try {
+      await client.query("BEGIN");
+      const res = await client.query(
+        `UPDATE envelopes SET status = 'expired', resolved_at = now(), reject_reason = $2
+         WHERE envelope_id = $1 AND status = 'issued' RETURNING project_id`,
+        [envelopeId, reason],
+      );
+      if (res.rowCount) {
+        await this.logEvent(client, res.rows[0].project_id, "gateway", "envelope_abandoned", {
+          envelope_id: envelopeId, reason,
+        });
+        await this.failExportJobs(client, envelopeId, reason);
+      }
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  /** Phase 7: fail every exporting job of a project (a frame could not be attached — the
+   *  slot order is no longer trustworthy). */
+  async failExportingJobs(projectId: string, cause: string): Promise<number> {
+    const res = await this.db.query(
+      `UPDATE render_jobs SET status = 'failed'
+       WHERE project_id = $1 AND status = 'exporting' RETURNING render_id, envelope_id`,
+      [projectId],
+    );
+    for (const row of res.rows) {
+      await this.logEvent(this.db, projectId, "gateway", "render_export_failed", {
+        render_id: row.render_id, envelope_id: row.envelope_id, cause,
+      });
+    }
+    return res.rowCount ?? 0;
+  }
+
+  /** Phase 7: an export envelope that will never commit strands its exporting job. */
+  private async failExportJobs(client: pg.PoolClient | Db, envelopeId: string, cause: string): Promise<void> {
+    const res = await client.query(
+      `UPDATE render_jobs SET status = 'failed'
+       WHERE envelope_id = $1 AND status = 'exporting' RETURNING render_id, project_id`,
+      [envelopeId],
+    );
+    for (const row of res.rows) {
+      await this.logEvent(client, row.project_id, "gateway", "render_export_failed", {
+        render_id: row.render_id, envelope_id: envelopeId, cause,
+      });
+    }
+  }
+
+  // ---- Phase 7: render jobs + finish selections ----------------------------------
+
+  /** Create the job for an export_views envelope BEFORE it is dispatched (so no frame can
+   *  arrive without a job). Any stray exporting job of the project is superseded. */
+  async createRenderJob(j: {
+    renderId: string;
+    projectId: string;
+    envelopeId: string;
+    views: RenderView[];
+  }): Promise<RenderJobRow> {
+    const client = await this.db.connect();
+    try {
+      await client.query("BEGIN");
+      const stray = await client.query(
+        `UPDATE render_jobs SET status = 'failed'
+         WHERE project_id = $1 AND status = 'exporting' RETURNING render_id`,
+        [j.projectId],
+      );
+      for (const row of stray.rows) {
+        await this.logEvent(client, j.projectId, "gateway", "render_job_superseded", {
+          render_id: row.render_id, by: j.renderId,
+        });
+      }
+      const res = await client.query(
+        `INSERT INTO render_jobs (render_id, project_id, envelope_id, views, expected_views, blob_refs)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [
+          j.renderId, j.projectId, j.envelopeId, JSON.stringify(j.views), j.views.length,
+          JSON.stringify(j.views.map(() => null)),
+        ],
+      );
+      await this.logEvent(client, j.projectId, "gateway", "render_job_created", {
+        render_id: j.renderId, envelope_id: j.envelopeId, views: j.views.map((v) => v.name),
+      });
+      await client.query("COMMIT");
+      return renderJobRow.parse(res.rows[0]);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  async getEnvelope(envelopeId: string): Promise<EnvelopeRow | null> {
+    const res = await this.db.query("SELECT * FROM envelopes WHERE envelope_id = $1", [envelopeId]);
+    return res.rowCount ? envelopeRow.parse(res.rows[0]) : null;
+  }
+
+  async latestRenderJob(projectId: string): Promise<RenderJobRow | null> {
+    const res = await this.db.query(
+      `SELECT * FROM render_jobs WHERE project_id = $1 ORDER BY created_at DESC, render_id DESC LIMIT 1`,
+      [projectId],
+    );
+    return res.rowCount ? renderJobRow.parse(res.rows[0]) : null;
+  }
+
+  async getRenderJob(renderId: string): Promise<RenderJobRow | null> {
+    const res = await this.db.query("SELECT * FROM render_jobs WHERE render_id = $1", [renderId]);
+    return res.rowCount ? renderJobRow.parse(res.rows[0]) : null;
+  }
+
+  async setRenderJobStatus(renderId: string, status: RenderJobRow["status"]): Promise<void> {
+    await this.db.query("UPDATE render_jobs SET status = $2 WHERE render_id = $1", [renderId, status]);
+  }
+
+  /** Land one export_ready view frame (P7-01). The project's latest exporting job whose
+   *  envelope COMMITTED takes the frame in its next empty slot (or the named slot when the
+   *  frame carries a view name). Refs may repeat — identical bytes are legal. The row is
+   *  locked so two frames never race for a slot; completion flips the job to `exported`. */
+  async attachExportBlob(
+    projectId: string,
+    blobRef: string,
+    hint?: { envelopeId?: string; name?: string },
+  ): Promise<AttachOutcome> {
+    const client = await this.db.connect();
+    try {
+      await client.query("BEGIN");
+      const res = await client.query(
+        `SELECT j.*, e.status AS envelope_status FROM render_jobs j
+           JOIN envelopes e ON e.envelope_id = j.envelope_id
+         WHERE j.project_id = $1 AND j.status = 'exporting'
+           AND ($2::uuid IS NULL OR j.envelope_id = $2::uuid)
+         ORDER BY j.created_at DESC LIMIT 1 FOR UPDATE OF j`,
+        [projectId, hint?.envelopeId ?? null],
+      );
+      if (!res.rowCount) {
+        await client.query("ROLLBACK");
+        return { attached: false, reason: "no_exporting_job" };
+      }
+      const row = res.rows[0];
+      if (row.envelope_status !== "committed") {
+        await client.query("ROLLBACK");
+        return { attached: false, reason: "envelope_not_committed" };
+      }
+      const job = renderJobRow.parse(row);
+      // frames follow THEIR envelope's commit_result on the same per-session queue, so the
+      // project's newest committed envelope is the frame's envelope; a job whose envelope
+      // is older can never complete — terminal, and never a slot for someone else's frame
+      const latest = await client.query(
+        `SELECT envelope_id FROM envelopes WHERE project_id = $1 AND status = 'committed'
+         ORDER BY seq DESC LIMIT 1`,
+        [projectId],
+      );
+      if (latest.rows[0]?.envelope_id !== job.envelope_id) {
+        await client.query(`UPDATE render_jobs SET status = 'failed' WHERE render_id = $1`, [job.render_id]);
+        await this.logEvent(client, projectId, "gateway", "render_export_failed", {
+          render_id: job.render_id, envelope_id: job.envelope_id, cause: "frames_lost",
+        });
+        await client.query("COMMIT");
+        return { attached: false, reason: "stale_job" };
+      }
+      const refs = [...job.blob_refs];
+      while (refs.length < job.expected_views) refs.push(null);
+      let index: number;
+      if (hint?.name !== undefined) {
+        index = job.views.findIndex((v) => v.name === hint.name);
+        if (index < 0) {
+          await client.query("ROLLBACK");
+          return { attached: false, reason: "unknown_view_name" };
+        }
+        if (refs[index] !== null) {
+          await client.query("ROLLBACK");
+          return { attached: false, reason: "job_full" };
+        }
+      } else {
+        index = refs.findIndex((r) => r === null);
+        if (index < 0) {
+          await client.query("ROLLBACK");
+          return { attached: false, reason: "job_full" };
+        }
+      }
+      refs[index] = blobRef;
+      const complete = refs.every((r) => r !== null);
+      await client.query(
+        `UPDATE render_jobs SET blob_refs = $2, status = $3 WHERE render_id = $1`,
+        [job.render_id, JSON.stringify(refs), complete ? "exported" : "exporting"],
+      );
+      if (complete) {
+        await this.logEvent(client, projectId, "gateway", "render_exported", {
+          render_id: job.render_id, envelope_id: job.envelope_id, blob_refs: refs,
+        });
+      }
+      await client.query("COMMIT");
+      return { attached: true, renderId: job.render_id, index, complete };
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  /** The project's committed finish selection (one per project in v1 = finish_done). */
+  async finishSelectionForProject(projectId: string): Promise<FinishSelectionRow | null> {
+    const res = await this.db.query(
+      `SELECT * FROM finish_selections WHERE project_id = $1 ORDER BY committed_at DESC LIMIT 1`,
+      [projectId],
+    );
+    return res.rowCount ? finishSelectionRow.parse(res.rows[0]) : null;
+  }
+
+  async finishSelectionForReview(reviewId: string): Promise<FinishSelectionRow | null> {
+    const res = await this.db.query("SELECT * FROM finish_selections WHERE review_id = $1", [reviewId]);
+    return res.rowCount ? finishSelectionRow.parse(res.rows[0]) : null;
+  }
+
+  /** A hard finish_failure naming this finish_commit review (executor rejection or the
+   *  re-issue cap): the review is spent; a NEW selection restarts. */
+  async finishHardFailure(projectId: string, finishReviewId: string): Promise<ReviewRow | null> {
+    const res = await this.db.query(
+      `SELECT * FROM reviews WHERE project_id = $1 AND kind = 'finish_failure'
+         AND content->>'finish_review_id' = $2 AND (content->>'hard')::boolean
+       ORDER BY created_at DESC LIMIT 1`,
+      [projectId, finishReviewId],
+    );
+    return res.rowCount ? reviewRow.parse(res.rows[0]) : null;
   }
 
   async idMapEntries(projectId: string): Promise<Record<string, number>> {

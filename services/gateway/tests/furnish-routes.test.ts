@@ -151,7 +151,7 @@ describe.skipIf(!DATABASE_URL)("gateway interior flow (DB-backed)", () => {
     furnishQueue.length = 0;
     furnishRequests.length = 0;
     await gw.pool.query(
-      "TRUNCATE layout_snapshots, briefs, reviews, id_map, event_log, envelopes, workstations, projects",
+      "TRUNCATE finish_selections, render_jobs, layout_snapshots, briefs, reviews, id_map, event_log, envelopes, workstations, projects",
     );
   });
 

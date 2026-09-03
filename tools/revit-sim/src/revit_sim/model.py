@@ -37,6 +37,12 @@ class Catalogs:
     conduit_type: str | None = None
     family_kinds: dict[tuple[str, str], tuple[str, ...]] = field(default_factory=dict)
     clash_prisms: dict[str, Any] = field(default_factory=dict)
+    # Phase 7 (SI-4): which categories each allowlisted parameter may touch ("*" = any), the
+    # parameter kind (finish/product/spec/comment), and the furniture kinds that are plumbing
+    # fixtures (a sanitary hookup in catalogs/plumbing.json) — the category of an F- target
+    param_categories: dict[str, frozenset[str]] = field(default_factory=dict)
+    param_kinds: dict[str, str] = field(default_factory=dict)
+    plumbing_kinds: frozenset[str] = frozenset()
 
     @classmethod
     def load(cls, contracts_dir: Path = CONTRACTS_DIR) -> Catalogs:
@@ -45,6 +51,7 @@ class Catalogs:
         allowlist = json.loads((contracts_dir / "ops" / "param_allowlist.json").read_text())
         mep = json.loads((contracts_dir / "catalogs" / "mep_types.json").read_text())
         prisms = json.loads((contracts_dir / "catalogs" / "clash_prisms.json").read_text())
+        plumbing = json.loads((contracts_dir / "catalogs" / "plumbing.json").read_text())
         family_kinds: dict[tuple[str, str], tuple[str, ...]] = {}
         for family in newc.get("families", []):
             for ftype in family["types"]:
@@ -64,6 +71,15 @@ class Catalogs:
             conduit_type=mep.get("conduit_type"),
             family_kinds=family_kinds,
             clash_prisms=prisms,
+            param_categories={
+                p["name"]: frozenset(p.get("categories", ["*"])) for p in allowlist["params"]
+            },
+            param_kinds={p["name"]: p.get("kind", "comment") for p in allowlist["params"]},
+            plumbing_kinds=frozenset(
+                kind
+                for kind, spec in plumbing.get("fixtures", {}).items()
+                if "sanitary" in spec.get("hookups", [])
+            ),
         )
 
 
@@ -223,12 +239,46 @@ class SimModel:
         self.conduits[args["id"]] = dict(args)
         return args["id"]
 
+    def _target_category(self, target_id: str, catalogs: Catalogs) -> str | None:
+        """The param_allowlist category vocabulary for a record: walls / doors / windows /
+        electrical (devices) / plumbing (a family whose kind has a sanitary hookup) /
+        furniture (any other family); levels, pipes and conduits have none (only "*"
+        parameters may touch them)."""
+        if target_id in self.walls:
+            return "walls"
+        if target_id in self.doors:
+            return "doors"
+        if target_id in self.windows:
+            return "windows"
+        if target_id in self.devices:
+            return "electrical"
+        fam = self.families.get(target_id)
+        if fam is not None:
+            kinds = catalogs.family_kinds.get((fam["revit_family"], fam["revit_type"]), ())
+            return "plumbing" if set(kinds) & catalogs.plumbing_kinds else "furniture"
+        return None
+
     def _op_set_parameter(self, args: dict[str, Any], catalogs: Catalogs) -> None:
-        if args["param"] not in catalogs.param_allowlist:
-            raise OpError("param_not_allowlisted", args["param"])
-        if args["target_id"] not in self.all_ids():
-            raise OpError("unknown_target", args["target_id"])
-        self.parameters.setdefault(args["target_id"], {})[args["param"]] = args["value"]
+        param, target_id, value = args["param"], args["target_id"], args["value"]
+        if param not in catalogs.param_allowlist:
+            raise OpError("param_not_allowlisted", param)
+        if target_id not in self.all_ids():
+            raise OpError("unknown_target", target_id)
+        # Phase 7 (SI-4): the allowlist scopes each parameter to categories; the sim mirrors
+        # the plugin's BuiltInCategory check with the record's category
+        categories = catalogs.param_categories.get(param, frozenset({"*"}))
+        category = self._target_category(target_id, catalogs)
+        if "*" not in categories and category not in categories:
+            raise OpError(
+                "param_not_allowlisted",
+                f"{param} not allowed on {category or 'unmapped'} ({target_id})",
+            )
+        # finish / product / spec / comment parameters are text in the template: a number or
+        # boolean would fail Parameter.Set on a String parameter in Revit
+        if catalogs.param_kinds.get(param) in {"finish", "product", "spec", "comment"}:
+            if not isinstance(value, str):
+                raise OpError("param_type_mismatch", f"{param} expects a string ({target_id})")
+        self.parameters.setdefault(target_id, {})[param] = value
         return None
 
     def _op_set_phase_demolished(self, args: dict[str, Any], _c: Catalogs) -> None:
