@@ -1,6 +1,133 @@
 {
-  "catalog_version": "0.0.0-placeholder",
+  "catalog_version": "0.1.0-placeholder",
   "requires_human_input": true,
-  "note": "PLACEHOLDER — seed with the 30 real Chapter SKUs (ask Eran; critical path for Phase 8). Fields per SKU: sku, manufacturer, model, description, finish_tier, csi_section, unit.",
-  "skus": []
+  "note": "PLACEHOLDER — the 14 rows below exist ONLY so Phase 7 fixtures, goldens and e2e have data; every sku ends in _PLACEHOLDER and the aidm-bridge finish-selection validator refuses them unless allow_placeholders (set by the gateway only under AUTO_APPROVE, i.e. CI). Replace with the 30 real Chapter SKUs (ask Eran; critical path for Phase 8). Fields per SKU: sku, manufacturer, model, description, finish_tier, csi_section, unit. The surface class (wall | casework | door | plumbing_fixture) is DERIVED from csi_section by the bridge's CSI table — nothing is invented per SKU; the 11 31 13 appliance row is deliberately unmapped.",
+  "skus": [
+    {
+      "sku": "CHPT-WALL-PAINT-ECO_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-01",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "economy",
+      "csi_section": "09 91 23",
+      "unit": "m2"
+    },
+    {
+      "sku": "CHPT-WALL-PAINT-STD_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-02",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "standard",
+      "csi_section": "09 91 23",
+      "unit": "m2"
+    },
+    {
+      "sku": "CHPT-WALL-PAINT-PRM_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-03",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "premium",
+      "csi_section": "09 91 23",
+      "unit": "m2"
+    },
+    {
+      "sku": "CHPT-WALL-TILE-LUX_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-04",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "luxury",
+      "csi_section": "09 30 13",
+      "unit": "m2"
+    },
+    {
+      "sku": "CHPT-CASE-LAM-ECO_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-05",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "economy",
+      "csi_section": "12 35 30",
+      "unit": "lf"
+    },
+    {
+      "sku": "CHPT-CASE-SHAKER-STD_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-06",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "standard",
+      "csi_section": "12 35 30",
+      "unit": "lf"
+    },
+    {
+      "sku": "CHPT-CASE-WOOD-PRM_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-07",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "premium",
+      "csi_section": "06 41 16",
+      "unit": "lf"
+    },
+    {
+      "sku": "CHPT-DOOR-HC-ECO_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-08",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "economy",
+      "csi_section": "08 14 16",
+      "unit": "ea"
+    },
+    {
+      "sku": "CHPT-DOOR-SC-STD_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-09",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "standard",
+      "csi_section": "08 14 16",
+      "unit": "ea"
+    },
+    {
+      "sku": "CHPT-DOOR-SOLID-PRM_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-10",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "premium",
+      "csi_section": "08 14 16",
+      "unit": "ea"
+    },
+    {
+      "sku": "CHPT-WC-STD_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-11",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "standard",
+      "csi_section": "22 41 13",
+      "unit": "ea"
+    },
+    {
+      "sku": "CHPT-LAV-STD_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-12",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "standard",
+      "csi_section": "22 41 16",
+      "unit": "ea"
+    },
+    {
+      "sku": "CHPT-SINK-STD_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-13",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "standard",
+      "csi_section": "22 41 16",
+      "unit": "ea"
+    },
+    {
+      "sku": "CHPT-APPL-DW-STD_PLACEHOLDER",
+      "manufacturer": "Placeholder Mfg",
+      "model": "PH-14",
+      "description": "PLACEHOLDER — not a real product",
+      "finish_tier": "standard",
+      "csi_section": "11 31 13",
+      "unit": "ea"
+    }
+  ]
 }

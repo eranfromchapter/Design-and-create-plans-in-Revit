@@ -144,8 +144,8 @@
           "pt3": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number" }], "items": false, "minItems": 3, "maxItems": 3 }
         }
       },
-      "revit_mapping": "Pipe.Create per segment; fittings: standard 90/45 elbows only in v1 — tee/wye into stacks emits REVIEW for manual completion (requires template with routing preferences; runbook prerequisite)",
-      "sim_behavior": "add polyline with radius"
+      "revit_mapping": "Pipe.Create per segment; fittings: standard 90/45 elbows only in v1 — tee/wye into stacks emits REVIEW for manual completion (requires template with routing preferences; runbook prerequisite); the pipe type must carry an elbow rule (routing_preference_missing) and the diameter snaps to the type's size table within 2.5 mm (unknown_size)",
+      "sim_behavior": "add polyline with radius; reject pipe_type not in catalogs/mep_types.json (unknown_revit_type) and any segment with 3D length < 1e-6 mm (invalid_path); level deliberately unchecked (Commit #0 replay parity)"
     },
     "create_conduit": {
       "args_schema": {
@@ -167,8 +167,8 @@
           "pt3": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number" }], "items": false, "minItems": 3, "maxItems": 3 }
         }
       },
-      "revit_mapping": "Conduit.Create per segment",
-      "sim_behavior": "add polyline"
+      "revit_mapping": "Conduit.Create per segment; the conduit type must carry a Bend fitting (routing_preference_missing); trade size snapped within 2.5 mm (unknown_size)",
+      "sim_behavior": "add polyline; reject any segment with 3D length < 1e-6 mm (invalid_path)"
     },
     "set_parameter": {
       "args_schema": {
@@ -177,12 +177,12 @@
         "required": ["target_id", "param", "value"],
         "properties": {
           "target_id": { "type": "string", "minLength": 1 },
-          "param": { "type": "string", "minLength": 1, "description": "MUST be present in ops/param_allowlist.json (SI-4); enforced by gateway, sim, and plugin" },
+          "param": { "type": "string", "minLength": 1, "description": "MUST be present in ops/param_allowlist.json AND allow the target's category (SI-4): the gateway checks name + category by target-id prefix before signing, revit-sim by name + the record's category, the plugin by name + the element's BuiltInCategory + storage type" },
           "value": { "type": ["string", "number", "boolean"] }
         }
       },
-      "revit_mapping": "Parameter.Set on the id-mapped element",
-      "sim_behavior": "update record; reject param not in allowlist"
+      "revit_mapping": "LookupParameter(param) on the id-mapped element (Comments = ALL_MODEL_INSTANCE_COMMENTS); allowlist name + category check; set by StorageType (String/Double/Integer, bool -> 0/1); failures param_not_allowlisted / unknown_param / param_readonly / param_type_mismatch",
+      "sim_behavior": "update record; reject param not in allowlist or not allowed for the target's category (param_not_allowlisted); reject a non-string value for finish/product/spec/comment params (param_type_mismatch)"
     },
     "set_phase_demolished": {
       "args_schema": {
@@ -263,8 +263,8 @@
           }
         }
       },
-      "revit_mapping": "ImageExportOptions -> PNG -> blob -> export_ready",
-      "sim_behavior": "render canonical SVG -> rasterize to PNG at requested px -> blob (bridge consumes one format from both executors)"
+      "revit_mapping": "temporary view per views[] entry (plan: ViewPlan.Create; section: ViewSection.CreateSection through the model bbox centre looking +Y; 3d_hidden: View3D.CreateIsometric + DisplayStyle.HLR) -> ImageExportOptions PNG at px -> PUT the bytes to the gateway blob store (blob_ref = lowercase sha256 hex of the PNG bytes) -> temporary views deleted -> one export_ready {kind: view, blob_ref} per entry, emitted IN views ORDER only after commit_result committed; `name` is never on the wire (correlation by order); failures view_export_failed / blob_upload_failed roll the envelope back",
+      "sim_behavior": "render the canonical SVG for the kind (plan | section = elevation through the bbox centre looking +Y | 3d_hidden = 30-degree axonometric boxes, painter-ordered, no hidden-line removal) -> rasterize PNG at px -> content-addressed blob (sha256 hex) -> one export_ready per entry in views order after commit_result committed; the bridge consumes one format from both executors"
     },
     "export_parameters": {
       "args_schema": {
@@ -327,8 +327,8 @@
           "scope": { "const": "last_commit" }
         }
       },
-      "revit_mapping": "ElementIntersectsElementFilter over the created set; hard interference -> whole-envelope rollback + clash_delta",
-      "sim_behavior": "oriented-footprint overlap check over the created set"
+      "revit_mapping": "ElementIntersectsElementFilter over the created set x the whole document (clash categories); hard interference -> whole-envelope rollback + clash_delta",
+      "sim_behavior": "2.5D clash law shared with the merge gate and the plugin (catalogs/clash_prisms.json): AABB prisms of the envelope's CREATED set x every other element, strict overlap on x/y/z (touching is legal), exempt pairs from the shared table; walls/doors/windows are never clash elements; first pair -> interference \"A~B\" -> whole-envelope rollback + clash_delta"
     }
   }
 }
