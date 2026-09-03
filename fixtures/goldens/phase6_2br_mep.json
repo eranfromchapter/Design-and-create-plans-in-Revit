@@ -1,0 +1,7235 @@
+{
+  "blocking": [],
+  "branches": [
+    {
+      "cls": "leg",
+      "diameter": 76.0,
+      "fixture_ids": [
+        "F-006"
+      ],
+      "id": "P-003",
+      "segment": [
+        [
+          600.0,
+          4225.0,
+          -191.8
+        ],
+        [
+          600.0,
+          6675.0,
+          -217.2
+        ]
+      ],
+      "slope": 0.0104,
+      "stack_id": "P-001"
+    },
+    {
+      "cls": "leg",
+      "diameter": 76.0,
+      "fixture_ids": [
+        "F-006",
+        "F-007"
+      ],
+      "id": "P-004",
+      "segment": [
+        [
+          600.0,
+          6675.0,
+          -217.2
+        ],
+        [
+          600.0,
+          7000.0,
+          -220.6
+        ]
+      ],
+      "slope": 0.0104,
+      "stack_id": "P-001"
+    },
+    {
+      "cls": "along",
+      "diameter": 76.0,
+      "fixture_ids": [
+        "F-006",
+        "F-007"
+      ],
+      "id": "P-005",
+      "segment": [
+        [
+          600.0,
+          7000.0,
+          -220.6
+        ],
+        [
+          5133.3,
+          7000.0,
+          -267.8
+        ]
+      ],
+      "slope": 0.0104,
+      "stack_id": "P-001"
+    },
+    {
+      "cls": "leg",
+      "diameter": 76.0,
+      "fixture_ids": [
+        "F-012"
+      ],
+      "id": "P-006",
+      "segment": [
+        [
+          10800.0,
+          4996.0,
+          -188.0
+        ],
+        [
+          10800.0,
+          7000.0,
+          -208.8
+        ]
+      ],
+      "slope": 0.0104,
+      "stack_id": "P-001"
+    },
+    {
+      "cls": "along",
+      "diameter": 76.0,
+      "fixture_ids": [
+        "F-012"
+      ],
+      "id": "P-007",
+      "segment": [
+        [
+          10800.0,
+          7000.0,
+          -208.8
+        ],
+        [
+          5133.3,
+          7000.0,
+          -267.8
+        ]
+      ],
+      "slope": 0.0104,
+      "stack_id": "P-001"
+    },
+    {
+      "cls": "leg",
+      "diameter": 38.0,
+      "fixture_ids": [
+        "F-017",
+        "F-018"
+      ],
+      "id": "P-008",
+      "segment": [
+        [
+          6110.0,
+          450.0,
+          -184.6
+        ],
+        [
+          4800.0,
+          450.0,
+          -211.8
+        ]
+      ],
+      "slope": 0.0208,
+      "stack_id": "P-002"
+    },
+    {
+      "cls": "along",
+      "diameter": 38.0,
+      "fixture_ids": [
+        "F-017",
+        "F-018"
+      ],
+      "id": "P-009",
+      "segment": [
+        [
+          4800.0,
+          450.0,
+          -211.8
+        ],
+        [
+          4800.0,
+          169.0,
+          -217.7
+        ]
+      ],
+      "slope": 0.0208,
+      "stack_id": "P-002"
+    },
+    {
+      "cls": "leg",
+      "diameter": 38.0,
+      "fixture_ids": [
+        "F-018"
+      ],
+      "id": "P-010",
+      "segment": [
+        [
+          6860.0,
+          450.0,
+          -169.0
+        ],
+        [
+          6110.0,
+          450.0,
+          -184.6
+        ]
+      ],
+      "slope": 0.0208,
+      "stack_id": "P-002"
+    }
+  ],
+  "counts": {
+    "blocking": 0,
+    "conduits": 81,
+    "devices": 45,
+    "extensions": {
+      "appliance": 3
+    },
+    "gfci": 4,
+    "pipes": 10,
+    "receptacle": 29,
+    "receptacle_240": 1,
+    "review_items": 21,
+    "stacks": 2,
+    "switch": 11
+  },
+  "devices": [
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-001",
+      "id": "E-001",
+      "kind": "receptacle",
+      "offset": 1912.5,
+      "room_id": "R-001",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        3825.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-002",
+      "id": "E-002",
+      "kind": "receptacle",
+      "offset": 1800.0,
+      "room_id": "R-001",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        3600.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-005",
+      "id": "E-003",
+      "kind": "receptacle",
+      "offset": 1459.5,
+      "room_id": "R-001",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        2919.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-003",
+      "id": "E-004",
+      "kind": "receptacle",
+      "offset": 1800.0,
+      "room_id": "R-001",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        3600.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-025",
+      "id": "E-005",
+      "kind": "receptacle",
+      "offset": 622.2,
+      "room_id": "R-002",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        1244.5
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-025",
+      "id": "E-006",
+      "kind": "receptacle",
+      "offset": 2565.2,
+      "room_id": "R-002",
+      "rule": "E-1",
+      "run": [
+        1955.5,
+        3175.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-003",
+      "id": "E-007",
+      "kind": "receptacle",
+      "offset": 2400.0,
+      "room_id": "R-002",
+      "rule": "E-1",
+      "run": [
+        1200.0,
+        3600.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-005",
+      "id": "E-008",
+      "kind": "receptacle",
+      "offset": 5783.8,
+      "room_id": "R-002",
+      "rule": "E-1",
+      "run": [
+        4567.5,
+        7000.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-004",
+      "id": "E-009",
+      "kind": "receptacle",
+      "offset": 2400.0,
+      "room_id": "R-002",
+      "rule": "E-1",
+      "run": [
+        1200.0,
+        3600.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-005",
+      "id": "E-010",
+      "kind": "receptacle",
+      "offset": 5950.0,
+      "room_id": "R-004",
+      "rule": "E-1",
+      "run": [
+        4600.0,
+        7000.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-006",
+      "id": "E-011",
+      "kind": "receptacle",
+      "offset": 1652.8,
+      "room_id": "R-004",
+      "rule": "E-1",
+      "run": [
+        1205.5,
+        2100.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-018",
+      "id": "E-012",
+      "kind": "receptacle",
+      "offset": 1200.0,
+      "room_id": "R-004",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        2400.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-004",
+      "id": "E-013",
+      "kind": "receptacle",
+      "offset": 4650.0,
+      "room_id": "R-004",
+      "rule": "E-1",
+      "run": [
+        3600.0,
+        5700.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-018",
+      "id": "E-014",
+      "kind": "receptacle",
+      "offset": 1350.0,
+      "room_id": "R-005",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        2400.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-006",
+      "id": "E-015",
+      "kind": "receptacle",
+      "offset": 2750.0,
+      "room_id": "R-005",
+      "rule": "E-1",
+      "run": [
+        2100.0,
+        3400.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-019",
+      "id": "E-016",
+      "kind": "receptacle",
+      "offset": 1200.0,
+      "room_id": "R-005",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        2400.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-004",
+      "id": "E-017",
+      "kind": "receptacle",
+      "offset": 6850.0,
+      "room_id": "R-005",
+      "rule": "E-1",
+      "run": [
+        5700.0,
+        8000.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-022",
+      "id": "E-018",
+      "kind": "receptacle",
+      "offset": 3325.0,
+      "room_id": "R-008",
+      "rule": "E-1",
+      "run": [
+        2050.0,
+        4600.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-016",
+      "id": "E-019",
+      "kind": "receptacle",
+      "offset": 700.0,
+      "room_id": "R-008",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        1400.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-017",
+      "id": "E-020",
+      "kind": "receptacle",
+      "offset": 1830.0,
+      "room_id": "R-008",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        4600.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-017",
+      "id": "E-021",
+      "kind": "receptacle",
+      "offset": 2770.0,
+      "room_id": "R-008",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        4600.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-021",
+      "id": "E-022",
+      "kind": "receptacle",
+      "offset": 521.2,
+      "room_id": "R-008",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        1042.5
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-021",
+      "id": "E-023",
+      "kind": "receptacle",
+      "offset": 2678.8,
+      "room_id": "R-008",
+      "rule": "E-1",
+      "run": [
+        1957.5,
+        3400.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-022",
+      "id": "E-024",
+      "kind": "receptacle",
+      "offset": 2425.0,
+      "room_id": "R-009",
+      "rule": "E-1",
+      "run": [
+        2050.0,
+        2800.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-024",
+      "id": "E-025",
+      "kind": "receptacle",
+      "offset": 1175.0,
+      "room_id": "R-009",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        2350.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-005",
+      "id": "E-026",
+      "kind": "receptacle",
+      "offset": 2000.0,
+      "room_id": "R-009",
+      "rule": "E-1",
+      "run": [
+        1200.0,
+        2800.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-027",
+      "id": "E-027",
+      "kind": "receptacle",
+      "offset": 600.0,
+      "room_id": "R-009",
+      "rule": "E-1",
+      "run": [
+        0.0,
+        1200.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-024",
+      "id": "E-028",
+      "kind": "receptacle",
+      "offset": 1325.0,
+      "room_id": "R-010",
+      "rule": "corridor",
+      "run": [
+        0.0,
+        2350.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 1150.0,
+      "host_wall_id": "W-002",
+      "id": "E-029",
+      "kind": "gfci",
+      "offset": 4200.0,
+      "room_id": "R-011",
+      "rule": "laundry",
+      "run": [
+        3600.0,
+        4800.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 1150.0,
+      "host_wall_id": "W-002",
+      "id": "E-030",
+      "kind": "gfci",
+      "offset": 5663.2,
+      "room_id": "R-009",
+      "rule": "E-2",
+      "run": [
+        4800.0,
+        6266.5
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 1150.0,
+      "host_wall_id": "W-004",
+      "id": "E-031",
+      "kind": "gfci",
+      "offset": 900.0,
+      "room_id": "R-003",
+      "rule": "E-2-basin",
+      "run": [
+        0.0,
+        1200.0
+      ],
+      "source": "F-007"
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "right",
+      "height_afl": 380.0,
+      "host_wall_id": "W-005",
+      "id": "E-032",
+      "kind": "receptacle",
+      "offset": 1800.0,
+      "room_id": "R-009",
+      "rule": "appliance",
+      "run": [
+        1200.0,
+        2800.0
+      ],
+      "source": "F-016"
+    },
+    {
+      "circuit": "120V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-002",
+      "id": "E-033",
+      "kind": "gfci",
+      "offset": 6860.0,
+      "room_id": "R-009",
+      "rule": "appliance",
+      "run": [
+        4800.0,
+        8000.0
+      ],
+      "source": "F-018"
+    },
+    {
+      "circuit": "240V",
+      "door_id": null,
+      "face": "left",
+      "height_afl": 380.0,
+      "host_wall_id": "W-022",
+      "id": "E-034",
+      "kind": "receptacle_240",
+      "offset": 280.0,
+      "room_id": "R-009",
+      "rule": "appliance",
+      "run": [
+        0.0,
+        350.0
+      ],
+      "source": "F-019"
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-001",
+      "face": "right",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-004",
+      "id": "E-035",
+      "kind": "switch",
+      "offset": 9207.5,
+      "room_id": "R-006",
+      "rule": "E-3",
+      "run": [
+        9057.5,
+        10200.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-003",
+      "face": "left",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-005",
+      "id": "E-036",
+      "kind": "switch",
+      "offset": 4717.5,
+      "room_id": "R-002",
+      "rule": "E-3",
+      "run": [
+        4567.5,
+        7000.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-004",
+      "face": "left",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-006",
+      "id": "E-037",
+      "kind": "switch",
+      "offset": 1355.5,
+      "room_id": "R-004",
+      "rule": "E-3",
+      "run": [
+        1205.5,
+        2100.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-006",
+      "face": "left",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-024",
+      "id": "E-038",
+      "kind": "switch",
+      "offset": 4200.0,
+      "room_id": "R-010",
+      "rule": "E-3",
+      "run": [
+        4050.0,
+        4400.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-007",
+      "face": "left",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-021",
+      "id": "E-039",
+      "kind": "switch",
+      "offset": 2107.5,
+      "room_id": "R-006",
+      "rule": "E-3",
+      "run": [
+        1957.5,
+        2200.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-008",
+      "face": "left",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-022",
+      "id": "E-040",
+      "kind": "switch",
+      "offset": 2200.0,
+      "room_id": "R-009",
+      "rule": "E-3",
+      "run": [
+        2050.0,
+        2800.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-009",
+      "face": "left",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-025",
+      "id": "E-041",
+      "kind": "switch",
+      "offset": 2105.5,
+      "room_id": "R-003",
+      "rule": "E-3",
+      "run": [
+        1955.5,
+        3175.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-010",
+      "face": "left",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-023",
+      "id": "E-042",
+      "kind": "switch",
+      "offset": 1705.5,
+      "room_id": "R-006",
+      "rule": "E-3",
+      "run": [
+        1555.5,
+        2400.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-011",
+      "face": "left",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-026",
+      "id": "E-043",
+      "kind": "switch",
+      "offset": 1105.5,
+      "room_id": "R-011",
+      "rule": "E-3",
+      "run": [
+        955.5,
+        1200.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-012",
+      "face": "right",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-003",
+      "id": "E-044",
+      "kind": "switch",
+      "offset": 3300.0,
+      "room_id": "R-001",
+      "rule": "E-3",
+      "run": [
+        0.0,
+        3600.0
+      ],
+      "source": null
+    },
+    {
+      "circuit": "120V",
+      "door_id": "D-013",
+      "face": "left",
+      "height_afl": 1220.0,
+      "host_wall_id": "W-019",
+      "id": "E-045",
+      "kind": "switch",
+      "offset": 300.0,
+      "room_id": "R-005",
+      "rule": "E-3",
+      "run": [
+        0.0,
+        2400.0
+      ],
+      "source": null
+    }
+  ],
+  "fixture_routes": [
+    {
+      "L_max_mm": 7115.4,
+      "L_mm": 4533.3,
+      "along_mm": 4533.3,
+      "fixture_id": "F-006",
+      "leg_mm": 2775.0,
+      "path_mm": 7308.3,
+      "plenum_overshoot_mm": 5.8,
+      "stack_id": "P-001"
+    },
+    {
+      "L_max_mm": 5673.1,
+      "L_mm": 4533.3,
+      "along_mm": 4533.3,
+      "fixture_id": "F-007",
+      "leg_mm": 325.0,
+      "path_mm": 4858.3,
+      "plenum_overshoot_mm": 5.8,
+      "stack_id": "P-001"
+    },
+    {
+      "L_max_mm": 7115.4,
+      "L_mm": 5666.7,
+      "along_mm": 5666.7,
+      "fixture_id": "F-012",
+      "leg_mm": 2004.0,
+      "path_mm": 7670.7,
+      "plenum_overshoot_mm": 5.8,
+      "stack_id": "P-001"
+    },
+    {
+      "L_max_mm": 5384.6,
+      "L_mm": 281.0,
+      "along_mm": 281.0,
+      "fixture_id": "F-017",
+      "leg_mm": 1310.0,
+      "path_mm": 1591.0,
+      "plenum_overshoot_mm": 0.0,
+      "stack_id": "P-002"
+    },
+    {
+      "L_max_mm": 5384.6,
+      "L_mm": 281.0,
+      "along_mm": 281.0,
+      "fixture_id": "F-018",
+      "leg_mm": 2060.0,
+      "path_mm": 2341.0,
+      "plenum_overshoot_mm": 0.0,
+      "stack_id": "P-002"
+    }
+  ],
+  "home_runs": [
+    {
+      "conduit_id": "Q-001",
+      "cost": 11287.5,
+      "device_id": "E-001",
+      "length_mm": 11287.5,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3300.0,
+          3825.0
+        ],
+        [
+          2400.0,
+          3825.0
+        ],
+        [
+          1800.0,
+          3825.0
+        ],
+        [
+          1200.0,
+          3825.0
+        ],
+        [
+          0.0,
+          3825.0
+        ],
+        [
+          0.0,
+          1912.5
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-002",
+      "cost": 11400.0,
+      "device_id": "E-002",
+      "length_mm": 11400.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3600.0,
+          2800.0
+        ],
+        [
+          3600.0,
+          2000.0
+        ],
+        [
+          3600.0,
+          1800.0
+        ],
+        [
+          3600.0,
+          1459.5
+        ],
+        [
+          3600.0,
+          1200.0
+        ],
+        [
+          3600.0,
+          0.0
+        ],
+        [
+          1800.0,
+          0.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-003",
+      "cost": 8140.5,
+      "device_id": "E-003",
+      "length_mm": 8140.5,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3600.0,
+          2800.0
+        ],
+        [
+          3600.0,
+          2000.0
+        ],
+        [
+          3600.0,
+          1800.0
+        ],
+        [
+          3600.0,
+          1459.5
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-004",
+      "cost": 7575.0,
+      "device_id": "E-004",
+      "length_mm": 7575.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3300.0,
+          3825.0
+        ],
+        [
+          2400.0,
+          3825.0
+        ],
+        [
+          1800.0,
+          3825.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-005",
+      "cost": 8797.2,
+      "device_id": "E-005",
+      "length_mm": 8797.2,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3300.0,
+          3825.0
+        ],
+        [
+          2400.0,
+          3825.0
+        ],
+        [
+          1800.0,
+          3825.0
+        ],
+        [
+          1200.0,
+          3825.0
+        ],
+        [
+          1200.0,
+          4447.2
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-006",
+      "cost": 10409.8,
+      "device_id": "E-006",
+      "length_mm": 10409.8,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          4717.5
+        ],
+        [
+          3600.0,
+          5783.8
+        ],
+        [
+          3600.0,
+          5950.0
+        ],
+        [
+          3600.0,
+          7000.0
+        ],
+        [
+          2400.0,
+          7000.0
+        ],
+        [
+          1200.0,
+          7000.0
+        ],
+        [
+          1200.0,
+          6390.2
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-007",
+      "cost": 6975.0,
+      "device_id": "E-007",
+      "length_mm": 6975.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3300.0,
+          3825.0
+        ],
+        [
+          2400.0,
+          3825.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-008",
+      "cost": 6183.8,
+      "device_id": "E-008",
+      "length_mm": 6183.8,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          4717.5
+        ],
+        [
+          3600.0,
+          5783.8
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-009",
+      "cost": 8600.0,
+      "device_id": "E-009",
+      "length_mm": 8600.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          4717.5
+        ],
+        [
+          3600.0,
+          5783.8
+        ],
+        [
+          3600.0,
+          5950.0
+        ],
+        [
+          3600.0,
+          7000.0
+        ],
+        [
+          2400.0,
+          7000.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-010",
+      "cost": 6350.0,
+      "device_id": "E-010",
+      "length_mm": 6350.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          4717.5
+        ],
+        [
+          3600.0,
+          5783.8
+        ],
+        [
+          3600.0,
+          5950.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-011",
+      "cost": 3347.2,
+      "device_id": "E-011",
+      "length_mm": 3347.2,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-012",
+      "cost": 4100.0,
+      "device_id": "E-012",
+      "length_mm": 4100.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          5800.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-013",
+      "cost": 8450.0,
+      "device_id": "E-013",
+      "length_mm": 8450.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          4717.5
+        ],
+        [
+          3600.0,
+          5783.8
+        ],
+        [
+          3600.0,
+          5950.0
+        ],
+        [
+          3600.0,
+          7000.0
+        ],
+        [
+          4650.0,
+          7000.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-014",
+      "cost": 4250.0,
+      "device_id": "E-014",
+      "length_mm": 4250.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          5800.0
+        ],
+        [
+          5700.0,
+          5950.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-015",
+      "cost": 2250.0,
+      "device_id": "E-015",
+      "length_mm": 2250.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-016",
+      "cost": 600.0,
+      "device_id": "E-016",
+      "length_mm": 600.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          5800.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-017",
+      "cost": 2950.0,
+      "device_id": "E-017",
+      "length_mm": 2950.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          5800.0
+        ],
+        [
+          8000.0,
+          7000.0
+        ],
+        [
+          6850.0,
+          7000.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-018",
+      "cost": 1875.0,
+      "device_id": "E-018",
+      "length_mm": 1875.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-019",
+      "cost": 8056.2,
+      "device_id": "E-019",
+      "length_mm": 8056.2,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ],
+        [
+          8000.0,
+          2800.0
+        ],
+        [
+          8000.0,
+          2425.0
+        ],
+        [
+          8000.0,
+          2200.0
+        ],
+        [
+          8000.0,
+          280.0
+        ],
+        [
+          8000.0,
+          0.0
+        ],
+        [
+          8258.1,
+          -168.1
+        ],
+        [
+          8543.6,
+          -283.7
+        ],
+        [
+          8846.0,
+          -342.6
+        ],
+        [
+          9154.0,
+          -342.6
+        ],
+        [
+          9456.4,
+          -283.7
+        ],
+        [
+          9741.9,
+          -168.1
+        ],
+        [
+          10000.0,
+          0.0
+        ],
+        [
+          10700.0,
+          0.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-020",
+      "cost": 6770.0,
+      "device_id": "E-020",
+      "length_mm": 6770.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8521.2,
+          4600.0
+        ],
+        [
+          10107.5,
+          4600.0
+        ],
+        [
+          10200.0,
+          4600.0
+        ],
+        [
+          10678.8,
+          4600.0
+        ],
+        [
+          11400.0,
+          4600.0
+        ],
+        [
+          11400.0,
+          2770.0
+        ],
+        [
+          11400.0,
+          1830.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-021",
+      "cost": 5830.0,
+      "device_id": "E-021",
+      "length_mm": 5830.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8521.2,
+          4600.0
+        ],
+        [
+          10107.5,
+          4600.0
+        ],
+        [
+          10200.0,
+          4600.0
+        ],
+        [
+          10678.8,
+          4600.0
+        ],
+        [
+          11400.0,
+          4600.0
+        ],
+        [
+          11400.0,
+          2770.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-022",
+      "cost": 1121.2,
+      "device_id": "E-022",
+      "length_mm": 1121.2,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8521.2,
+          4600.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-023",
+      "cost": 3278.8,
+      "device_id": "E-023",
+      "length_mm": 3278.8,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8521.2,
+          4600.0
+        ],
+        [
+          10107.5,
+          4600.0
+        ],
+        [
+          10200.0,
+          4600.0
+        ],
+        [
+          10678.8,
+          4600.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-024",
+      "cost": 2775.0,
+      "device_id": "E-024",
+      "length_mm": 2775.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ],
+        [
+          8000.0,
+          2800.0
+        ],
+        [
+          8000.0,
+          2425.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-025",
+      "cost": 5625.0,
+      "device_id": "E-025",
+      "length_mm": 5625.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ],
+        [
+          8000.0,
+          2800.0
+        ],
+        [
+          7800.0,
+          2800.0
+        ],
+        [
+          4925.0,
+          2800.0
+        ],
+        [
+          4775.0,
+          2800.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-026",
+      "cost": 7600.0,
+      "device_id": "E-026",
+      "length_mm": 7600.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3600.0,
+          2800.0
+        ],
+        [
+          3600.0,
+          2000.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-027",
+      "cost": 9000.0,
+      "device_id": "E-027",
+      "length_mm": 9000.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3600.0,
+          2800.0
+        ],
+        [
+          3600.0,
+          2000.0
+        ],
+        [
+          3600.0,
+          1800.0
+        ],
+        [
+          3600.0,
+          1459.5
+        ],
+        [
+          3600.0,
+          1200.0
+        ],
+        [
+          4200.0,
+          1200.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-028",
+      "cost": 5475.0,
+      "device_id": "E-028",
+      "length_mm": 5475.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ],
+        [
+          8000.0,
+          2800.0
+        ],
+        [
+          7800.0,
+          2800.0
+        ],
+        [
+          4925.0,
+          2800.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-029",
+      "cost": 10200.0,
+      "device_id": "E-029",
+      "length_mm": 10200.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3600.0,
+          2800.0
+        ],
+        [
+          3600.0,
+          2000.0
+        ],
+        [
+          3600.0,
+          1800.0
+        ],
+        [
+          3600.0,
+          1459.5
+        ],
+        [
+          3600.0,
+          1200.0
+        ],
+        [
+          3600.0,
+          0.0
+        ],
+        [
+          4200.0,
+          0.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-030",
+      "cost": 7536.8,
+      "device_id": "E-030",
+      "length_mm": 7536.8,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ],
+        [
+          8000.0,
+          2800.0
+        ],
+        [
+          8000.0,
+          2425.0
+        ],
+        [
+          8000.0,
+          2200.0
+        ],
+        [
+          8000.0,
+          280.0
+        ],
+        [
+          8000.0,
+          0.0
+        ],
+        [
+          6860.0,
+          0.0
+        ],
+        [
+          5663.2,
+          0.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-031",
+      "cost": 10100.0,
+      "device_id": "E-031",
+      "length_mm": 10100.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          4717.5
+        ],
+        [
+          3600.0,
+          5783.8
+        ],
+        [
+          3600.0,
+          5950.0
+        ],
+        [
+          3600.0,
+          7000.0
+        ],
+        [
+          2400.0,
+          7000.0
+        ],
+        [
+          1200.0,
+          7000.0
+        ],
+        [
+          900.0,
+          7000.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-032",
+      "cost": 7800.0,
+      "device_id": "E-032",
+      "length_mm": 7800.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3600.0,
+          2800.0
+        ],
+        [
+          3600.0,
+          2000.0
+        ],
+        [
+          3600.0,
+          1800.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-033",
+      "cost": 6340.0,
+      "device_id": "E-033",
+      "length_mm": 6340.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ],
+        [
+          8000.0,
+          2800.0
+        ],
+        [
+          8000.0,
+          2425.0
+        ],
+        [
+          8000.0,
+          2200.0
+        ],
+        [
+          8000.0,
+          280.0
+        ],
+        [
+          8000.0,
+          0.0
+        ],
+        [
+          6860.0,
+          0.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-034",
+      "cost": 4920.0,
+      "device_id": "E-034",
+      "length_mm": 4920.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ],
+        [
+          8000.0,
+          2800.0
+        ],
+        [
+          8000.0,
+          2425.0
+        ],
+        [
+          8000.0,
+          2200.0
+        ],
+        [
+          8000.0,
+          280.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-035",
+      "cost": 3007.5,
+      "device_id": "E-035",
+      "length_mm": 3007.5,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          5800.0
+        ],
+        [
+          8000.0,
+          7000.0
+        ],
+        [
+          9207.5,
+          7000.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-036",
+      "cost": 5117.5,
+      "device_id": "E-036",
+      "length_mm": 5117.5,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          4717.5
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-037",
+      "cost": 3644.5,
+      "device_id": "E-037",
+      "length_mm": 3644.5,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-038",
+      "cost": 2600.0,
+      "device_id": "E-038",
+      "length_mm": 2600.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ],
+        [
+          8000.0,
+          2800.0
+        ],
+        [
+          7800.0,
+          2800.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-039",
+      "cost": 2707.5,
+      "device_id": "E-039",
+      "length_mm": 2707.5,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8521.2,
+          4600.0
+        ],
+        [
+          10107.5,
+          4600.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-040",
+      "cost": 3000.0,
+      "device_id": "E-040",
+      "length_mm": 3000.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8000.0,
+          3325.0
+        ],
+        [
+          8000.0,
+          2800.0
+        ],
+        [
+          8000.0,
+          2425.0
+        ],
+        [
+          8000.0,
+          2200.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-041",
+      "cost": 10280.5,
+      "device_id": "E-041",
+      "length_mm": 10280.5,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3300.0,
+          3825.0
+        ],
+        [
+          2400.0,
+          3825.0
+        ],
+        [
+          1800.0,
+          3825.0
+        ],
+        [
+          1200.0,
+          3825.0
+        ],
+        [
+          1200.0,
+          4447.2
+        ],
+        [
+          1200.0,
+          5930.5
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-042",
+      "cost": 4505.5,
+      "device_id": "E-042",
+      "length_mm": 4505.5,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          8521.2,
+          4600.0
+        ],
+        [
+          10107.5,
+          4600.0
+        ],
+        [
+          10200.0,
+          4600.0
+        ],
+        [
+          10200.0,
+          6305.5
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-043",
+      "cost": 9694.5,
+      "device_id": "E-043",
+      "length_mm": 9694.5,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3600.0,
+          2800.0
+        ],
+        [
+          3600.0,
+          2000.0
+        ],
+        [
+          3600.0,
+          1800.0
+        ],
+        [
+          3600.0,
+          1459.5
+        ],
+        [
+          3600.0,
+          1200.0
+        ],
+        [
+          4200.0,
+          1200.0
+        ],
+        [
+          4800.0,
+          1200.0
+        ],
+        [
+          4800.0,
+          1105.5
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-044",
+      "cost": 6075.0,
+      "device_id": "E-044",
+      "length_mm": 6075.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ],
+        [
+          8000.0,
+          4600.0
+        ],
+        [
+          7000.0,
+          4600.0
+        ],
+        [
+          6350.0,
+          4600.0
+        ],
+        [
+          5700.0,
+          4600.0
+        ],
+        [
+          5252.8,
+          4600.0
+        ],
+        [
+          4955.5,
+          4600.0
+        ],
+        [
+          3600.0,
+          4600.0
+        ],
+        [
+          3600.0,
+          3825.0
+        ],
+        [
+          3300.0,
+          3825.0
+        ]
+      ],
+      "penetrations": 0
+    },
+    {
+      "conduit_id": "Q-045",
+      "cost": 300.0,
+      "device_id": "E-045",
+      "length_mm": 300.0,
+      "nodes": [
+        [
+          8000.0,
+          5200.0
+        ],
+        [
+          8000.0,
+          4900.0
+        ]
+      ],
+      "penetrations": 0
+    }
+  ],
+  "inputs": {
+    "ceiling_z": 2700.0,
+    "counter_source": "derived",
+    "counter_walls": {
+      "R-009": [
+        "W-002"
+      ]
+    },
+    "derived_wet_rooms": [
+      "R-009"
+    ],
+    "floor_z": 0.0,
+    "h_fitting": 150.0,
+    "h_plenum": 300.0,
+    "host_walls": {
+      "F-001": "W-002",
+      "F-002": "W-003",
+      "F-003": "W-001",
+      "F-004": "W-004",
+      "F-005": "W-025",
+      "F-006": "W-003",
+      "F-007": "W-004",
+      "F-008": "W-004",
+      "F-009": "W-005",
+      "F-010": "W-018",
+      "F-011": "W-018",
+      "F-012": "W-021",
+      "F-014": "W-017",
+      "F-015": "W-022",
+      "F-016": "W-005",
+      "F-017": "W-002",
+      "F-018": "W-002",
+      "F-019": "W-022"
+    },
+    "levels_source": "confirmation",
+    "outlet_spacing": 3660.0,
+    "panel": [
+      8050.0,
+      5200.0
+    ],
+    "panel_node": [
+      8000.0,
+      5200.0
+    ],
+    "panel_source": "confirmation",
+    "panel_wall_id": "W-019",
+    "slab_to_slab": 3000.0,
+    "wet_rooms": [
+      "R-003",
+      "R-007",
+      "R-009",
+      "R-011"
+    ]
+  },
+  "layout": {
+    "constraints": {
+      "circulation_min": 900,
+      "style_tags": [
+        "modern",
+        "warm minimalism",
+        "light wood"
+      ]
+    },
+    "doors": [
+      {
+        "confidence": 0.8,
+        "height": 2040.0,
+        "host_wall_id": "W-004",
+        "id": "D-001",
+        "offset": 8600.0,
+        "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+        "swing": "L",
+        "width": 915.0
+      },
+      {
+        "confidence": 0.8,
+        "height": 2040.0,
+        "host_wall_id": "W-005",
+        "id": "D-003",
+        "offset": 4212.0,
+        "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+        "swing": "L",
+        "width": 711.0
+      },
+      {
+        "confidence": 0.8,
+        "height": 2040.0,
+        "host_wall_id": "W-006",
+        "id": "D-004",
+        "offset": 850.0,
+        "revit_type": "CHPT_AsBuilt_Door_PLACEHOLDER",
+        "swing": "L",
+        "width": 711.0
+      },
+      {
+        "height": 2040.0,
+        "host_wall_id": "W-024",
+        "id": "D-006",
+        "offset": 3200.0,
+        "revit_type": "CHPT_Door_Pocket_PLACEHOLDER",
+        "swing": "L",
+        "width": 1700.0
+      },
+      {
+        "height": 2040.0,
+        "host_wall_id": "W-021",
+        "id": "D-007",
+        "offset": 1500.0,
+        "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+        "swing": "L",
+        "width": 915.0
+      },
+      {
+        "height": 2040.0,
+        "host_wall_id": "W-022",
+        "id": "D-008",
+        "offset": 1200.0,
+        "revit_type": "CHPT_Door_Pocket_PLACEHOLDER",
+        "swing": "L",
+        "width": 1700.0
+      },
+      {
+        "height": 2040.0,
+        "host_wall_id": "W-025",
+        "id": "D-009",
+        "offset": 1600.0,
+        "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+        "swing": "L",
+        "width": 711.0
+      },
+      {
+        "height": 2040.0,
+        "host_wall_id": "W-023",
+        "id": "D-010",
+        "offset": 1200.0,
+        "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+        "swing": "L",
+        "width": 711.0
+      },
+      {
+        "height": 2040.0,
+        "host_wall_id": "W-026",
+        "id": "D-011",
+        "offset": 600.0,
+        "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+        "swing": "L",
+        "width": 711.0
+      },
+      {
+        "height": 2040.0,
+        "host_wall_id": "W-005",
+        "id": "D-012",
+        "offset": 3300.0,
+        "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+        "swing": "L",
+        "width": 762.0
+      },
+      {
+        "height": 2040.0,
+        "host_wall_id": "W-020",
+        "id": "D-013",
+        "offset": 500.0,
+        "revit_type": "CHPT_Door_Single_PLACEHOLDER",
+        "swing": "L",
+        "width": 762.0
+      }
+    ],
+    "furniture": [
+      {
+        "items": [
+          {
+            "center": [
+              1800.0,
+              1166.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              1524.0,
+              2032.0
+            ],
+            "id": "F-001",
+            "kind": "bed",
+            "revit_family": "CHPT_Bed_PLACEHOLDER",
+            "revit_type": "Queen_1524x2032_PLACEHOLDER",
+            "rotation_deg": 0.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              1800.0,
+              3475.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              1200.0,
+              600.0
+            ],
+            "id": "F-002",
+            "kind": "wardrobe",
+            "revit_family": "CHPT_Wardrobe_PLACEHOLDER",
+            "revit_type": "Wardrobe_1200x600_PLACEHOLDER",
+            "rotation_deg": 0.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              425.0,
+              1900.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              1200.0,
+              600.0
+            ],
+            "id": "F-003",
+            "kind": "desk",
+            "revit_family": "CHPT_Desk_PLACEHOLDER",
+            "revit_type": "Desk_1200x600_PLACEHOLDER",
+            "rotation_deg": 90.0,
+            "wall_seeking": true
+          }
+        ],
+        "room_id": "R-001"
+      },
+      {
+        "items": [
+          {
+            "center": [
+              2836.0,
+              5947.5
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              1372.0,
+              1905.0
+            ],
+            "id": "F-004",
+            "kind": "bed",
+            "revit_family": "CHPT_Bed_PLACEHOLDER",
+            "revit_type": "Double_1372x1905_PLACEHOLDER",
+            "rotation_deg": 0.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              1576.0,
+              6300.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              1000.0,
+              600.0
+            ],
+            "id": "F-005",
+            "kind": "wardrobe",
+            "revit_family": "CHPT_Wardrobe_PLACEHOLDER",
+            "revit_type": "Wardrobe_1000x600_PLACEHOLDER",
+            "rotation_deg": 90.0,
+            "wall_seeking": true
+          }
+        ],
+        "room_id": "R-002"
+      },
+      {
+        "items": [
+          {
+            "center": [
+              600.0,
+              4225.0
+            ],
+            "clearance_front": 500.0,
+            "fixture_units": 4.0,
+            "footprint": [
+              400.0,
+              700.0
+            ],
+            "hookups": [
+              "sanitary",
+              "supply_c",
+              "vent"
+            ],
+            "id": "F-006",
+            "kind": "wc",
+            "revit_family": "CHPT_WC_PLACEHOLDER",
+            "revit_type": "WC_400x700_PLACEHOLDER",
+            "rotation_deg": 0.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              600.0,
+              6675.0
+            ],
+            "clearance_front": 0.0,
+            "fixture_units": 1.0,
+            "footprint": [
+              500.0,
+              450.0
+            ],
+            "hookups": [
+              "sanitary",
+              "supply_h",
+              "supply_c",
+              "vent"
+            ],
+            "id": "F-007",
+            "kind": "lav",
+            "revit_family": "CHPT_Lav_PLACEHOLDER",
+            "revit_type": "Lav_500x450_PLACEHOLDER",
+            "rotation_deg": 0.0,
+            "wall_seeking": true
+          }
+        ],
+        "room_id": "R-003"
+      },
+      {
+        "items": [
+          {
+            "center": [
+              4654.5,
+              6404.5
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              991.0,
+              1905.0
+            ],
+            "id": "F-008",
+            "kind": "bed",
+            "revit_family": "CHPT_Bed_PLACEHOLDER",
+            "revit_type": "Twin_991x1905_PLACEHOLDER",
+            "rotation_deg": 90.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              3875.0,
+              5650.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              450.0,
+              450.0
+            ],
+            "id": "F-009",
+            "kind": "table",
+            "revit_family": "CHPT_Nightstand_PLACEHOLDER",
+            "revit_type": "Nightstand_450x450_PLACEHOLDER",
+            "rotation_deg": 90.0,
+            "wall_seeking": true
+          }
+        ],
+        "room_id": "R-004"
+      },
+      {
+        "items": [
+          {
+            "center": [
+              6698.5,
+              6000.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              991.0,
+              1905.0
+            ],
+            "id": "F-010",
+            "kind": "bed",
+            "revit_family": "CHPT_Bed_PLACEHOLDER",
+            "revit_type": "Twin_991x1905_PLACEHOLDER",
+            "rotation_deg": 90.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              5971.0,
+              5250.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              450.0,
+              450.0
+            ],
+            "id": "F-011",
+            "kind": "table",
+            "revit_family": "CHPT_Nightstand_PLACEHOLDER",
+            "revit_type": "Nightstand_450x450_PLACEHOLDER",
+            "rotation_deg": 90.0,
+            "wall_seeking": true
+          }
+        ],
+        "room_id": "R-005"
+      },
+      {
+        "items": [
+          {
+            "center": [
+              10800.0,
+              4996.0
+            ],
+            "clearance_front": 500.0,
+            "fixture_units": 4.0,
+            "footprint": [
+              400.0,
+              700.0
+            ],
+            "hookups": [
+              "sanitary",
+              "supply_c",
+              "vent"
+            ],
+            "id": "F-012",
+            "kind": "wc",
+            "revit_family": "CHPT_WC_PLACEHOLDER",
+            "revit_type": "WC_400x700_PLACEHOLDER",
+            "rotation_deg": 0.0,
+            "wall_seeking": true
+          }
+        ],
+        "room_id": "R-007"
+      },
+      {
+        "items": [
+          {
+            "center": [
+              10825.0,
+              2250.0
+            ],
+            "clearance_front": 450.0,
+            "footprint": [
+              2100.0,
+              900.0
+            ],
+            "id": "F-014",
+            "kind": "sofa",
+            "revit_family": "CHPT_Sofa_PLACEHOLDER",
+            "revit_type": "Sofa_2100x900_PLACEHOLDER",
+            "rotation_deg": 90.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              9425.0,
+              1900.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              900.0,
+              1800.0
+            ],
+            "id": "F-015",
+            "kind": "table",
+            "revit_family": "CHPT_DiningTable_PLACEHOLDER",
+            "revit_type": "Dining_900x1800_PLACEHOLDER",
+            "rotation_deg": 0.0,
+            "wall_seeking": false
+          }
+        ],
+        "room_id": "R-008"
+      },
+      {
+        "items": [
+          {
+            "center": [
+              4025.0,
+              1800.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              750.0,
+              750.0
+            ],
+            "hookups": [
+              "electrical_120"
+            ],
+            "id": "F-016",
+            "kind": "refrigerator",
+            "revit_family": "CHPT_Refrigerator_PLACEHOLDER",
+            "revit_type": "Fridge_750x750_PLACEHOLDER",
+            "rotation_deg": 90.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              6110.0,
+              450.0
+            ],
+            "clearance_front": 0.0,
+            "fixture_units": 2.0,
+            "footprint": [
+              900.0,
+              600.0
+            ],
+            "hookups": [
+              "sanitary",
+              "supply_h",
+              "supply_c",
+              "vent"
+            ],
+            "id": "F-017",
+            "kind": "kitchen_sink",
+            "revit_family": "CHPT_KitchenSink_PLACEHOLDER",
+            "revit_type": "Sink_900x600_PLACEHOLDER",
+            "rotation_deg": 0.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              6860.0,
+              450.0
+            ],
+            "clearance_front": 0.0,
+            "fixture_units": 2.0,
+            "footprint": [
+              600.0,
+              600.0
+            ],
+            "hookups": [
+              "sanitary",
+              "supply_h",
+              "electrical_120"
+            ],
+            "id": "F-018",
+            "kind": "dishwasher",
+            "revit_family": "CHPT_Dishwasher_PLACEHOLDER",
+            "revit_type": "DW_600x600_PLACEHOLDER",
+            "rotation_deg": 0.0,
+            "wall_seeking": true
+          },
+          {
+            "center": [
+              7573.0,
+              480.0
+            ],
+            "clearance_front": 0.0,
+            "footprint": [
+              762.0,
+              660.0
+            ],
+            "hookups": [
+              "electrical_240"
+            ],
+            "id": "F-019",
+            "kind": "range",
+            "revit_family": "CHPT_Range_PLACEHOLDER",
+            "revit_type": "Range_762x660_PLACEHOLDER",
+            "rotation_deg": 180.0,
+            "wall_seeking": true
+          }
+        ],
+        "room_id": "R-009"
+      }
+    ],
+    "meta": {
+      "brief_version": 1,
+      "electrical": {
+        "panel": [
+          8050.0,
+          5200.0
+        ]
+      },
+      "level": "Level 1",
+      "levels": {
+        "ceiling_z": 2700.0,
+        "floor_z": 0.0,
+        "slab_to_slab": 3000.0
+      },
+      "origin": "revit_internal_origin",
+      "phase": "new",
+      "project_id": "1f6b3c58-7a2d-4e90-9c41-2b8f5d6a7e01",
+      "schema_version": "2.3",
+      "units": "mm"
+    },
+    "rooms": [
+      {
+        "boundary": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            3600.0,
+            0.0
+          ],
+          [
+            3600.0,
+            3825.0
+          ],
+          [
+            0.0,
+            3825.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-001",
+          "W-002",
+          "W-005",
+          "W-003"
+        ],
+        "id": "R-001",
+        "name": "Bedroom 1",
+        "program": "bedroom"
+      },
+      {
+        "boundary": [
+          [
+            1200.0,
+            3825.0
+          ],
+          [
+            3600.0,
+            3825.0
+          ],
+          [
+            3600.0,
+            7000.0
+          ],
+          [
+            1200.0,
+            7000.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-025",
+          "W-003",
+          "W-005",
+          "W-004"
+        ],
+        "id": "R-002",
+        "name": "Bedroom 2",
+        "program": "bedroom"
+      },
+      {
+        "boundary": [
+          [
+            0.0,
+            3825.0
+          ],
+          [
+            1200.0,
+            3825.0
+          ],
+          [
+            1200.0,
+            7000.0
+          ],
+          [
+            0.0,
+            7000.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-001",
+          "W-003",
+          "W-025",
+          "W-004"
+        ],
+        "id": "R-003",
+        "name": "Bath 1",
+        "program": "bathroom",
+        "wet_zone": true
+      },
+      {
+        "boundary": [
+          [
+            3600.0,
+            4600.0
+          ],
+          [
+            5700.0,
+            4600.0
+          ],
+          [
+            5700.0,
+            7000.0
+          ],
+          [
+            3600.0,
+            7000.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-005",
+          "W-006",
+          "W-018",
+          "W-004"
+        ],
+        "id": "R-004",
+        "name": "Bedroom 3",
+        "program": "bedroom"
+      },
+      {
+        "boundary": [
+          [
+            5700.0,
+            4600.0
+          ],
+          [
+            8000.0,
+            4600.0
+          ],
+          [
+            8000.0,
+            7000.0
+          ],
+          [
+            5700.0,
+            7000.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-018",
+          "W-006",
+          "W-020",
+          "W-019",
+          "W-004"
+        ],
+        "id": "R-005",
+        "name": "Bedroom 4",
+        "program": "bedroom"
+      },
+      {
+        "boundary": [
+          [
+            8000.0,
+            4600.0
+          ],
+          [
+            10200.0,
+            4600.0
+          ],
+          [
+            10200.0,
+            7000.0
+          ],
+          [
+            8000.0,
+            7000.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-019",
+          "W-021",
+          "W-023",
+          "W-004"
+        ],
+        "id": "R-006",
+        "name": "Foyer",
+        "program": "corridor"
+      },
+      {
+        "boundary": [
+          [
+            10200.0,
+            4600.0
+          ],
+          [
+            11400.0,
+            4600.0
+          ],
+          [
+            11400.0,
+            7000.0
+          ],
+          [
+            10200.0,
+            7000.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-023",
+          "W-021",
+          "W-017",
+          "W-004"
+        ],
+        "id": "R-007",
+        "name": "Bath 2",
+        "program": "bathroom",
+        "wet_zone": true
+      },
+      {
+        "boundary": [
+          [
+            8000.0,
+            4600.0
+          ],
+          [
+            8000.0,
+            0.0
+          ],
+          [
+            8258.1,
+            -168.1
+          ],
+          [
+            8543.6,
+            -283.7
+          ],
+          [
+            8846.0,
+            -342.6
+          ],
+          [
+            9154.0,
+            -342.6
+          ],
+          [
+            9456.4,
+            -283.7
+          ],
+          [
+            9741.9,
+            -168.1
+          ],
+          [
+            10000.0,
+            0.0
+          ],
+          [
+            11400.0,
+            0.0
+          ],
+          [
+            11400.0,
+            4600.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-022",
+          "W-009",
+          "W-010",
+          "W-011",
+          "W-012",
+          "W-013",
+          "W-014",
+          "W-015",
+          "W-016",
+          "W-017",
+          "W-021"
+        ],
+        "id": "R-008",
+        "name": "Living Room",
+        "program": "living"
+      },
+      {
+        "boundary": [
+          [
+            4800.0,
+            0.0
+          ],
+          [
+            8000.0,
+            0.0
+          ],
+          [
+            8000.0,
+            2800.0
+          ],
+          [
+            3600.0,
+            2800.0
+          ],
+          [
+            3600.0,
+            1200.0
+          ],
+          [
+            4800.0,
+            1200.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-002",
+          "W-022",
+          "W-024",
+          "W-005",
+          "W-027",
+          "W-026"
+        ],
+        "id": "R-009",
+        "name": "Kitchen / Dining (open)",
+        "program": "kitchen"
+      },
+      {
+        "boundary": [
+          [
+            3600.0,
+            2800.0
+          ],
+          [
+            8000.0,
+            2800.0
+          ],
+          [
+            8000.0,
+            4600.0
+          ],
+          [
+            3600.0,
+            4600.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-024",
+          "W-022",
+          "W-006",
+          "W-020",
+          "W-005"
+        ],
+        "id": "R-010",
+        "name": "Hall",
+        "program": "corridor"
+      },
+      {
+        "boundary": [
+          [
+            3600.0,
+            0.0
+          ],
+          [
+            4800.0,
+            0.0
+          ],
+          [
+            4800.0,
+            1200.0
+          ],
+          [
+            3600.0,
+            1200.0
+          ]
+        ],
+        "boundary_wall_ids": [
+          "W-002",
+          "W-026",
+          "W-027",
+          "W-005"
+        ],
+        "id": "R-011",
+        "name": "Laundry",
+        "program": "laundry",
+        "wet_zone": true
+      }
+    ],
+    "walls": [
+      {
+        "as_built_thickness": 250.0,
+        "confidence": 0.85,
+        "end": [
+          0.0,
+          7000.0
+        ],
+        "height": 2700.0,
+        "id": "W-001",
+        "revit_type": "CHPT_AsBuilt_250mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "as_built_thickness": 300.0,
+        "confidence": 0.85,
+        "end": [
+          8000.0,
+          0.0
+        ],
+        "height": 2700.0,
+        "id": "W-002",
+        "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "as_built_thickness": 100.0,
+        "confidence": 0.85,
+        "end": [
+          3600.0,
+          3825.0
+        ],
+        "height": 2700.0,
+        "id": "W-003",
+        "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          0.0,
+          3825.0
+        ]
+      },
+      {
+        "as_built_thickness": 200.0,
+        "confidence": 0.85,
+        "end": [
+          11400.0,
+          7000.0
+        ],
+        "height": 2700.0,
+        "id": "W-004",
+        "revit_type": "CHPT_AsBuilt_200mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          0.0,
+          7000.0
+        ]
+      },
+      {
+        "as_built_thickness": 100.0,
+        "confidence": 0.85,
+        "end": [
+          3600.0,
+          7000.0
+        ],
+        "height": 2700.0,
+        "id": "W-005",
+        "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          3600.0,
+          0.0
+        ]
+      },
+      {
+        "as_built_thickness": 100.0,
+        "confidence": 0.85,
+        "end": [
+          7000.0,
+          4600.0
+        ],
+        "height": 2700.0,
+        "id": "W-006",
+        "revit_type": "CHPT_AsBuilt_100mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          3600.0,
+          4600.0
+        ]
+      },
+      {
+        "as_built_thickness": 300.0,
+        "confidence": 0.6,
+        "curved_approximation": true,
+        "end": [
+          8258.1,
+          -168.1
+        ],
+        "height": 2700.0,
+        "id": "W-009",
+        "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          8000.0,
+          0.0
+        ]
+      },
+      {
+        "as_built_thickness": 300.0,
+        "confidence": 0.6,
+        "curved_approximation": true,
+        "end": [
+          8543.6,
+          -283.7
+        ],
+        "height": 2700.0,
+        "id": "W-010",
+        "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          8258.1,
+          -168.1
+        ]
+      },
+      {
+        "as_built_thickness": 300.0,
+        "confidence": 0.6,
+        "curved_approximation": true,
+        "end": [
+          8846.0,
+          -342.6
+        ],
+        "height": 2700.0,
+        "id": "W-011",
+        "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          8543.6,
+          -283.7
+        ]
+      },
+      {
+        "as_built_thickness": 300.0,
+        "confidence": 0.6,
+        "curved_approximation": true,
+        "end": [
+          9154.0,
+          -342.6
+        ],
+        "height": 2700.0,
+        "id": "W-012",
+        "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          8846.0,
+          -342.6
+        ]
+      },
+      {
+        "as_built_thickness": 300.0,
+        "confidence": 0.6,
+        "curved_approximation": true,
+        "end": [
+          9456.4,
+          -283.7
+        ],
+        "height": 2700.0,
+        "id": "W-013",
+        "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          9154.0,
+          -342.6
+        ]
+      },
+      {
+        "as_built_thickness": 300.0,
+        "confidence": 0.6,
+        "curved_approximation": true,
+        "end": [
+          9741.9,
+          -168.1
+        ],
+        "height": 2700.0,
+        "id": "W-014",
+        "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          9456.4,
+          -283.7
+        ]
+      },
+      {
+        "as_built_thickness": 300.0,
+        "confidence": 0.6,
+        "curved_approximation": true,
+        "end": [
+          10000.0,
+          0.0
+        ],
+        "height": 2700.0,
+        "id": "W-015",
+        "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          9741.9,
+          -168.1
+        ]
+      },
+      {
+        "as_built_thickness": 300.0,
+        "confidence": 0.85,
+        "end": [
+          11400.0,
+          0.0
+        ],
+        "height": 2700.0,
+        "id": "W-016",
+        "revit_type": "CHPT_AsBuilt_300mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          10000.0,
+          0.0
+        ]
+      },
+      {
+        "as_built_thickness": 250.0,
+        "confidence": 0.85,
+        "end": [
+          11400.0,
+          7000.0
+        ],
+        "height": 2700.0,
+        "id": "W-017",
+        "revit_type": "CHPT_AsBuilt_250mm_PLACEHOLDER",
+        "source": "scan",
+        "start": [
+          11400.0,
+          0.0
+        ]
+      },
+      {
+        "end": [
+          5700.0,
+          7000.0
+        ],
+        "height": 2700.0,
+        "id": "W-018",
+        "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          5700.0,
+          4600.0
+        ]
+      },
+      {
+        "end": [
+          8000.0,
+          7000.0
+        ],
+        "height": 2700.0,
+        "id": "W-019",
+        "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          8000.0,
+          4600.0
+        ]
+      },
+      {
+        "end": [
+          8000.0,
+          4600.0
+        ],
+        "height": 2700.0,
+        "id": "W-020",
+        "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          7000.0,
+          4600.0
+        ]
+      },
+      {
+        "end": [
+          11400.0,
+          4600.0
+        ],
+        "height": 2700.0,
+        "id": "W-021",
+        "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          8000.0,
+          4600.0
+        ]
+      },
+      {
+        "end": [
+          8000.0,
+          4600.0
+        ],
+        "height": 2700.0,
+        "id": "W-022",
+        "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          8000.0,
+          0.0
+        ]
+      },
+      {
+        "end": [
+          10200.0,
+          7000.0
+        ],
+        "height": 2700.0,
+        "id": "W-023",
+        "is_wet_wall": true,
+        "revit_type": "CHPT_Partition_Wet_152mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          10200.0,
+          4600.0
+        ]
+      },
+      {
+        "end": [
+          8000.0,
+          2800.0
+        ],
+        "height": 2700.0,
+        "id": "W-024",
+        "revit_type": "CHPT_Partition_92mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          3600.0,
+          2800.0
+        ]
+      },
+      {
+        "end": [
+          1200.0,
+          7000.0
+        ],
+        "height": 2700.0,
+        "id": "W-025",
+        "is_wet_wall": true,
+        "revit_type": "CHPT_Partition_Wet_152mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          1200.0,
+          3825.0
+        ]
+      },
+      {
+        "end": [
+          4800.0,
+          1200.0
+        ],
+        "height": 2700.0,
+        "id": "W-026",
+        "is_wet_wall": true,
+        "revit_type": "CHPT_Partition_Wet_152mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          4800.0,
+          0.0
+        ]
+      },
+      {
+        "end": [
+          4800.0,
+          1200.0
+        ],
+        "height": 2700.0,
+        "id": "W-027",
+        "is_wet_wall": true,
+        "revit_type": "CHPT_Partition_Wet_152mm_PLACEHOLDER",
+        "source": "generated",
+        "start": [
+          3600.0,
+          1200.0
+        ]
+      }
+    ],
+    "windows": [
+      {
+        "confidence": 0.8,
+        "height": 1400.0,
+        "host_wall_id": "W-002",
+        "id": "N-001",
+        "offset": 1800.0,
+        "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+        "sill_height": 900.0,
+        "width": 1067.0
+      },
+      {
+        "confidence": 0.8,
+        "height": 1400.0,
+        "host_wall_id": "W-002",
+        "id": "N-002",
+        "offset": 6800.0,
+        "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+        "sill_height": 900.0,
+        "width": 1067.0
+      },
+      {
+        "confidence": 0.8,
+        "height": 1400.0,
+        "host_wall_id": "W-016",
+        "id": "N-003",
+        "offset": 700.0,
+        "revit_type": "CHPT_AsBuilt_Window_PLACEHOLDER",
+        "sill_height": 900.0,
+        "width": 915.0
+      }
+    ]
+  },
+  "ops": [
+    {
+      "args": {
+        "diameter": 76.0,
+        "id": "P-001",
+        "level": "Level 1",
+        "path": [
+          [
+            5133.3,
+            7000.0,
+            -300.0
+          ],
+          [
+            5133.3,
+            7000.0,
+            2700.0
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "diameter": 51.0,
+        "id": "P-002",
+        "level": "Level 1",
+        "path": [
+          [
+            4800.0,
+            169.0,
+            -300.0
+          ],
+          [
+            4800.0,
+            169.0,
+            2700.0
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "diameter": 76.0,
+        "id": "P-003",
+        "level": "Level 1",
+        "path": [
+          [
+            600.0,
+            4225.0,
+            -191.8
+          ],
+          [
+            600.0,
+            6675.0,
+            -217.2
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "diameter": 76.0,
+        "id": "P-004",
+        "level": "Level 1",
+        "path": [
+          [
+            600.0,
+            6675.0,
+            -217.2
+          ],
+          [
+            600.0,
+            7000.0,
+            -220.6
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "diameter": 76.0,
+        "id": "P-005",
+        "level": "Level 1",
+        "path": [
+          [
+            600.0,
+            7000.0,
+            -220.6
+          ],
+          [
+            5133.3,
+            7000.0,
+            -267.8
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "diameter": 76.0,
+        "id": "P-006",
+        "level": "Level 1",
+        "path": [
+          [
+            10800.0,
+            4996.0,
+            -188.0
+          ],
+          [
+            10800.0,
+            7000.0,
+            -208.8
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "diameter": 76.0,
+        "id": "P-007",
+        "level": "Level 1",
+        "path": [
+          [
+            10800.0,
+            7000.0,
+            -208.8
+          ],
+          [
+            5133.3,
+            7000.0,
+            -267.8
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "diameter": 38.0,
+        "id": "P-008",
+        "level": "Level 1",
+        "path": [
+          [
+            6110.0,
+            450.0,
+            -184.6
+          ],
+          [
+            4800.0,
+            450.0,
+            -211.8
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "diameter": 38.0,
+        "id": "P-009",
+        "level": "Level 1",
+        "path": [
+          [
+            4800.0,
+            450.0,
+            -211.8
+          ],
+          [
+            4800.0,
+            169.0,
+            -217.7
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "diameter": 38.0,
+        "id": "P-010",
+        "level": "Level 1",
+        "path": [
+          [
+            6860.0,
+            450.0,
+            -169.0
+          ],
+          [
+            6110.0,
+            450.0,
+            -184.6
+          ]
+        ],
+        "pipe_type": "CHPT_Pipe_PVC_DWV_PLACEHOLDER",
+        "system": "sanitary"
+      },
+      "op": "create_pipe"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-001",
+        "id": "E-001",
+        "kind": "receptacle",
+        "offset": 1912.5
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-002",
+        "id": "E-002",
+        "kind": "receptacle",
+        "offset": 1800.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-005",
+        "id": "E-003",
+        "kind": "receptacle",
+        "offset": 1459.5
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-003",
+        "id": "E-004",
+        "kind": "receptacle",
+        "offset": 1800.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-025",
+        "id": "E-005",
+        "kind": "receptacle",
+        "offset": 622.2
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-025",
+        "id": "E-006",
+        "kind": "receptacle",
+        "offset": 2565.2
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-003",
+        "id": "E-007",
+        "kind": "receptacle",
+        "offset": 2400.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-005",
+        "id": "E-008",
+        "kind": "receptacle",
+        "offset": 5783.8
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-004",
+        "id": "E-009",
+        "kind": "receptacle",
+        "offset": 2400.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-005",
+        "id": "E-010",
+        "kind": "receptacle",
+        "offset": 5950.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-006",
+        "id": "E-011",
+        "kind": "receptacle",
+        "offset": 1652.8
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-018",
+        "id": "E-012",
+        "kind": "receptacle",
+        "offset": 1200.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-004",
+        "id": "E-013",
+        "kind": "receptacle",
+        "offset": 4650.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-018",
+        "id": "E-014",
+        "kind": "receptacle",
+        "offset": 1350.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-006",
+        "id": "E-015",
+        "kind": "receptacle",
+        "offset": 2750.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-019",
+        "id": "E-016",
+        "kind": "receptacle",
+        "offset": 1200.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-004",
+        "id": "E-017",
+        "kind": "receptacle",
+        "offset": 6850.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-022",
+        "id": "E-018",
+        "kind": "receptacle",
+        "offset": 3325.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-016",
+        "id": "E-019",
+        "kind": "receptacle",
+        "offset": 700.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-017",
+        "id": "E-020",
+        "kind": "receptacle",
+        "offset": 1830.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-017",
+        "id": "E-021",
+        "kind": "receptacle",
+        "offset": 2770.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-021",
+        "id": "E-022",
+        "kind": "receptacle",
+        "offset": 521.2
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-021",
+        "id": "E-023",
+        "kind": "receptacle",
+        "offset": 2678.8
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-022",
+        "id": "E-024",
+        "kind": "receptacle",
+        "offset": 2425.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-024",
+        "id": "E-025",
+        "kind": "receptacle",
+        "offset": 1175.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-005",
+        "id": "E-026",
+        "kind": "receptacle",
+        "offset": 2000.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-027",
+        "id": "E-027",
+        "kind": "receptacle",
+        "offset": 600.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-024",
+        "id": "E-028",
+        "kind": "receptacle",
+        "offset": 1325.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1150.0,
+        "host_wall_id": "W-002",
+        "id": "E-029",
+        "kind": "gfci",
+        "offset": 4200.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1150.0,
+        "host_wall_id": "W-002",
+        "id": "E-030",
+        "kind": "gfci",
+        "offset": 5663.2
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 1150.0,
+        "host_wall_id": "W-004",
+        "id": "E-031",
+        "kind": "gfci",
+        "offset": 900.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 380.0,
+        "host_wall_id": "W-005",
+        "id": "E-032",
+        "kind": "receptacle",
+        "offset": 1800.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-002",
+        "id": "E-033",
+        "kind": "gfci",
+        "offset": 6860.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 380.0,
+        "host_wall_id": "W-022",
+        "id": "E-034",
+        "kind": "receptacle_240",
+        "offset": 280.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-004",
+        "id": "E-035",
+        "kind": "switch",
+        "offset": 9207.5
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-005",
+        "id": "E-036",
+        "kind": "switch",
+        "offset": 4717.5
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-006",
+        "id": "E-037",
+        "kind": "switch",
+        "offset": 1355.5
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-024",
+        "id": "E-038",
+        "kind": "switch",
+        "offset": 4200.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-021",
+        "id": "E-039",
+        "kind": "switch",
+        "offset": 2107.5
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-022",
+        "id": "E-040",
+        "kind": "switch",
+        "offset": 2200.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-025",
+        "id": "E-041",
+        "kind": "switch",
+        "offset": 2105.5
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-023",
+        "id": "E-042",
+        "kind": "switch",
+        "offset": 1705.5
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-026",
+        "id": "E-043",
+        "kind": "switch",
+        "offset": 1105.5
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "right",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-003",
+        "id": "E-044",
+        "kind": "switch",
+        "offset": 3300.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "face": "left",
+        "height_afl": 1220.0,
+        "host_wall_id": "W-019",
+        "id": "E-045",
+        "kind": "switch",
+        "offset": 300.0
+      },
+      "op": "place_device"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-001",
+        "level": "Level 1",
+        "path": [
+          [
+            0.0,
+            1912.5,
+            380.0
+          ],
+          [
+            0.0,
+            1912.5,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-002",
+        "level": "Level 1",
+        "path": [
+          [
+            1800.0,
+            0.0,
+            380.0
+          ],
+          [
+            1800.0,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-003",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            1459.5,
+            380.0
+          ],
+          [
+            3600.0,
+            1459.5,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-004",
+        "level": "Level 1",
+        "path": [
+          [
+            1800.0,
+            3825.0,
+            380.0
+          ],
+          [
+            1800.0,
+            3825.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-005",
+        "level": "Level 1",
+        "path": [
+          [
+            1200.0,
+            4447.2,
+            380.0
+          ],
+          [
+            1200.0,
+            4447.2,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-006",
+        "level": "Level 1",
+        "path": [
+          [
+            1200.0,
+            6390.2,
+            380.0
+          ],
+          [
+            1200.0,
+            6390.2,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-007",
+        "level": "Level 1",
+        "path": [
+          [
+            2400.0,
+            3825.0,
+            380.0
+          ],
+          [
+            2400.0,
+            3825.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-008",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            5783.8,
+            380.0
+          ],
+          [
+            3600.0,
+            5783.8,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-009",
+        "level": "Level 1",
+        "path": [
+          [
+            2400.0,
+            7000.0,
+            380.0
+          ],
+          [
+            2400.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-010",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            5950.0,
+            380.0
+          ],
+          [
+            3600.0,
+            5950.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-011",
+        "level": "Level 1",
+        "path": [
+          [
+            5252.8,
+            4600.0,
+            380.0
+          ],
+          [
+            5252.8,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-012",
+        "level": "Level 1",
+        "path": [
+          [
+            5700.0,
+            5800.0,
+            380.0
+          ],
+          [
+            5700.0,
+            5800.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-013",
+        "level": "Level 1",
+        "path": [
+          [
+            4650.0,
+            7000.0,
+            380.0
+          ],
+          [
+            4650.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-014",
+        "level": "Level 1",
+        "path": [
+          [
+            5700.0,
+            5950.0,
+            380.0
+          ],
+          [
+            5700.0,
+            5950.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-015",
+        "level": "Level 1",
+        "path": [
+          [
+            6350.0,
+            4600.0,
+            380.0
+          ],
+          [
+            6350.0,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-016",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            5800.0,
+            380.0
+          ],
+          [
+            8000.0,
+            5800.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-017",
+        "level": "Level 1",
+        "path": [
+          [
+            6850.0,
+            7000.0,
+            380.0
+          ],
+          [
+            6850.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-018",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            3325.0,
+            380.0
+          ],
+          [
+            8000.0,
+            3325.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-019",
+        "level": "Level 1",
+        "path": [
+          [
+            10700.0,
+            0.0,
+            380.0
+          ],
+          [
+            10700.0,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-020",
+        "level": "Level 1",
+        "path": [
+          [
+            11400.0,
+            1830.0,
+            380.0
+          ],
+          [
+            11400.0,
+            1830.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-021",
+        "level": "Level 1",
+        "path": [
+          [
+            11400.0,
+            2770.0,
+            380.0
+          ],
+          [
+            11400.0,
+            2770.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-022",
+        "level": "Level 1",
+        "path": [
+          [
+            8521.2,
+            4600.0,
+            380.0
+          ],
+          [
+            8521.2,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-023",
+        "level": "Level 1",
+        "path": [
+          [
+            10678.8,
+            4600.0,
+            380.0
+          ],
+          [
+            10678.8,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-024",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            2425.0,
+            380.0
+          ],
+          [
+            8000.0,
+            2425.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-025",
+        "level": "Level 1",
+        "path": [
+          [
+            4775.0,
+            2800.0,
+            380.0
+          ],
+          [
+            4775.0,
+            2800.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-026",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            2000.0,
+            380.0
+          ],
+          [
+            3600.0,
+            2000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-027",
+        "level": "Level 1",
+        "path": [
+          [
+            4200.0,
+            1200.0,
+            380.0
+          ],
+          [
+            4200.0,
+            1200.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-028",
+        "level": "Level 1",
+        "path": [
+          [
+            4925.0,
+            2800.0,
+            380.0
+          ],
+          [
+            4925.0,
+            2800.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-029",
+        "level": "Level 1",
+        "path": [
+          [
+            4200.0,
+            0.0,
+            1150.0
+          ],
+          [
+            4200.0,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-030",
+        "level": "Level 1",
+        "path": [
+          [
+            5663.2,
+            0.0,
+            1150.0
+          ],
+          [
+            5663.2,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-031",
+        "level": "Level 1",
+        "path": [
+          [
+            900.0,
+            7000.0,
+            1150.0
+          ],
+          [
+            900.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-032",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            1800.0,
+            380.0
+          ],
+          [
+            3600.0,
+            1800.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-033",
+        "level": "Level 1",
+        "path": [
+          [
+            6860.0,
+            0.0,
+            380.0
+          ],
+          [
+            6860.0,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-034",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            280.0,
+            380.0
+          ],
+          [
+            8000.0,
+            280.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-035",
+        "level": "Level 1",
+        "path": [
+          [
+            9207.5,
+            7000.0,
+            1220.0
+          ],
+          [
+            9207.5,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-036",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            4717.5,
+            1220.0
+          ],
+          [
+            3600.0,
+            4717.5,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-037",
+        "level": "Level 1",
+        "path": [
+          [
+            4955.5,
+            4600.0,
+            1220.0
+          ],
+          [
+            4955.5,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-038",
+        "level": "Level 1",
+        "path": [
+          [
+            7800.0,
+            2800.0,
+            1220.0
+          ],
+          [
+            7800.0,
+            2800.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-039",
+        "level": "Level 1",
+        "path": [
+          [
+            10107.5,
+            4600.0,
+            1220.0
+          ],
+          [
+            10107.5,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-040",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            2200.0,
+            1220.0
+          ],
+          [
+            8000.0,
+            2200.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-041",
+        "level": "Level 1",
+        "path": [
+          [
+            1200.0,
+            5930.5,
+            1220.0
+          ],
+          [
+            1200.0,
+            5930.5,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-042",
+        "level": "Level 1",
+        "path": [
+          [
+            10200.0,
+            6305.5,
+            1220.0
+          ],
+          [
+            10200.0,
+            6305.5,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-043",
+        "level": "Level 1",
+        "path": [
+          [
+            4800.0,
+            1105.5,
+            1220.0
+          ],
+          [
+            4800.0,
+            1105.5,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-044",
+        "level": "Level 1",
+        "path": [
+          [
+            3300.0,
+            3825.0,
+            1220.0
+          ],
+          [
+            3300.0,
+            3825.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-045",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            4900.0,
+            1220.0
+          ],
+          [
+            8000.0,
+            4900.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-046",
+        "level": "Level 1",
+        "path": [
+          [
+            0.0,
+            1912.5,
+            2600.0
+          ],
+          [
+            0.0,
+            3825.0,
+            2600.0
+          ],
+          [
+            1200.0,
+            3825.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-047",
+        "level": "Level 1",
+        "path": [
+          [
+            900.0,
+            7000.0,
+            2600.0
+          ],
+          [
+            1200.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-048",
+        "level": "Level 1",
+        "path": [
+          [
+            1200.0,
+            3825.0,
+            2600.0
+          ],
+          [
+            1200.0,
+            5930.5,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-049",
+        "level": "Level 1",
+        "path": [
+          [
+            1200.0,
+            3825.0,
+            2600.0
+          ],
+          [
+            3600.0,
+            3825.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-050",
+        "level": "Level 1",
+        "path": [
+          [
+            1200.0,
+            6390.2,
+            2600.0
+          ],
+          [
+            1200.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-051",
+        "level": "Level 1",
+        "path": [
+          [
+            1200.0,
+            7000.0,
+            2600.0
+          ],
+          [
+            3600.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-052",
+        "level": "Level 1",
+        "path": [
+          [
+            1800.0,
+            0.0,
+            2600.0
+          ],
+          [
+            3600.0,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-053",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            0.0,
+            2600.0
+          ],
+          [
+            3600.0,
+            1200.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-054",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            0.0,
+            2600.0
+          ],
+          [
+            4200.0,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-055",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            1200.0,
+            2600.0
+          ],
+          [
+            3600.0,
+            3825.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-056",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            1200.0,
+            2600.0
+          ],
+          [
+            4800.0,
+            1200.0,
+            2600.0
+          ],
+          [
+            4800.0,
+            1105.5,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-057",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            3825.0,
+            2600.0
+          ],
+          [
+            3600.0,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-058",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            4600.0,
+            2600.0
+          ],
+          [
+            3600.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-059",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            4600.0,
+            2600.0
+          ],
+          [
+            5700.0,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-060",
+        "level": "Level 1",
+        "path": [
+          [
+            3600.0,
+            7000.0,
+            2600.0
+          ],
+          [
+            4650.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-061",
+        "level": "Level 1",
+        "path": [
+          [
+            4775.0,
+            2800.0,
+            2600.0
+          ],
+          [
+            8000.0,
+            2800.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-062",
+        "level": "Level 1",
+        "path": [
+          [
+            5663.2,
+            0.0,
+            2600.0
+          ],
+          [
+            8000.0,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-063",
+        "level": "Level 1",
+        "path": [
+          [
+            5700.0,
+            4600.0,
+            2600.0
+          ],
+          [
+            5700.0,
+            5950.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-064",
+        "level": "Level 1",
+        "path": [
+          [
+            5700.0,
+            4600.0,
+            2600.0
+          ],
+          [
+            8000.0,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-065",
+        "level": "Level 1",
+        "path": [
+          [
+            6850.0,
+            7000.0,
+            2600.0
+          ],
+          [
+            8000.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-066",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            0.0,
+            2600.0
+          ],
+          [
+            8000.0,
+            2800.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-067",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            0.0,
+            2600.0
+          ],
+          [
+            8258.1,
+            -168.1,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-068",
+        "level": "Level 1",
+        "path": [
+          [
+            8258.1,
+            -168.1,
+            2600.0
+          ],
+          [
+            8543.6,
+            -283.7,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-069",
+        "level": "Level 1",
+        "path": [
+          [
+            8543.6,
+            -283.7,
+            2600.0
+          ],
+          [
+            8846.0,
+            -342.6,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-070",
+        "level": "Level 1",
+        "path": [
+          [
+            8846.0,
+            -342.6,
+            2600.0
+          ],
+          [
+            9154.0,
+            -342.6,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-071",
+        "level": "Level 1",
+        "path": [
+          [
+            9154.0,
+            -342.6,
+            2600.0
+          ],
+          [
+            9456.4,
+            -283.7,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-072",
+        "level": "Level 1",
+        "path": [
+          [
+            9456.4,
+            -283.7,
+            2600.0
+          ],
+          [
+            9741.9,
+            -168.1,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-073",
+        "level": "Level 1",
+        "path": [
+          [
+            9741.9,
+            -168.1,
+            2600.0
+          ],
+          [
+            10000.0,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-074",
+        "level": "Level 1",
+        "path": [
+          [
+            10000.0,
+            0.0,
+            2600.0
+          ],
+          [
+            10700.0,
+            0.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-075",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            2800.0,
+            2600.0
+          ],
+          [
+            8000.0,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-076",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            4600.0,
+            2600.0
+          ],
+          [
+            8000.0,
+            5200.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-077",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            4600.0,
+            2600.0
+          ],
+          [
+            10200.0,
+            4600.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-078",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            5200.0,
+            2600.0
+          ],
+          [
+            8000.0,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-079",
+        "level": "Level 1",
+        "path": [
+          [
+            8000.0,
+            7000.0,
+            2600.0
+          ],
+          [
+            9207.5,
+            7000.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-080",
+        "level": "Level 1",
+        "path": [
+          [
+            10200.0,
+            4600.0,
+            2600.0
+          ],
+          [
+            10200.0,
+            6305.5,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    },
+    {
+      "args": {
+        "diameter": 21.0,
+        "id": "Q-081",
+        "level": "Level 1",
+        "path": [
+          [
+            10200.0,
+            4600.0,
+            2600.0
+          ],
+          [
+            11400.0,
+            4600.0,
+            2600.0
+          ],
+          [
+            11400.0,
+            1830.0,
+            2600.0
+          ]
+        ]
+      },
+      "op": "create_conduit"
+    }
+  ],
+  "review_items": [
+    {
+      "code": "counter_walls_derived",
+      "message": "layout has no casework: counter walls derived from the kitchen sink/dishwasher host walls (+/-600 mm), appliances subtracted",
+      "refs": [
+        "W-002"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "p3_snapped",
+      "message": "P-002: FU-weighted position fell in a door span on W-026; snapped to offset 169.0",
+      "refs": [
+        "P-002"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "branch_plenum_marginal",
+      "message": "F-006: branch bottom overshoots the plenum by 5.8 mm (spec-literal P-4 accepts the along-wall length; verify on site)",
+      "refs": [
+        "F-006",
+        "P-001"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "branch_plenum_marginal",
+      "message": "F-007: branch bottom overshoots the plenum by 5.8 mm (spec-literal P-4 accepts the along-wall length; verify on site)",
+      "refs": [
+        "F-007",
+        "P-001"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "branch_plenum_marginal",
+      "message": "F-012: branch bottom overshoots the plenum by 5.8 mm (spec-literal P-4 accepts the along-wall length; verify on site)",
+      "refs": [
+        "F-012",
+        "P-001"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "wye_manual",
+      "message": "P-001: 1 tee/wye junction(s) to complete manually (registry: standard elbows only in v1)",
+      "refs": [
+        "P-001"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "wye_manual",
+      "message": "P-002: 1 tee/wye junction(s) to complete manually (registry: standard elbows only in v1)",
+      "refs": [
+        "P-002"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "vent_manual",
+      "message": "v1 emits sanitary DWV only; vent connections are completed manually",
+      "refs": [
+        "F-006",
+        "F-007",
+        "F-012",
+        "F-017"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "supply_manual",
+      "message": "v1 emits sanitary DWV only; supply_h/supply_c connections are completed manually",
+      "refs": [
+        "F-006",
+        "F-007",
+        "F-012",
+        "F-017",
+        "F-018"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "electrical_240",
+      "message": "F-019 (range) needs a dedicated 240 V circuit",
+      "refs": [
+        "F-019"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "appliance_receptacle_shifted",
+      "message": "F-019: receptacle shifted 200 mm to a legal run point",
+      "refs": [
+        "F-019"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "switch_corner_fallback",
+      "message": "D-012: latch side blocked; switch on the adjacent wall W-003 at the latch corner",
+      "refs": [
+        "D-012",
+        "W-003"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "switch_corner_fallback",
+      "message": "D-013: latch side blocked; switch on the adjacent wall W-019 at the latch corner",
+      "refs": [
+        "D-013",
+        "W-019"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "device_backtoback_shifted",
+      "message": "E-1 device on W-005 shifted to 5950 (back-to-back with E-1)",
+      "refs": [
+        "W-005"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "device_backtoback_shifted",
+      "message": "E-1 device on W-018 shifted to 1350 (back-to-back with E-1)",
+      "refs": [
+        "W-018"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "device_backtoback_shifted",
+      "message": "corridor device on W-024 shifted to 1325 (back-to-back with E-1)",
+      "refs": [
+        "W-024"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "room_without_receptacle",
+      "message": "R-006 (corridor) ends with no receptacle",
+      "refs": [
+        "R-006"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "room_without_receptacle",
+      "message": "R-007 (bathroom) ends with no receptacle",
+      "refs": [
+        "R-007"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "room_without_switch",
+      "message": "R-007 (bathroom) has no switched door",
+      "refs": [
+        "R-007"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "room_without_switch",
+      "message": "R-008 (living) has no switched door",
+      "refs": [
+        "R-008"
+      ],
+      "severity": "info"
+    },
+    {
+      "code": "conduit_fittings_manual",
+      "message": "20 raceway junction(s)/odd bend(s) to fit manually (v1: elbows only)",
+      "refs": [
+        "W-019"
+      ],
+      "severity": "info"
+    }
+  ],
+  "stacks": [
+    {
+      "diameter": 76.0,
+      "fixtures": [
+        "F-006",
+        "F-007",
+        "F-012"
+      ],
+      "id": "P-001",
+      "offset": 5133.3,
+      "p1_ranking": [
+        [
+          "W-004",
+          9.0
+        ],
+        [
+          "W-025",
+          5.0
+        ],
+        [
+          "W-001",
+          5.0
+        ],
+        [
+          "W-003",
+          5.0
+        ],
+        [
+          "W-023",
+          4.0
+        ]
+      ],
+      "riser_bias": 0.0,
+      "score_fu": 9.0,
+      "snapped": false,
+      "wall_id": "W-004",
+      "xy": [
+        5133.3,
+        7000.0
+      ]
+    },
+    {
+      "diameter": 51.0,
+      "fixtures": [
+        "F-017",
+        "F-018"
+      ],
+      "id": "P-002",
+      "offset": 169.0,
+      "p1_ranking": [
+        [
+          "W-026",
+          4.0
+        ],
+        [
+          "W-002",
+          4.0
+        ],
+        [
+          "W-022",
+          4.0
+        ],
+        [
+          "W-024",
+          4.0
+        ],
+        [
+          "W-005",
+          4.0
+        ]
+      ],
+      "riser_bias": 0.0,
+      "score_fu": 4.0,
+      "snapped": true,
+      "wall_id": "W-026",
+      "xy": [
+        4800.0,
+        169.0
+      ]
+    }
+  ]
+}

@@ -27,7 +27,7 @@ Exhausted → the item is UNPLACED (REVIEW), never force-placed."""
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -157,6 +157,7 @@ class _RoomCtx:
     thresholds: list[tuple[str, tuple[float, float]]]
     circulation_min: float
     placed: list[tuple[dict[str, Any], Polygon, BaseGeometry]]  # (item, rect, blob)
+    obstacles: list[BaseGeometry] = field(default_factory=list)  # Phase 6 re-plan seam
 
 
 def _candidate_ok(
@@ -176,6 +177,9 @@ def _candidate_ok(
             return False
     for arc in ctx.arcs:
         if rect.intersection(arc).area > OVERLAP_EPS_MM2:
+            return False
+    for obstacle in ctx.obstacles:  # merge-gate re-plans: keep clear of the higher element
+        if rect.intersection(obstacle).area > OVERLAP_EPS_MM2:
             return False
     cand_aabb = aabb_of(
         tuple(candidate["center"]), candidate["rotation_deg"], candidate["footprint"]
@@ -349,12 +353,22 @@ def legalize_furniture(
     proposals: list[dict[str, Any]],
     layout: dict[str, Any],
     deadline_check: Callable[[], None] | None = None,
+    *,
+    preplaced: Iterable[dict[str, Any]] = (),
+    obstacles: Iterable[BaseGeometry] = (),
 ) -> FurnishOutcome:
     """proposals: furniture proposals, each carrying room_id. Items are placed
     in ONE global (footprint area desc, id asc) order per Part G — the
     model-wide AABB predicate couples rooms, so ordering is global, not
     per-room. `deadline_check` (optional) is called throughout the search and
-    may raise to abort the whole run (SI-6 time limit; never partial output)."""
+    may raise to abort the whole run (SI-6 time limit; never partial output).
+
+    Phase 6 merge-gate seams (keyword-only; the defaults leave Phase 5 byte-
+    identical): `preplaced` are already-placed items (each carrying room_id)
+    that seed the per-room placed lists and the model-wide AABBs so a single
+    re-legalized item cannot land on existing furniture; `obstacles` are
+    polygons every candidate footprint must stay clear of (the higher-priority
+    clash element, inflated)."""
     walls_by_id = {w["id"]: w for w in layout["walls"]}
     rooms_by_id = {r["id"]: r for r in layout["rooms"]}
     circulation_min = float(
@@ -364,6 +378,11 @@ def legalize_furniture(
     by_room: dict[str, list[dict[str, Any]]] = {}
     for proposal in proposals:
         by_room.setdefault(proposal["room_id"], []).append(proposal)
+    preplaced_by_room: dict[str, list[dict[str, Any]]] = {}
+    for item in preplaced:
+        preplaced_by_room.setdefault(item["room_id"], []).append(item)
+        by_room.setdefault(item["room_id"], [])
+    obstacle_list = list(obstacles)
 
     unplaced: list[dict[str, Any]] = []
     diags: list[ItemDiag] = []
@@ -385,7 +404,14 @@ def legalize_furniture(
             thresholds=room_thresholds(room, polygon, layout["doors"], walls_by_id),
             circulation_min=circulation_min,
             placed=[],
+            obstacles=obstacle_list,
         )
+        for item in sorted(preplaced_by_room.get(room_id, []), key=lambda i: i["id"]):
+            clean = {k: v for k, v in item.items() if k != "room_id"}
+            ctxs[room_id].placed.append((clean, furniture_rect(clean), clearance_blob(clean)))
+            all_aabbs.append(
+                aabb_of(tuple(clean["center"]), clean["rotation_deg"], clean["footprint"])
+            )
         for proposal in by_room[room_id]:
             spec = family_types().get((proposal["revit_family"], proposal["revit_type"]))
             if spec is None:  # defensive: proposal validation runs upstream
@@ -422,14 +448,14 @@ def legalize_furniture(
             aabb_of(tuple(placed["center"]), placed["rotation_deg"], placed["footprint"])
         )
 
-    furniture = [
-        {
-            "room_id": room_id,
-            "items": sorted((item for item, _r, _b in ctxs[room_id].placed), key=lambda i: i["id"]),
-        }
-        for room_id in sorted(ctxs)
-        if ctxs[room_id].placed
-    ]
+    pre_ids = {item["id"] for items in preplaced_by_room.values() for item in items}
+    furniture = []
+    for room_id in sorted(ctxs):
+        new_items = [item for item, _r, _b in ctxs[room_id].placed if item["id"] not in pre_ids]
+        if new_items:
+            furniture.append(
+                {"room_id": room_id, "items": sorted(new_items, key=lambda i: i["id"])}
+            )
 
     return FurnishOutcome(
         furniture=furniture,

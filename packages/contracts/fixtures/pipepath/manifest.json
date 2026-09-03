@@ -1,0 +1,343 @@
+{
+  "manifest_version": "1.0.0",
+  "description": "Pipe/conduit path classification shared by the layout-compiler (mep/fittings.py) and the Revit plugin (ChapterHub.Core PipePath): consecutive collinear segments merge; a bend within angle_tolerance_deg of 90 or 45 is a supported standard elbow; any other bend is fitting_unsupported (v1 emits REVIEW for tee/wye); a segment shorter than min_segment_mm is zero_length. All coordinates mm, 3D.",
+  "angle_tolerance_deg": 0.5,
+  "collinear_tolerance_deg": 0.5,
+  "min_segment_mm": 1e-06,
+  "cases": [
+    {
+      "name": "straight",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": true,
+        "segments": 1,
+        "bends_deg": []
+      }
+    },
+    {
+      "name": "sloped_straight",
+      "path": [
+        [
+          0,
+          0,
+          -188.0
+        ],
+        [
+          2450,
+          0,
+          -162.5
+        ]
+      ],
+      "expect": {
+        "ok": true,
+        "segments": 1,
+        "bends_deg": []
+      }
+    },
+    {
+      "name": "vertical_stack",
+      "path": [
+        [
+          0,
+          0,
+          -300
+        ],
+        [
+          0,
+          0,
+          2700
+        ]
+      ],
+      "expect": {
+        "ok": true,
+        "segments": 1,
+        "bends_deg": []
+      }
+    },
+    {
+      "name": "elbow_90",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ],
+        [
+          1000,
+          500,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": true,
+        "segments": 2,
+        "bends_deg": [
+          90
+        ]
+      }
+    },
+    {
+      "name": "elbow_45",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ],
+        [
+          1707.10678,
+          707.10678,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": true,
+        "segments": 2,
+        "bends_deg": [
+          45
+        ]
+      }
+    },
+    {
+      "name": "drop_then_along",
+      "path": [
+        [
+          100,
+          0,
+          380
+        ],
+        [
+          100,
+          0,
+          2600
+        ],
+        [
+          3000,
+          0,
+          2600
+        ]
+      ],
+      "expect": {
+        "ok": true,
+        "segments": 2,
+        "bends_deg": [
+          90
+        ]
+      }
+    },
+    {
+      "name": "two_elbows",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ],
+        [
+          1000,
+          500,
+          0
+        ],
+        [
+          2000,
+          500,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": true,
+        "segments": 3,
+        "bends_deg": [
+          90,
+          90
+        ]
+      }
+    },
+    {
+      "name": "collinear_merge",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          500,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": true,
+        "segments": 1,
+        "bends_deg": []
+      }
+    },
+    {
+      "name": "near_collinear_merges_within_tolerance",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ],
+        [
+          2000,
+          4.0,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": true,
+        "segments": 1,
+        "bends_deg": []
+      }
+    },
+    {
+      "name": "bend_30_unsupported",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ],
+        [
+          1866.0254,
+          500,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": false,
+        "error": "fitting_unsupported"
+      }
+    },
+    {
+      "name": "bend_60_unsupported",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ],
+        [
+          1500,
+          866.0254,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": false,
+        "error": "fitting_unsupported"
+      }
+    },
+    {
+      "name": "reversal_unsupported",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ],
+        [
+          0,
+          500,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": false,
+        "error": "fitting_unsupported"
+      }
+    },
+    {
+      "name": "zero_length_segment",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1000,
+          0,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": false,
+        "error": "zero_length"
+      }
+    },
+    {
+      "name": "single_point",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "expect": {
+        "ok": false,
+        "error": "too_few_points"
+      }
+    }
+  ]
+}

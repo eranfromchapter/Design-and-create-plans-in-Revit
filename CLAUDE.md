@@ -169,3 +169,156 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   or bless. (8) Catalog has no leafless/pocket door flag; the swing exemption is
   name-based ("pocket") — a real flag needs catalog vocabulary from Eran.
   Standing asks unchanged (catalogs, ANTHROPIC_API_KEY, MANUAL_REVIT_TEST Phases 1–2).
+- Phase 6: code complete on this branch (PR #7, stacked on PR #6). Design in
+  docs/PHASE6_DESIGN.md (37 PINs, refutation ledger) — normative. NO LLM, no schema change;
+  registry: place_device.args.face (left|right, required) + kind receptacle_240 (Eran Q1).
+  layout-compiler mep/ = deterministic Part G MEP agent: inputs (levels/panel stamped from
+  meta → riser → card confirmations {panel, slab_to_slab_mm} → blocking items; wet rooms,
+  fixture semantics from kind/FU/hookups + plumbing.json, placer host walls, derived counter
+  walls), plumbing P-1 argmax ΣFU − λ·dist (λ=0.0005 FU/mm, SI-8 walls excluded) → P-2 → P-3
+  FU-weighted t_s snapped out of door spans → P-4 L_max=(h_plenum−Ø−h_fitting)/slope with
+  L = along (PIN-08, Eran Q3), prune → residual re-run (MAX_STACKS 4), branch TREE with honest
+  z-profile; electrical E-1 kernel N=max(1,⌈(L−2a)/S⌉+1) + fixpoint dedupe <300, E-2 counter
+  circuit + basin ≤914, E-3 latch-side switches with the corner/hinge fallback ladder,
+  corridor/laundry/appliance (receptacle_240) extensions, GFCI area rule; E-4 canonical wall
+  graph + state Dijkstra from the panel (cost = length + 4000·rated penetrations, stack ±300
+  squares forbidden) → raceway tree at 2600. fittings.py is the C# PipePath twin (shared
+  manifest). POST /plan-mep → MepPlan. merge/ = ONE clash law (catalogs/clash_prisms.json;
+  Phase A oriented prisms ⊆ sim AABB law, exemption table proven shared with revit-sim and
+  ChapterHub.Core): STRtree sweep → lower priority re-plans (furniture via
+  legalize_furniture(preplaced, obstacles), device ±150·k, conduit reroute, relocate_stack;
+  same priority → blocked; progress guarantee → drop; ids never renumber) under the SHARED
+  ≤3-round budget; stateless replay of prior actions; POST /merge → MergeResult (interior ops
+  verbatim + MEP ops + one trailing run_interference_check, validator oracle, sim preflight).
+  Goldens (gen_golden_mep.py sole source of truth, eyeballed): 2 stacks (P-001 W-004 @5133.3
+  Ø76 for F-006/F-007/F-012; P-002 W-026 @169 Ø51 snapped), 10 pipes, 45 devices (11 switches,
+  4 gfci, 1 240V), 81 conduits, 155-op Commit #2, Phase A 0 clashes, real-sim commit;
+  recovery E-001 1912.5→1762.5→1612.5 commits at plan 3 (iterations_used 2); exhaustion after
+  4 rejects; gate note with both sides of PIN-08 (→3 stacks) and PIN-13 (no-op on this chain).
+  Sim: MEP rendering (goldens 1–5 byte-stable), revit_sim.clash (created×all, strict <),
+  TestHooks.inject_clash only behind --control-port. Gateway: migration 0005, plan-mep /
+  merge-commit2 / issue-commit2 ladders, merge chain state derived from reviews+envelopes,
+  MergeResult verified before any card, every rebuilt plan = NEW commit2_merge approval
+  (Eran Q2), fresh seq per re-issue (PIN-30), clash signal authoritative from commit_result
+  "A~B" errors (clash_delta supplementary, per-session frame serialization), commit2 snapshot,
+  /state.commit2, mep_plan + commit2_merge cards, /envelopes approval_ref_required. Plugin:
+  Core PipePath/ClashPairs/ClashExemptions/MepTypes (82 tests); Addin place_family,
+  create_pipe/conduit (PIN-35 groups), place_device face-hosted, door flips,
+  run_interference_check, clash_delta; catalogs enrolled beside the config. Tests: compiler
+  461, gateway 73 (14 Phase 6), sim + C# green, e2e 10 suites incl. phase6 recovery +
+  exhaustion; make demo-phase6.
+  ADVERSARIAL REVIEW (46 agents: 10 dimension finders → 65 findings → 2-lens refutation of
+  the top 18 → 17 confirmed; every confirmed finding plus the material unverified ones is
+  fixed on this branch): stable conduit ids (drop Q-n ↔ device E-n, trunks from a fixed base,
+  dropped ids reserved, dropped trunk GEOMETRY forbidden; devices that lose their only path
+  are dropped + reported, never left conduit-less), fixture moves record a `replan_plumbing`
+  action the verifier honours, device shifts clear the stack ±300 square and escalate to
+  k 5..8 before dropping, Phase A acts on live pairs only, structure/structure pairs are
+  existing conditions, P-4 governing fixture = highest pipe top, P-1 only on walls a fixture
+  faces (unclamped feet), honest `snapped` flag, plumbing not blocked by electrical-only
+  items, riser_adjacent from the stack, supply_manual incl. cold-only, E-3 latch corner from
+  the ROOM edge at E3_CORNER_FALLBACK_MM, E-2 on every counter-owning room, side probes clear
+  face-aligned boundaries (t/2 + tol), conduits/devices in ABSOLUTE z, Lane B partial
+  meta.levels honoured, gateway /envelopes approval_ref must name the approved ops (SI-2),
+  verifier completeness + review_id echoes, project-scoped commit_result/ack (SI-10),
+  transient merge errors retryable, zod → 400, unreachable compiler → outcome, plugin
+  interference wire message "A~B" (Detail), whole-document created×all sweep, sim codes
+  aligned, malformed catalogs never take the add-in offline, sim boxes use as-built
+  thickness and survive deleted hosts, inject test exercises the real law.
+  DEVIATIONS FROM THE DESIGN (for sign-off): (a) conduit ids: drops are stable (Q-n ↔ E-n),
+  trunks renumber from a fixed base on every raceway re-run and never reuse a dropped id;
+  pipes are derived state whenever P-1..P-4 re-run (relocate_stack, or the recorded
+  `replan_plumbing` after a plumbing fixture moved/dropped) — ids may renumber; the gateway
+  verifier applies exactly these exemptions plus completeness (every approved op survives,
+  is in `dropped`, or is derived) instead of the design's literal "every un-actioned op
+  deep-equals"; (b) MEP card svg keys are {furnished, mep} (the design said commit1/mep);
+  (c) a moved/dropped plumbing FIXTURE re-resolves inputs (its recorded host wall
+  forgotten) and re-runs P-1..P-4 + E-4; (d) unknown clash ids are a contract error except
+  `revit:<ElementId>` structure; (e) a dropped trunk's geometry stays forbidden, so devices
+  whose only home run used it are dropped and reported (the alternative — re-emitting the
+  clashing segment under a new id — was the confirmed high finding); (f) "Phase A == sim
+  law" shipped as five forced device plans + the exemption table, not a random-model
+  property; (g) PIN-35 extras (segments 2..n, elbows, group) are not persisted in the HUB
+  id-map — invisible to DocumentChangedWatcher after Commit #2 (gate item).
+  GATE ITEMS FOR ERAN: (1) clearance semantics — the field is named clearance_FRONT but
+  the validator/Part G inflate all sides; front-only would be a validator/Part G change
+  (bed clearance set to 0 for now: all-around 760 makes <2650mm bedrooms bed-less).
+  (2) Golden reality: bath2 legally holds wc only; the frozen 1200×1200 laundry can't hold
+  any 600mm appliance (D-011 swing) — both ship as REVIEW demos; alternatives touch Phase 4
+  semantics. (3) Pinned v1 interpretations for sign-off: t_finish=0, spiral cap 324,
+  swing/flip conventions, slide-outer nesting, positive-area overlap (touching legal),
+  model-wide AABB as a deliberate 5th predicate. (4) Dry-appliance hookups
+  (range 240V, fridge 120V, washer-stack +240V) are authored per-item, not yet catalog
+  entries; the washer/dryer stack is ONE kind=washer item (Phase 6 never sees 'dryer').
+  (5) Fixture chain stays flag-free by design — confirming wall flags on a real scan
+  obliges the Phase 4 compiler to echo them (live behavior; immutability then bites).
+  (6) brief.v1.json source_sessions has no charset pattern — runtime boundaries clamp to
+  ^[A-Za-z0-9_-]{1,120}$ everywhere, but pinning it in the SCHEMA is a contract change
+  needing approval. (7) PLAN Part H says "hypothesis" for the placer property suite; what
+  shipped is a 200-case seeded-PRNG corpus + hypothesis on validator totality — reconcile
+  or bless. (8) Catalog has no leafless/pocket door flag; the swing exemption is
+  name-based ("pocket") — a real flag needs catalog vocabulary from Eran.
+  Standing asks unchanged (catalogs, ANTHROPIC_API_KEY, MANUAL_REVIT_TEST Phases 1–2).
+- Phase 6: code complete on this branch (PR #7, stacked on PR #6). Design in
+  docs/PHASE6_DESIGN.md (37 PINs, refutation ledger) — normative. NO LLM, no schema change;
+  registry: place_device.args.face (left|right, required) + kind receptacle_240 (Eran Q1).
+  layout-compiler mep/ = deterministic Part G MEP agent: inputs (levels/panel stamped from
+  meta → riser → card confirmations {panel, slab_to_slab_mm} → blocking items; wet rooms,
+  fixture semantics from kind/FU/hookups + plumbing.json, placer host walls, derived counter
+  walls), plumbing P-1 argmax ΣFU − λ·dist (λ=0.0005 FU/mm, SI-8 walls excluded) → P-2 → P-3
+  FU-weighted t_s snapped out of door spans → P-4 L_max=(h_plenum−Ø−h_fitting)/slope with
+  L = along (PIN-08, Eran Q3), prune → residual re-run (MAX_STACKS 4), branch TREE with honest
+  z-profile; electrical E-1 kernel N=max(1,⌈(L−2a)/S⌉+1) + fixpoint dedupe <300, E-2 counter
+  circuit + basin ≤914, E-3 latch-side switches with the corner/hinge fallback ladder,
+  corridor/laundry/appliance (receptacle_240) extensions, GFCI area rule; E-4 canonical wall
+  graph + state Dijkstra from the panel (cost = length + 4000·rated penetrations, stack ±300
+  squares forbidden) → raceway tree at 2600. fittings.py is the C# PipePath twin (shared
+  manifest). POST /plan-mep → MepPlan. merge/ = ONE clash law (catalogs/clash_prisms.json;
+  Phase A oriented prisms ⊆ sim AABB law, exemption table proven shared with revit-sim and
+  ChapterHub.Core): STRtree sweep → lower priority re-plans (furniture via
+  legalize_furniture(preplaced, obstacles), device ±150·k, conduit reroute, relocate_stack;
+  same priority → blocked; progress guarantee → drop; ids never renumber) under the SHARED
+  ≤3-round budget; stateless replay of prior actions; POST /merge → MergeResult (interior ops
+  verbatim + MEP ops + one trailing run_interference_check, validator oracle, sim preflight).
+  Goldens (gen_golden_mep.py sole source of truth, eyeballed): 2 stacks (P-001 W-004 @5133.3
+  Ø76 for F-006/F-007/F-012; P-002 W-026 @169 Ø51 snapped), 10 pipes, 45 devices (11 switches,
+  4 gfci, 1 240V), 81 conduits, 155-op Commit #2, Phase A 0 clashes, real-sim commit;
+  recovery E-001 1912.5→1762.5→1612.5 commits at plan 3 (iterations_used 2); exhaustion after
+  4 rejects; gate note with both sides of PIN-08 (→3 stacks) and PIN-13 (no-op on this chain).
+  Sim: MEP rendering (goldens 1–5 byte-stable), revit_sim.clash (created×all, strict <),
+  TestHooks.inject_clash only behind --control-port. Gateway: migration 0005, plan-mep /
+  merge-commit2 / issue-commit2 ladders, merge chain state derived from reviews+envelopes,
+  MergeResult verified before any card, every rebuilt plan = NEW commit2_merge approval
+  (Eran Q2), fresh seq per re-issue (PIN-30), clash signal authoritative from commit_result
+  "A~B" errors (clash_delta supplementary, per-session frame serialization), commit2 snapshot,
+  /state.commit2, mep_plan + commit2_merge cards, /envelopes approval_ref_required. Plugin:
+  Core PipePath/ClashPairs/ClashExemptions/MepTypes (82 tests); Addin place_family,
+  create_pipe/conduit (PIN-35 groups), place_device face-hosted, door flips,
+  run_interference_check, clash_delta; catalogs enrolled beside the config. Tests: compiler
+  461, gateway 73 (14 Phase 6), sim + C# green, e2e 10 suites incl. phase6 recovery +
+  exhaustion; make demo-phase6.
+  DEVIATIONS FROM THE DESIGN (for sign-off): (a) conduit ids are re-derived on every
+  raceway re-run (drops keep their device pairing, trunks renumber) — the gateway verifier
+  treats conduits as derived state and pipes as derived after relocate_stack, instead of
+  the design's literal "every un-actioned op deep-equals"; (b) MEP card svg keys are
+  {furnished, mep} (the design said commit1/mep); (c) a moved/dropped plumbing FIXTURE
+  re-resolves inputs and re-runs P-1..P-4 + E-4 (design named furniture re-legalize only);
+  (d) unknown clash ids are a contract error except `revit:<ElementId>` structure.
+  GATE DECISIONS (Eran, 2026-09-03): (1) ⚠ PINs 08, 12, 13, 16, 17, 20, 29, 30, 37 BLESSED as
+  shipped (no golden re-run); (2) catalog vocabulary stays _PLACEHOLDER for now — Eran will
+  connect the real vocabulary through knowledge later (mep_types.json, clash_prisms.json
+  heights/device box, counter casework family); (3) deviations (a)–(g) signed off; (4) the
+  human Pre-Phase-6 Revit spike: STAGE 1 DONE 2026-09-03 on Eran's dev-only workstation (Claude
+  Cowork + AUTOM8LABS bridge, throwaway model) — docs/REVIT_SPIKE_RESULTS.md; face law
+  CONFIRMED (exterior = LEFT of start→end), touching not flagged (strict law), conduit + elbow
+  work; template lacks door/electrical families, a PVC type and a pipe elbow. Plugin follow-ups
+  shipped (docs/PHASE6_DESIGN.md §9b): door flips decided from HandOrientation/FacingOrientation
+  vectors under the declared Door.rft convention (`door_flip_failed`), `unhosted` post-checks,
+  routing-preference preflight (`routing_preference_missing`, `fitting_insert_failed`),
+  size-table snapping within 2.5 mm (`unknown_size`); Core 107 tests. STAGE 2 (the add-in on the
+  workstation, docs/MANUAL_REVIT_TEST.md Pre-Phase-6 + Phase 6 rows) stays OPEN until the
+  template has the content listed in docs/REVIT_SPIKE.md; (5) v1 scope = sanitary DWV only
+  confirmed; registry prose amendment for sim_behavior (Q5) folded into the Phase 7 contracts
+  commit. Standing asks: catalog vocabulary via knowledge (conduit_diameter_mm as a trade size),
+  template content (door family per Door.rft convention, face-based device families, PVC DWV
+  pipe type + elbow fitting), ANTHROPIC_API_KEY, MANUAL_REVIT_TEST Phases 1–2 and 6.

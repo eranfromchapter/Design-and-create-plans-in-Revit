@@ -130,3 +130,46 @@ def plumbing_fixtures() -> dict[str, dict]:
 def families_vocabulary_block() -> str:
     """The closed furniture vocabulary injected verbatim into the furnish prompt."""
     return json.dumps(_load("new_construction_types.json")["families"], indent=2)
+
+
+@cache
+def plumbing_table() -> dict:
+    """The raw plumbing catalog (Phase 6 P-4 needs drain diameters, slope rules and
+    the fitting allowance, not just the FU/hookup closure)."""
+    return _load("plumbing.json")
+
+
+def drain_slope(diameter_mm: float) -> float:
+    """IPC Table 704.1 via catalogs/plumbing.json slope_rules: 1/4 in/ft below 76 mm,
+    1/8 in/ft at 76 mm and above."""
+    for rule in plumbing_table()["slope_rules"]:
+        if "max_diameter_mm_exclusive" in rule and diameter_mm < rule["max_diameter_mm_exclusive"]:
+            return float(rule["slope"])
+        if "min_diameter_mm" in rule and diameter_mm >= rule["min_diameter_mm"]:
+            return float(rule["slope"])
+    raise ValueError(f"no slope rule for diameter {diameter_mm}")
+
+
+@cache
+def new_wall_fire_ratings() -> dict[str, float]:
+    return {
+        t["revit_type"]: float(t.get("fire_rating_hr", 0))
+        for t in _load("new_construction_types.json")["walls"]
+    }
+
+
+def wall_fire_rating_hr(wall: dict) -> float:
+    """Wall flag first, then the new-construction catalog entry, else 0 (E-4)."""
+    if wall.get("fire_rating_hr") is not None:
+        return float(wall["fire_rating_hr"])
+    return new_wall_fire_ratings().get(wall["revit_type"], 0.0)
+
+
+@cache
+def mep_types() -> dict:
+    return _load("mep_types.json")
+
+
+@cache
+def clash_prisms() -> dict:
+    return _load("clash_prisms.json")

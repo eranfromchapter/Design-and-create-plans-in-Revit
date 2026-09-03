@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import canonicalize from "canonicalize";
 import type { Config } from "../config.js";
 import type { Repos, ReviewRow } from "../db/repos.js";
 import type { GatewayCore } from "../core.js";
@@ -13,8 +14,16 @@ import { extractBrief } from "../brief/extractor-client.js";
 import { compileLayout } from "../layout/compiler-client.js";
 import { furnishLayout } from "../layout/furnish-client.js";
 import { commit0LayoutFromReview } from "../layout/snapshot.js";
+import { commit2State, registerCommit2Routes, type IssueSpec } from "./commit2.js";
 
 const createProjectBody = z.object({ name: z.string().min(1).max(200) });
+const COMMIT_CLASS_OPS = new Set([
+  "run_interference_check",
+  "place_family",
+  "place_device",
+  "create_pipe",
+  "create_conduit",
+]);
 const enrollBody = z.object({
   workstation_id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/),
 });
@@ -104,12 +113,7 @@ export function registerRoutes(
   async function issueEnvelope(
     reply: FastifyReply,
     projectId: string,
-    spec: {
-      ops: OpInput[];
-      ttlS?: number;
-      commitLabel?: string;
-      approvalRef?: { review_id: string; content_hash: string };
-    },
+    spec: IssueSpec,
   ): Promise<FastifyReply> {
     const project = await repos.getProject(projectId);
     if (!project) return reply.code(404).send({ error: "unknown_project" });
@@ -125,7 +129,13 @@ export function registerRoutes(
     }
 
     const workstationId = core.workstationFor(projectId) ?? "";
-    const seq = (await repos.lastCommittedSeq(projectId)) + 1;
+    // Phases 1-5: next committed seq (a rolled-back envelope's number is reused).
+    // Commit #2 re-issues (PIN-30): a FRESH seq above every issued one, so the
+    // rolled-back merged envelope and its rebuilt successor never share a number.
+    const seq =
+      spec.seqPolicy === "next_issued"
+        ? Math.max(await repos.lastCommittedSeq(projectId), await repos.lastIssuedSeq(projectId)) + 1
+        : (await repos.lastCommittedSeq(projectId)) + 1;
     const built = buildEnvelope(
       {
         projectId,
@@ -153,6 +163,7 @@ export function registerRoutes(
         commitLabel: spec.commitLabel,
         approvalRef: spec.approvalRef,
         issuedAt: built.issuedAt,
+        reissueOf: spec.reissueOf,
       });
     } catch (err) {
       if (String(err).includes("envelopes_one_inflight")) {
@@ -170,6 +181,30 @@ export function registerRoutes(
   app.post("/projects/:id/envelopes", { preHandler: serviceAuth }, async (req, reply) => {
     const projectId = (req.params as { id: string }).id;
     const body = envelopeBody.parse(req.body);
+    // Phase 6 guard: commit-class envelopes (a "Commit #n" label or the ops only an
+    // approved review may carry) must ride under an approval_ref — the dedicated
+    // issue-commit routes are the human gate; the generic route cannot bypass it
+    const commitClass =
+      /^Commit #/.test(body.commit_label ?? "") ||
+      body.ops.some((o) => COMMIT_CLASS_OPS.has(o.op));
+    if (commitClass) {
+      if (!body.approval_ref) return reply.code(422).send({ error: "approval_ref_required" });
+      // SI-2: the ref must name THIS project's approved review whose content ops are
+      // exactly the ops being signed — a well-formed ref alone is not a human gate
+      const review = await repos.getReview(body.approval_ref.review_id);
+      if (
+        !review ||
+        review.project_id !== projectId ||
+        review.status !== "approved" ||
+        review.content_hash !== body.approval_ref.content_hash
+      ) {
+        return reply.code(422).send({ error: "approval_ref_mismatch", detail: "no approved review with that id/hash" });
+      }
+      const approvedOps = (review.content as { ops?: unknown }).ops;
+      if (canonicalize(approvedOps) !== canonicalize(body.ops)) {
+        return reply.code(422).send({ error: "approval_ref_mismatch", detail: "ops differ from the approved review content" });
+      }
+    }
     return issueEnvelope(reply, projectId, {
       ops: body.ops as OpInput[],
       ttlS: body.ttl_s,
@@ -336,6 +371,15 @@ export function registerRoutes(
     if (!commit0) return reply.code(409).send({ error: "commit0_not_done" });
     const commit1 = await repos.getSnapshot(projectId, "commit1");
     if (!commit1) return reply.code(409).send({ error: "commit1_not_done" });
+    // Phase 6: once Commit #2 is on the model (or in flight) the interior branch
+    // is consumed — a new furnish pass would orphan the merge chain
+    if (await repos.hasSnapshot(projectId, "commit2")) {
+      return reply.code(409).send({ error: "commit2_already_done" });
+    }
+    const inflight = await repos.inflightEnvelope(projectId);
+    if (inflight && inflight.commit_label === "Commit #2") {
+      return reply.code(409).send({ error: "commit2_envelope_in_flight" });
+    }
     // the ops that actually built Commit #1 (the snapshot's review is the one
     // that committed, by construction) — they rebuild the card's left pane
     const commit1Review = await repos.getReview(commit1.review_id);
@@ -509,6 +553,7 @@ export function registerRoutes(
           (plan.content as { brief_version?: number }).brief_version === confirmed.brief_version
         );
       })(),
+      ...(await commit2State(repos, projectId)),
       executor_connected: core.executorReady(projectId),
       last_committed_seq: await repos.lastCommittedSeq(projectId),
       id_map: await repos.idMapEntries(projectId),
@@ -522,6 +567,8 @@ export function registerRoutes(
       })),
     };
   });
+
+  registerCommit2Routes(app, { config, repos }, issueEnvelope);
 
   app.get("/projects/:id/reviews", { preHandler: actorOrService(config) }, async (req, reply) => {
     const projectId = (req.params as { id: string }).id;

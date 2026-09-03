@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Electrical;
+using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.DB.Structure;
 using ChapterHub.Core;
 using ChapterHub.Core.Contracts;
@@ -8,11 +10,11 @@ using Wall = Autodesk.Revit.DB.Wall;
 
 namespace ChapterHub.Revit.Addin.Ops;
 
-// The op handlers the Phase 1 gate exercises live (create_level, create_wall,
-// create_door, create_window, place_device). Every other registry op routes to
-// NotImplementedOpHandler, which fails the envelope CLEANLY (rolled_back) instead of
-// pretending — those handlers land with their phases (pipes/conduits Phase 6, exports
-// Phase 2/7, etc.).
+// The op handlers the phase gates exercise live: Phase 1 (create_level, create_wall,
+// create_door, create_window, place_device), Phase 5 (place_family) and Phase 6
+// (create_pipe, create_conduit, run_interference_check; place_device gains `face`).
+// Every other registry op routes to NotImplementedOpHandler, which fails the envelope
+// CLEANLY (rolled_back) instead of pretending — those handlers land with their phases.
 
 internal static class Lookup
 {
@@ -38,6 +40,24 @@ internal static class Lookup
         return symbol;
     }
 
+    /// <summary>(family, type) lookup across the categories a placeable family may live in.</summary>
+    public static FamilySymbol SymbolByFamilyAndType(
+        Document doc, IEnumerable<BuiltInCategory> categories, string familyName, string typeName)
+    {
+        foreach (var category in categories)
+        {
+            var symbol = new FilteredElementCollector(doc)
+                .OfCategory(category)
+                .OfClass(typeof(FamilySymbol))
+                .Cast<FamilySymbol>()
+                .FirstOrDefault(s => s.FamilyName == familyName && s.Name == typeName);
+            if (symbol is null) continue;
+            if (!symbol.IsActive) symbol.Activate();
+            return symbol;
+        }
+        throw new OpFailure("unknown_revit_type", $"{familyName}/{typeName}");
+    }
+
     public static Wall HostWall(OpContext context, string logicalId) =>
         context.ResolveTarget(logicalId) as Wall
         ?? throw new OpFailure("unknown_host", logicalId);
@@ -49,6 +69,30 @@ internal static class Lookup
         var p0 = curve.GetEndPoint(0);
         var p1 = curve.GetEndPoint(1);
         return (new Pt2(FtToMm(p0.X), FtToMm(p0.Y)), new Pt2(FtToMm(p1.X), FtToMm(p1.Y)));
+    }
+
+    public static XYZ Xyz(Pt3 p) => new(MmToFt(p.X), MmToFt(p.Y), MmToFt(p.Z));
+
+    /// <summary>The connector of a pipe/conduit sitting at `point` (within 1 mm).</summary>
+    public static Connector ConnectorAt(MEPCurve curve, XYZ point)
+    {
+        foreach (Connector connector in curve.ConnectorManager.Connectors)
+            if (connector.Origin.DistanceTo(point) < MmToFt(1.0)) return connector;
+        throw new OpFailure("internal", $"no connector at {point} on {curve.Id}");
+    }
+
+    /// <summary>PIN-35: the logical id maps to the FIRST segment; the remaining segments and
+    /// elbows are extras grouped under a model group named "HUB {id}".</summary>
+    public static void MapRun(OpContext context, string logicalId, IReadOnlyList<ElementId> created)
+    {
+        context.MapCreated(logicalId, created[0]);
+        for (var i = 1; i < created.Count; i++) context.MapExtra(logicalId, created[i]);
+        if (created.Count > 1)
+        {
+            var group = context.Doc.Create.NewGroup(created.ToList());
+            group.GroupType.Name = $"HUB {logicalId}";
+            context.MapExtra(logicalId, group.Id);
+        }
     }
 }
 
@@ -103,10 +147,29 @@ public sealed class CreateDoorHandler : IOpHandler
         var instance = context.Doc.Create.NewFamilyInstance(
             new XYZ(MmToFt(point.X), MmToFt(point.Y), level.Elevation),
             symbol, host, level, StructuralType.NonStructural);
-        // swing (L|R) + flip_facing orientation lands with the pre-Phase-6 live spike
-        // (docs/MANUAL_REVIT_TEST.md) — hosted-instance flip semantics need live Revit.
+        if (instance.Host is not { } doorHost || doorHost.Id != host.Id)
+            throw new OpFailure("unhosted", $"{a.Id}: not hosted by {a.HostWallId}");
+        // Phase 5 swing.py law: hinge at offset - w/2 (toward start) for swing L, + w/2 for R;
+        // the leaf sweeps LEFT of start->end when flip_facing is falsy. Revit's HandFlipped /
+        // FacingFlipped are relative to the family's authoring and to Wall.Orientation (a fresh
+        // door faces the wall's exterior, which Wall.Flipped negates), so the flags are never
+        // read: the placed instance's orientation VECTORS are compared with the desired world
+        // directions (live spike 2026-09-03, docs/REVIT_SPIKE_RESULTS.md step 3). Assumes the
+        // Door.rft authoring convention — hinge at the family's -X jamb, swing to family +Y —
+        // which stage 2 of the spike verifies against Chapter's real door family.
+        var desired = DoorOrientation.For(start, end, a.Swing, a.FlipFacing ?? false);
+        var flipped = false;
+        if (DoorOrientation.Sign(Vec(instance.HandOrientation), desired.Hand) < 0) flipped |= instance.flipHand();
+        if (DoorOrientation.Sign(Vec(instance.FacingOrientation), desired.Facing) < 0) flipped |= instance.flipFacing();
+        if (flipped) context.Doc.Regenerate();
+        var hand = DoorOrientation.Sign(Vec(instance.HandOrientation), desired.Hand);
+        var facing = DoorOrientation.Sign(Vec(instance.FacingOrientation), desired.Facing);
+        if (hand <= 0 || facing <= 0)
+            throw new OpFailure("door_flip_failed", $"{a.Id}: hand {hand} facing {facing} after flips");
         context.MapCreated(a.Id, instance.Id);
     }
+
+    private static DoorOrientation.Vec2 Vec(XYZ v) => new(v.X, v.Y);
 }
 
 public sealed class CreateWindowHandler : IOpHandler
@@ -129,32 +192,358 @@ public sealed class CreateWindowHandler : IOpHandler
     }
 }
 
+public sealed class PlaceFamilyHandler : IOpHandler
+{
+    public string Op => "place_family";
+
+    private static readonly BuiltInCategory[] Categories =
+    [
+        BuiltInCategory.OST_Furniture,
+        BuiltInCategory.OST_PlumbingFixtures,
+        BuiltInCategory.OST_Casework,
+        BuiltInCategory.OST_SpecialityEquipment,
+        BuiltInCategory.OST_ElectricalEquipment,
+    ];
+
+    public void Execute(OpContext context, JsonElement args)
+    {
+        var a = ContractJson.Deserialize<PlaceFamilyArgs>(args);
+        var level = Lookup.LevelByName(context.Doc, a.Level);
+        var symbol = Lookup.SymbolByFamilyAndType(context.Doc, Categories, a.RevitFamily, a.RevitType);
+        var origin = new XYZ(MmToFt(a.Center.X), MmToFt(a.Center.Y), level.Elevation);
+        var instance = context.Doc.Create.NewFamilyInstance(origin, symbol, level, StructuralType.NonStructural);
+        if (a.RotationDeg != 0)
+        {
+            // Part G: rotation_deg is CCW about +Z at the footprint centre (the sim's furniture_rect).
+            var axis = Line.CreateBound(origin, origin + XYZ.BasisZ);
+            ElementTransformUtils.RotateElement(context.Doc, instance.Id, axis, a.RotationDeg * Math.PI / 180.0);
+        }
+        context.MapCreated(a.Id, instance.Id);
+    }
+}
+
 public sealed class PlaceDeviceHandler : IOpHandler
 {
     public string Op => "place_device";
 
+    private static readonly BuiltInCategory[] Categories =
+    [
+        BuiltInCategory.OST_ElectricalFixtures,
+        BuiltInCategory.OST_LightingDevices,
+    ];
+
     public void Execute(OpContext context, JsonElement args)
     {
         var a = ContractJson.Deserialize<PlaceDeviceArgs>(args);
+        var types = context.Catalogs.RequireMepTypes();
+        if (!types.DeviceFamilies.TryGetValue(a.Kind, out var family))
+            throw new OpFailure("invalid_args", $"device kind {a.Kind}");
         var host = Lookup.HostWall(context, a.HostWallId);
-        var symbol = Lookup.SymbolByTypeName(
-            context.Doc, BuiltInCategory.OST_ElectricalFixtures, a.Kind switch
-            {
-                "receptacle" or "gfci" => "CHPT_Receptacle_PLACEHOLDER",
-                "switch" => "CHPT_Switch_PLACEHOLDER",
-                _ => throw new OpFailure("invalid_args", a.Kind),
-            });
+        var symbol = Lookup.SymbolByFamilyAndType(context.Doc, Categories, family.RevitFamily, family.RevitType);
         var (start, end) = Lookup.CenterlineMm(host);
-        // Same face convention the sim pins (face_left) until room polygons land; the
-        // pre-Phase-6 live spike upgrades this to true face-hosted placement.
-        var point = Placement.Place("face_left", start, end, FtToMm(host.Width), a.Offset, a.HeightAfl);
+        // The shared placement law (fixtures/placement): left = +90° CCW of start->end, which is
+        // the wall's exterior/finish side under the D1 convention (confirmed live, spike step 1);
+        // `face` names the ROOM side. The face is chosen GEOMETRICALLY — by its outward normal and
+        // by lying within 1 mm of the law's point — never by shell layer, so Wall.Flipped (which
+        // swaps Exterior/Interior against the draw direction) cannot move a device.
+        var kind = a.Face == "right" ? "face_right" : "face_left";
+        var point = Placement.Place(kind, start, end, FtToMm(host.Width), a.Offset, a.HeightAfl);
         var level = context.Doc.GetElement(host.LevelId) as Level
             ?? throw new OpFailure("unknown_level", a.HostWallId);
-        var instance = context.Doc.Create.NewFamilyInstance(
-            new XYZ(MmToFt(point.X), MmToFt(point.Y), level.Elevation + MmToFt(a.HeightAfl)),
-            symbol, host, level, StructuralType.NonStructural);
+        var location = new XYZ(MmToFt(point.X), MmToFt(point.Y), level.Elevation + MmToFt(a.HeightAfl));
+        var (face, sideSeen) = SideFaceOn(host, location, OutwardNormal(start, end, a.Face));
+        if (face is null)
+            throw new OpFailure("unknown_host", sideSeen
+                ? $"{a.Id}: no face of {a.HostWallId} within 1 mm of the {a.Face} placement (host Location Line off the centerline?)"
+                : $"{a.Id}: {a.HostWallId} has no side face on its {a.Face} side");
+        var instance = context.Doc.Create.NewFamilyInstance(face, location, XYZ.BasisZ, symbol);
+        // spike cross-cutting finding 1: a placement can "succeed" unhosted at z=0 — never commit one
+        if (instance.Host is not { } deviceHost || deviceHost.Id != host.Id || instance.HostFace is null)
+            throw new OpFailure("unhosted", $"{a.Id}: not face-hosted by {a.HostWallId}");
         context.MapCreated(a.Id, instance.Id);
     }
+
+    private static XYZ OutwardNormal(Pt2 start, Pt2 end, string face)
+    {
+        var dx = end.X - start.X;
+        var dy = end.Y - start.Y;
+        var length = Math.Sqrt(dx * dx + dy * dy);
+        var left = new XYZ(-dy / length, dx / length, 0);
+        return face == "right" ? -left : left;
+    }
+
+    /// <summary>The wall side face (either shell) whose outward normal points along `outward`
+    /// and which lies within 1 mm of `point`; SideSeen reports whether ANY face on that side
+    /// exists (distinguishes an off-centre Location Line from a missing side).</summary>
+    private static (Reference? Face, bool SideSeen) SideFaceOn(Wall host, XYZ point, XYZ outward)
+    {
+        var sideSeen = false;
+        foreach (var layer in new[] { ShellLayerType.Exterior, ShellLayerType.Interior })
+        {
+            foreach (var reference in HostObjectUtils.GetSideFaces(host, layer))
+            {
+                if (host.GetGeometryObjectFromReference(reference) is not Face face) continue;
+                var projection = face.Project(point);
+                if (projection is null) continue;
+                if (face.ComputeNormal(projection.UVPoint).DotProduct(outward) < 0.5) continue;
+                sideSeen = true;
+                if (projection.Distance < MmToFt(1.0)) return (reference, true);
+            }
+        }
+        return (null, sideSeen);
+    }
+}
+
+public sealed class CreatePipeHandler : IOpHandler
+{
+    public string Op => "create_pipe";
+
+    public void Execute(OpContext context, JsonElement args)
+    {
+        var a = ContractJson.Deserialize<CreatePipeArgs>(args);
+        var types = context.Catalogs.RequireMepTypes();
+        if (!types.SystemTypeNames.TryGetValue(a.System, out var systemName))
+            throw new OpFailure("invalid_args", $"system {a.System}");
+        if (!types.PipeTypes.Values.Contains(a.PipeType))
+            throw new OpFailure("unknown_revit_type", a.PipeType); // the sim's code for the same condition
+        var doc = context.Doc;
+        var systemType = new FilteredElementCollector(doc).OfClass(typeof(PipingSystemType))
+            .Cast<PipingSystemType>().FirstOrDefault(t => t.Name == systemName)
+            ?? throw new OpFailure("unknown_system_type", systemName);
+        var pipeType = new FilteredElementCollector(doc).OfClass(typeof(PipeType))
+            .Cast<PipeType>().FirstOrDefault(t => t.Name == a.PipeType)
+            ?? throw new OpFailure("unknown_revit_type", a.PipeType);
+        var level = Lookup.LevelByName(doc, a.Level);
+        var path = Classify(a.Path);
+        var preferences = pipeType.RoutingPreferenceManager;
+        // live spike steps 4/7: a pipe type without an elbow rule makes NewElbowFitting fail
+        // ("failed to insert elbow") — a template prerequisite, checked before anything is created
+        if (path.Segments > 1 && preferences.GetNumberOfRules(RoutingPreferenceRuleGroupType.Elbows) == 0)
+            throw new OpFailure("routing_preference_missing", $"{pipeType.Name}: no elbow in its routing preferences");
+        var diameter = Fittings.BindSize(a.Id, a.Diameter, PipeNominalsMm(doc, preferences), pipeType.Name);
+
+        var created = new List<ElementId>();
+        var pipes = new List<Pipe>();
+        for (var i = 1; i < path.Points.Count; i++)
+        {
+            var pipe = Pipe.Create(doc, systemType.Id, pipeType.Id, level.Id,
+                Lookup.Xyz(path.Points[i - 1]), Lookup.Xyz(path.Points[i]));
+            pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM)?.Set(MmToFt(diameter));
+            pipes.Add(pipe);
+            created.Add(pipe.Id);
+        }
+        for (var i = 1; i < pipes.Count; i++)
+            created.Add(Fittings.Elbow(doc, a.Id, pipes[i - 1], pipes[i], Lookup.Xyz(path.Points[i])).Id);
+        Lookup.MapRun(context, a.Id, created);
+    }
+
+    /// <summary>Nominal diameters (mm) of every segment the type's routing preferences carry.</summary>
+    private static IEnumerable<double> PipeNominalsMm(Document doc, RoutingPreferenceManager preferences)
+    {
+        var count = preferences.GetNumberOfRules(RoutingPreferenceRuleGroupType.Segments);
+        var seen = new HashSet<double>();
+        for (var i = 0; i < count; i++)
+        {
+            var rule = preferences.GetRule(RoutingPreferenceRuleGroupType.Segments, i);
+            if (doc.GetElement(rule.MEPPartId) is not PipeSegment segment) continue;
+            foreach (var size in segment.GetSizes())
+                if (seen.Add(size.NominalDiameter)) yield return FtToMm(size.NominalDiameter);
+        }
+    }
+
+    internal static PipePath.Classification Classify(IReadOnlyList<Pt3> path)
+    {
+        try
+        {
+            return PipePath.Classify(path);
+        }
+        catch (PipePathError error)
+        {
+            // sim parity: a degenerate segment is `invalid_path` there; fittings keep their code
+            throw new OpFailure(error.Code == "zero_length" ? "invalid_path" : error.Code, error.Message);
+        }
+    }
+}
+
+public sealed class CreateConduitHandler : IOpHandler
+{
+    public string Op => "create_conduit";
+
+    public void Execute(OpContext context, JsonElement args)
+    {
+        var a = ContractJson.Deserialize<CreateConduitArgs>(args);
+        var types = context.Catalogs.RequireMepTypes();
+        var doc = context.Doc;
+        var conduitType = new FilteredElementCollector(doc).OfClass(typeof(ConduitType))
+            .Cast<ConduitType>().FirstOrDefault(t => t.Name == types.ConduitType)
+            ?? throw new OpFailure("unknown_revit_type", types.ConduitType);
+        var level = Lookup.LevelByName(doc, a.Level);
+        var path = CreatePipeHandler.Classify(a.Path);
+        // conduit types carry their fittings as type properties (spike step 7: Bend = the elbow)
+        if (path.Segments > 1 && conduitType.Elbow is null)
+            throw new OpFailure("routing_preference_missing", $"{conduitType.Name}: no elbow (Bend) fitting on the conduit type");
+        var diameter = Fittings.BindSize(a.Id, a.Diameter, ConduitNominalsMm(doc, conduitType), conduitType.Name);
+
+        var created = new List<ElementId>();
+        var conduits = new List<Conduit>();
+        for (var i = 1; i < path.Points.Count; i++)
+        {
+            var conduit = Conduit.Create(doc, conduitType.Id,
+                Lookup.Xyz(path.Points[i - 1]), Lookup.Xyz(path.Points[i]), level.Id);
+            conduit.get_Parameter(BuiltInParameter.RBS_CONDUIT_DIAMETER_PARAM)?.Set(MmToFt(diameter));
+            conduits.Add(conduit);
+            created.Add(conduit.Id);
+        }
+        for (var i = 1; i < conduits.Count; i++)
+            created.Add(Fittings.Elbow(doc, a.Id, conduits[i - 1], conduits[i], Lookup.Xyz(path.Points[i])).Id);
+        Lookup.MapRun(context, a.Id, created);
+    }
+
+    /// <summary>Trade sizes (mm) of the conduit standard the type is set to (e.g. EMT).</summary>
+    private static IEnumerable<double> ConduitNominalsMm(Document doc, ConduitType conduitType)
+    {
+        var standard = conduitType.get_Parameter(BuiltInParameter.CONDUIT_STANDARD_TYPE_PARAM)?.AsValueString();
+        if (string.IsNullOrEmpty(standard)) yield break;
+        foreach (var entry in ConduitSizeSettings.GetConduitSizeSettings(doc))
+        {
+            if (entry.Key != standard) continue;
+            foreach (var size in entry.Value) yield return FtToMm(size.NominalDiameter);
+        }
+    }
+}
+
+/// <summary>Shared by the pipe and conduit handlers: trade-size binding and guarded elbow
+/// insertion (live spike steps 4–5, docs/REVIT_SPIKE_RESULTS.md).</summary>
+internal static class Fittings
+{
+    /// <summary>The diameter actually written: the size-table nominal nearest the request when
+    /// the type exposes a table (a literal 76 mm never binds OD/ID — Revit needs the table's
+    /// 76.2 = 3"), the literal request when the type has no table at all; `unknown_size` when
+    /// the table has nothing within MepSizes.SnapToleranceMm.</summary>
+    public static double BindSize(string id, double requestedMm, IEnumerable<double> nominalsMm, string typeName)
+    {
+        var table = nominalsMm.ToList();
+        if (table.Count == 0) return requestedMm;
+        return MepSizes.Snap(requestedMm, table)
+            ?? throw new OpFailure("unknown_size",
+                $"{id}: {requestedMm} mm is not a size of {typeName} (nearest {MepSizes.Nearest(requestedMm, table):0.##} mm)");
+    }
+
+    /// <summary>NewElbowFitting with Revit's refusal surfaced as `fitting_insert_failed` (the
+    /// routing preferences name a fitting Revit cannot place here) instead of `internal`.</summary>
+    public static FamilyInstance Elbow(Document doc, string id, MEPCurve first, MEPCurve second, XYZ joint)
+    {
+        try
+        {
+            return doc.Create.NewElbowFitting(Lookup.ConnectorAt(first, joint), Lookup.ConnectorAt(second, joint));
+        }
+        catch (Autodesk.Revit.Exceptions.ApplicationException ex)
+        {
+            throw new OpFailure("fitting_insert_failed", $"{id}: {ex.Message}");
+        }
+    }
+}
+
+/// <summary>The plugin's executor of the ONE clash law (PLAN.md Part G): after a regenerate,
+/// every element THIS envelope created is intersected (ElementIntersectsElementFilter) with
+/// every created or id-mapped element; walls/doors/windows/levels are never clash elements;
+/// exempt category pairs come from clash_prisms.json (ClashExemptions); connector-joined pairs
+/// and elements sharing a logical id (segments of one run) are skipped. The first hit fails
+/// the envelope with `interference "A~B"` in logical ids — the merge gate's Phase B signal.</summary>
+public sealed class RunInterferenceCheckHandler : IOpHandler
+{
+    public string Op => "run_interference_check";
+
+    public void Execute(OpContext context, JsonElement args)
+    {
+        var a = ContractJson.Deserialize<RunInterferenceCheckArgs>(args);
+        if (a.Scope != "last_commit") throw new OpFailure("invalid_args", $"scope {a.Scope}");
+        var doc = context.Doc;
+        var exemptions = context.Catalogs.RequireClash();
+        var types = context.Catalogs.MepTypes;
+        doc.Regenerate();
+
+        var created = context.Created();
+        if (created.Count == 0) return;
+        // created × ALL: every clash-class element in the document is a candidate — modelled
+        // columns, existing MEP and hand-placed families included (reported as
+        // revit:<ElementId> when the HUB never created them); walls/doors/windows never are
+        var clashCategories = new ElementMulticategoryFilter(new List<BuiltInCategory>
+        {
+            BuiltInCategory.OST_PipeCurves, BuiltInCategory.OST_PipeFitting, BuiltInCategory.OST_FlexPipeCurves,
+            BuiltInCategory.OST_Conduit, BuiltInCategory.OST_ConduitFitting,
+            BuiltInCategory.OST_ElectricalFixtures, BuiltInCategory.OST_LightingDevices,
+            BuiltInCategory.OST_Furniture, BuiltInCategory.OST_PlumbingFixtures, BuiltInCategory.OST_Casework,
+            BuiltInCategory.OST_SpecialityEquipment, BuiltInCategory.OST_ElectricalEquipment,
+            BuiltInCategory.OST_Columns, BuiltInCategory.OST_StructuralColumns, BuiltInCategory.OST_StructuralFraming,
+        });
+
+        foreach (var (aLogical, aElementId) in created)
+        {
+            if (doc.GetElement(new ElementId(aElementId)) is not { } element) continue;
+            var aClass = ClashClass(element);
+            if (aClass is null) continue;
+            var hits = new FilteredElementCollector(doc)
+                .WhereElementIsNotElementType()
+                .WherePasses(clashCategories)
+                .WherePasses(new ElementIntersectsElementFilter(element))
+                .ToElements();
+            foreach (var other in hits.OrderBy(e => e.Id.Value))
+            {
+                var bLogical = context.LogicalIdOf(other.Id);
+                if (bLogical == aLogical) continue; // segments/fittings of one run
+                var bClass = ClashClass(other);
+                if (bClass is null) continue;
+                if (exemptions.IsExempt(aClass, SystemOf(element, types), bClass, SystemOf(other, types))) continue;
+                if (ConnectorJoined(element, other)) continue;
+                throw new OpFailure("interference", ClashPairs.Format(aLogical, bLogical));
+            }
+        }
+    }
+
+    /// <summary>Category → clash class; null = not a clash element (walls, doors, windows,
+    /// levels, rooms, anything unknown).</summary>
+    internal static string? ClashClass(Element element)
+    {
+        if (element.Category is null) return null;
+        return (BuiltInCategory)element.Category.Id.Value switch
+        {
+            BuiltInCategory.OST_PipeCurves or BuiltInCategory.OST_PipeFitting
+                or BuiltInCategory.OST_FlexPipeCurves => "pipe",
+            BuiltInCategory.OST_Conduit or BuiltInCategory.OST_ConduitFitting => "conduit",
+            BuiltInCategory.OST_ElectricalFixtures or BuiltInCategory.OST_LightingDevices => "device",
+            BuiltInCategory.OST_Furniture or BuiltInCategory.OST_PlumbingFixtures
+                or BuiltInCategory.OST_Casework or BuiltInCategory.OST_SpecialityEquipment
+                or BuiltInCategory.OST_ElectricalEquipment => "furniture",
+            BuiltInCategory.OST_Columns or BuiltInCategory.OST_StructuralColumns
+                or BuiltInCategory.OST_StructuralFraming => "structure",
+            _ => null,
+        };
+    }
+
+    private static string? SystemOf(Element element, MepTypes? types)
+    {
+        var name = element.get_Parameter(BuiltInParameter.RBS_PIPING_SYSTEM_TYPE_PARAM)?.AsValueString();
+        return name is null ? null : types?.SystemOf(name) ?? name;
+    }
+
+    private static bool ConnectorJoined(Element a, Element b)
+    {
+        var managerA = Connectors(a);
+        var managerB = Connectors(b);
+        if (managerA is null || managerB is null) return false;
+        foreach (Connector ca in managerA.Connectors)
+            foreach (Connector cb in managerB.Connectors)
+                if (ca.IsConnectedTo(cb)) return true;
+        return false;
+    }
+
+    private static ConnectorManager? Connectors(Element element) => element switch
+    {
+        MEPCurve curve => curve.ConnectorManager,
+        FamilyInstance instance => instance.MEPModel?.ConnectorManager,
+        _ => null,
+    };
 }
 
 public sealed class NotImplementedOpHandler(string op) : IOpHandler
@@ -175,7 +564,11 @@ public static class OpHandlerRegistry
             new CreateWallHandler(),
             new CreateDoorHandler(),
             new CreateWindowHandler(),
+            new PlaceFamilyHandler(),
             new PlaceDeviceHandler(),
+            new CreatePipeHandler(),
+            new CreateConduitHandler(),
+            new RunInterferenceCheckHandler(),
         };
         var map = handlers.ToDictionary(h => h.Op);
         foreach (var op in OpArgsRegistry.ArgTypes.Keys)

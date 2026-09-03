@@ -1,5 +1,6 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using ChapterHub.Core;
 using ChapterHub.Core.Contracts;
 using ChapterHub.Core.Execution;
 using ChapterHub.Revit.Addin.IdMap;
@@ -12,15 +13,22 @@ namespace ChapterHub.Revit.Addin.Execution;
 /// its own TransactionGroup; seq + id-map persisted via Extensible Storage INSIDE the
 /// group (rollback releases the seq); TTL re-checked at dequeue; document binding
 /// verified before anything runs; re-Raise drains the queue one envelope at a time.
+/// Phase 6: errors carry op_index; an `interference` rollback is followed by a
+/// `clash_delta` frame naming the clashing pair in logical ids (the sim's frame order).
 /// </summary>
 public sealed class EnvelopeHandler : IExternalEventHandler
 {
     private readonly EnvelopeQueue _queue = new();
     private readonly IReadOnlyDictionary<string, IOpHandler> _handlers = OpHandlerRegistry.Build();
     private readonly Action<object> _send;
+    private readonly AddinCatalogs _catalogs;
     private ExternalEvent? _event;
 
-    public EnvelopeHandler(Action<object> sendMessage) => _send = sendMessage;
+    public EnvelopeHandler(Action<object> sendMessage, AddinCatalogs? catalogs = null)
+    {
+        _send = sendMessage;
+        _catalogs = catalogs ?? AddinCatalogs.Empty;
+    }
 
     /// <summary>Must be created in a valid Revit API context (IExternalApplication.OnStartup).</summary>
     public void Attach(ExternalEvent externalEvent) => _event = externalEvent;
@@ -75,7 +83,7 @@ public sealed class EnvelopeHandler : IExternalEventHandler
                 return;
             }
 
-            var context = new OpContext(doc, store);
+            var context = new OpContext(doc, store, _catalogs);
             var done = 0;
             foreach (var batch in body.Ops.Chunk(200))
             {
@@ -83,7 +91,14 @@ public sealed class EnvelopeHandler : IExternalEventHandler
                 transaction.Start();
                 foreach (var call in batch)
                 {
-                    _handlers[call.Op].Execute(context, call.Args);
+                    try
+                    {
+                        _handlers[call.Op].Execute(context, call.Args);
+                    }
+                    catch (OpFailure failure)
+                    {
+                        throw new IndexedOpFailure(failure, done);
+                    }
                     done++;
                 }
                 transaction.Commit();
@@ -103,10 +118,26 @@ public sealed class EnvelopeHandler : IExternalEventHandler
                 delta: context.Delta.Select(d => new { logical_id = d.LogicalId, element_id = d.ElementId }).ToArray(),
                 errors: []);
         }
+        catch (IndexedOpFailure indexed)
+        {
+            group.RollBack();
+            var failure = indexed.Failure;
+            SendCommitResult(body, committed: false, delta: [],
+                errors: [Error(failure.Code, failure.Detail, indexed.OpIndex)]);
+            if (failure.Code == "interference" && ClashPairs.Parse(failure.Detail) is { } pair)
+            {
+                _send(new
+                {
+                    type = "clash_delta",
+                    envelope_id = body.EnvelopeId,
+                    pairs = new[] { new { a_id = pair.AId, b_id = pair.BId, kind = "hard_interference" } },
+                });
+            }
+        }
         catch (OpFailure failure)
         {
             group.RollBack();
-            SendCommitResult(body, committed: false, delta: [], errors: [Error(failure.Code, failure.Message)]);
+            SendCommitResult(body, committed: false, delta: [], errors: [Error(failure.Code, failure.Detail)]);
         }
         catch (Exception ex)
         {
@@ -123,6 +154,15 @@ public sealed class EnvelopeHandler : IExternalEventHandler
     }
 
     private static object Error(string code, string message) => new { code, message };
+
+    private static object Error(string code, string message, int opIndex) =>
+        new { code, message, op_index = opIndex };
+
+    private sealed class IndexedOpFailure(OpFailure failure, int opIndex) : Exception(failure.Message)
+    {
+        public OpFailure Failure { get; } = failure;
+        public int OpIndex { get; } = opIndex;
+    }
 
     private void SendCommitResult(EnvelopeBody body, bool committed, object[] delta, object[] errors) =>
         _send(new

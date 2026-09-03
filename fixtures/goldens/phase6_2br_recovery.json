@@ -1,0 +1,479 @@
+{
+  "exhaustion": {
+    "rejects": 4,
+    "sequence": [
+      {
+        "e001_offset": 1912.5,
+        "iteration": 1,
+        "iterations_used": 0,
+        "status": "clean"
+      },
+      {
+        "e001_offset": 1762.5,
+        "iteration": 2,
+        "iterations_used": 1,
+        "status": "clean"
+      },
+      {
+        "e001_offset": 1612.5,
+        "iteration": 3,
+        "iterations_used": 2,
+        "status": "clean"
+      },
+      {
+        "e001_offset": 1462.5,
+        "iteration": 4,
+        "iterations_used": 3,
+        "status": "clean"
+      },
+      {
+        "e001_offset": null,
+        "iteration": 5,
+        "iterations_used": 3,
+        "status": "budget_exhausted"
+      }
+    ]
+  },
+  "injected_pair": {
+    "a_id": "E-001",
+    "b_id": "P-001",
+    "kind": "hard_interference"
+  },
+  "recovery": {
+    "commits_at_plan": 3,
+    "final_iterations_used": 2,
+    "plans": [
+      {
+        "actions": [
+          {
+            "action": "shift_device",
+            "changed": true,
+            "higher": "P-001",
+            "higher_priority": 1,
+            "iteration": 2,
+            "lower": "E-001",
+            "lower_priority": 4,
+            "pair": {
+              "a_id": "P-001",
+              "b_id": "E-001",
+              "kind": "hard_interference"
+            },
+            "params": {
+              "after": {
+                "face": "right",
+                "offset": 1762.5
+              },
+              "away_from": "P-001",
+              "before": {
+                "face": "right",
+                "offset": 1912.5
+              },
+              "k": 1
+            },
+            "trigger": "phase_b"
+          }
+        ],
+        "clash_report": {
+          "budget": {
+            "limit": 3,
+            "remaining": 2,
+            "used": 1
+          },
+          "open_clashes": [],
+          "phase_a": {
+            "rounds": []
+          },
+          "phase_b": {
+            "replans": [
+              {
+                "actions": [
+                  {
+                    "action": "shift_device",
+                    "changed": true,
+                    "higher": "P-001",
+                    "higher_priority": 1,
+                    "iteration": 2,
+                    "lower": "E-001",
+                    "lower_priority": 4,
+                    "pair": {
+                      "a_id": "P-001",
+                      "b_id": "E-001",
+                      "kind": "hard_interference"
+                    },
+                    "params": {
+                      "after": {
+                        "face": "right",
+                        "offset": 1762.5
+                      },
+                      "away_from": "P-001",
+                      "before": {
+                        "face": "right",
+                        "offset": 1912.5
+                      },
+                      "k": 1
+                    },
+                    "trigger": "phase_b"
+                  }
+                ],
+                "iteration": 2,
+                "pairs": [
+                  {
+                    "a_id": "E-001",
+                    "b_id": "P-001",
+                    "kind": "hard_interference"
+                  }
+                ]
+              }
+            ]
+          },
+          "prisms": {
+            "conduit": 84,
+            "device": 45,
+            "furniture": 18,
+            "pipe": 10
+          },
+          "status": "clean"
+        },
+        "counts": {
+          "create_conduit": 81,
+          "create_pipe": 10,
+          "ops": 155,
+          "place_device": 45,
+          "place_family": 18,
+          "run_interference_check": 1
+        },
+        "injected": [
+          {
+            "a_id": "E-001",
+            "b_id": "P-001",
+            "kind": "hard_interference"
+          }
+        ],
+        "iteration": 2,
+        "iterations_used": 1,
+        "ops_diff": [
+          {
+            "after": {
+              "face": "right",
+              "height_afl": 380.0,
+              "host_wall_id": "W-001",
+              "id": "E-001",
+              "kind": "receptacle",
+              "offset": 1762.5
+            },
+            "before": {
+              "face": "right",
+              "height_afl": 380.0,
+              "host_wall_id": "W-001",
+              "id": "E-001",
+              "kind": "receptacle",
+              "offset": 1912.5
+            },
+            "id": "E-001"
+          },
+          {
+            "after": {
+              "diameter": 21.0,
+              "id": "Q-001",
+              "level": "Level 1",
+              "path": [
+                [
+                  0.0,
+                  1762.5,
+                  380.0
+                ],
+                [
+                  0.0,
+                  1762.5,
+                  2600.0
+                ]
+              ]
+            },
+            "before": {
+              "diameter": 21.0,
+              "id": "Q-001",
+              "level": "Level 1",
+              "path": [
+                [
+                  0.0,
+                  1912.5,
+                  380.0
+                ],
+                [
+                  0.0,
+                  1912.5,
+                  2600.0
+                ]
+              ]
+            },
+            "id": "Q-001"
+          },
+          {
+            "after": {
+              "diameter": 21.0,
+              "id": "Q-046",
+              "level": "Level 1",
+              "path": [
+                [
+                  0.0,
+                  1762.5,
+                  2600.0
+                ],
+                [
+                  0.0,
+                  3825.0,
+                  2600.0
+                ],
+                [
+                  1200.0,
+                  3825.0,
+                  2600.0
+                ]
+              ]
+            },
+            "before": {
+              "diameter": 21.0,
+              "id": "Q-046",
+              "level": "Level 1",
+              "path": [
+                [
+                  0.0,
+                  1912.5,
+                  2600.0
+                ],
+                [
+                  0.0,
+                  3825.0,
+                  2600.0
+                ],
+                [
+                  1200.0,
+                  3825.0,
+                  2600.0
+                ]
+              ]
+            },
+            "id": "Q-046"
+          }
+        ],
+        "status": "clean"
+      },
+      {
+        "actions": [
+          {
+            "action": "shift_device",
+            "changed": true,
+            "higher": "P-001",
+            "higher_priority": 1,
+            "iteration": 3,
+            "lower": "E-001",
+            "lower_priority": 4,
+            "pair": {
+              "a_id": "P-001",
+              "b_id": "E-001",
+              "kind": "hard_interference"
+            },
+            "params": {
+              "after": {
+                "face": "right",
+                "offset": 1612.5
+              },
+              "away_from": "P-001",
+              "before": {
+                "face": "right",
+                "offset": 1762.5
+              },
+              "k": 1
+            },
+            "trigger": "phase_b"
+          }
+        ],
+        "clash_report": {
+          "budget": {
+            "limit": 3,
+            "remaining": 1,
+            "used": 2
+          },
+          "open_clashes": [],
+          "phase_a": {
+            "rounds": []
+          },
+          "phase_b": {
+            "replans": [
+              {
+                "actions": [
+                  {
+                    "action": "shift_device",
+                    "changed": true,
+                    "higher": "P-001",
+                    "higher_priority": 1,
+                    "iteration": 3,
+                    "lower": "E-001",
+                    "lower_priority": 4,
+                    "pair": {
+                      "a_id": "P-001",
+                      "b_id": "E-001",
+                      "kind": "hard_interference"
+                    },
+                    "params": {
+                      "after": {
+                        "face": "right",
+                        "offset": 1612.5
+                      },
+                      "away_from": "P-001",
+                      "before": {
+                        "face": "right",
+                        "offset": 1762.5
+                      },
+                      "k": 1
+                    },
+                    "trigger": "phase_b"
+                  }
+                ],
+                "iteration": 3,
+                "pairs": [
+                  {
+                    "a_id": "E-001",
+                    "b_id": "P-001",
+                    "kind": "hard_interference"
+                  }
+                ]
+              }
+            ]
+          },
+          "prisms": {
+            "conduit": 84,
+            "device": 45,
+            "furniture": 18,
+            "pipe": 10
+          },
+          "status": "clean"
+        },
+        "counts": {
+          "create_conduit": 81,
+          "create_pipe": 10,
+          "ops": 155,
+          "place_device": 45,
+          "place_family": 18,
+          "run_interference_check": 1
+        },
+        "injected": [
+          {
+            "a_id": "E-001",
+            "b_id": "P-001",
+            "kind": "hard_interference"
+          }
+        ],
+        "iteration": 3,
+        "iterations_used": 2,
+        "ops_diff": [
+          {
+            "after": {
+              "face": "right",
+              "height_afl": 380.0,
+              "host_wall_id": "W-001",
+              "id": "E-001",
+              "kind": "receptacle",
+              "offset": 1612.5
+            },
+            "before": {
+              "face": "right",
+              "height_afl": 380.0,
+              "host_wall_id": "W-001",
+              "id": "E-001",
+              "kind": "receptacle",
+              "offset": 1762.5
+            },
+            "id": "E-001"
+          },
+          {
+            "after": {
+              "diameter": 21.0,
+              "id": "Q-001",
+              "level": "Level 1",
+              "path": [
+                [
+                  0.0,
+                  1612.5,
+                  380.0
+                ],
+                [
+                  0.0,
+                  1612.5,
+                  2600.0
+                ]
+              ]
+            },
+            "before": {
+              "diameter": 21.0,
+              "id": "Q-001",
+              "level": "Level 1",
+              "path": [
+                [
+                  0.0,
+                  1762.5,
+                  380.0
+                ],
+                [
+                  0.0,
+                  1762.5,
+                  2600.0
+                ]
+              ]
+            },
+            "id": "Q-001"
+          },
+          {
+            "after": {
+              "diameter": 21.0,
+              "id": "Q-046",
+              "level": "Level 1",
+              "path": [
+                [
+                  0.0,
+                  1612.5,
+                  2600.0
+                ],
+                [
+                  0.0,
+                  3825.0,
+                  2600.0
+                ],
+                [
+                  1200.0,
+                  3825.0,
+                  2600.0
+                ]
+              ]
+            },
+            "before": {
+              "diameter": 21.0,
+              "id": "Q-046",
+              "level": "Level 1",
+              "path": [
+                [
+                  0.0,
+                  1762.5,
+                  2600.0
+                ],
+                [
+                  0.0,
+                  3825.0,
+                  2600.0
+                ],
+                [
+                  1200.0,
+                  3825.0,
+                  2600.0
+                ]
+              ]
+            },
+            "id": "Q-046"
+          }
+        ],
+        "status": "clean"
+      }
+    ],
+    "rejects": 2
+  }
+}

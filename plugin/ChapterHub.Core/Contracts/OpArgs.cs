@@ -74,6 +74,8 @@ public sealed record PlaceDeviceArgs
     public required string HostWallId { get; init; }
     public required double Offset { get; init; }
     public required double HeightAfl { get; init; }
+    /// <summary>Host wall face: "left" or "right" of the wall's start->end direction (Phase 6).</summary>
+    public required string Face { get; init; }
 }
 
 public sealed record CreatePipeArgs

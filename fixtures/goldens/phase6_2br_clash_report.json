@@ -1,0 +1,31 @@
+{
+  "clash_report": {
+    "budget": {
+      "limit": 3,
+      "remaining": 3,
+      "used": 0
+    },
+    "open_clashes": [],
+    "phase_a": {
+      "rounds": []
+    },
+    "phase_b": {
+      "replans": []
+    },
+    "prisms": {
+      "conduit": 84,
+      "device": 45,
+      "furniture": 18,
+      "pipe": 10
+    },
+    "status": "clean"
+  },
+  "counts": {
+    "create_conduit": 81,
+    "create_pipe": 10,
+    "ops": 155,
+    "place_device": 45,
+    "place_family": 18,
+    "run_interference_check": 1
+  }
+}
