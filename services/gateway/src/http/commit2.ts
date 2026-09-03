@@ -39,11 +39,14 @@ export interface IssueSpec {
   approvalRef?: { review_id: string; content_hash: string };
   seqPolicy?: "next_committed" | "next_issued";
   reissueOf?: string;
+  /** Phase 7: runs after the envelope row is inserted and BEFORE the frame is sent (the
+   *  render job must exist before any export_ready can arrive). */
+  beforeDispatch?: (envelopeId: string, seq: number) => Promise<void>;
 }
 
 type IssueFn = (reply: FastifyReply, projectId: string, spec: IssueSpec) => Promise<FastifyReply>;
 
-interface Outcome {
+export interface Outcome {
   code: number;
   body: unknown;
 }

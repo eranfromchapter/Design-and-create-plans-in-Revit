@@ -10,3 +10,5 @@ export { commandEnvelopeSchema } from "./generated/command-envelope.js";
 export type { CommandEnvelope } from "./generated/command-envelope.js";
 export { wssMessageSchema } from "./generated/wss-messages.js";
 export type { WssMessage } from "./generated/wss-messages.js";
+export { productsCatalog, paramAllowlist } from "./catalogs.js";
+export type { ProductsCatalog, ProductSku, ParamAllowlist, ParamAllowlistEntry } from "./catalogs.js";

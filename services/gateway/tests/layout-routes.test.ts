@@ -108,7 +108,7 @@ describe.skipIf(!DATABASE_URL)("gateway layout flow (DB-backed)", () => {
     compileQueue.length = 0;
     compileRequests.length = 0;
     await gw.pool.query(
-      "TRUNCATE layout_snapshots, briefs, reviews, id_map, event_log, envelopes, workstations, projects",
+      "TRUNCATE finish_selections, render_jobs, layout_snapshots, briefs, reviews, id_map, event_log, envelopes, workstations, projects",
     );
   });
 

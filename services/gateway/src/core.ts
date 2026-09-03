@@ -5,6 +5,7 @@ import { wssMessageSchema } from "@chapter/contracts";
 import type { Config } from "./config.js";
 import type { Repos } from "./db/repos.js";
 import { clashPairSchema } from "./layout/merge-client.js";
+import { BLOB_REF_RE } from "./blobs/store.js";
 
 export interface ExecutorSession {
   ws: WebSocket;
@@ -127,8 +128,13 @@ export class GatewayCore {
         }
         break;
       }
+      case "export_ready": {
+        await this.onExportReady(session, msg as unknown as {
+          kind: string; blob_ref: string; envelope_id?: string; name?: string;
+        });
+        break;
+      }
       case "progress":
-      case "export_ready":
         await this.repos.logEventDirect(
           session.projectId, `workstation:${session.workstationId}`, msg.type, msg,
         );
@@ -141,6 +147,40 @@ export class GatewayCore {
       default:
         session.ws.send(JSON.stringify({ type: "error", code: "unexpected_type", message: msg.type }));
     }
+  }
+
+  /** Phase 7 export correlation (P7-01): a `view` frame lands in the next empty slot of
+   *  the project's latest exporting job whose envelope committed — frames arrive IN
+   *  views ORDER after the commit_result on the same per-session queue, so order is the
+   *  correlation key. `envelope_id` / `name` are honoured when a future contract
+   *  amendment (gate question G1) puts them on the wire. Other kinds stay event-only
+   *  (export_parameters is Phase 8). Nothing here can fail an envelope. */
+  private async onExportReady(
+    session: ExecutorSession,
+    m: { kind: string; blob_ref: string; envelope_id?: string; name?: string },
+  ): Promise<void> {
+    const actor = `workstation:${session.workstationId}`;
+    if (m.kind !== "view") {
+      await this.repos.logEventDirect(session.projectId, actor, "export_ready", m);
+      return;
+    }
+    if (!BLOB_REF_RE.test(m.blob_ref)) {
+      await this.repos.logEventDirect(session.projectId, actor, "export_ready_bad_ref", { blob_ref: String(m.blob_ref).slice(0, 80) });
+      return;
+    }
+    const hint = m.envelope_id || m.name ? { envelopeId: m.envelope_id, name: m.name } : undefined;
+    const outcome = await this.repos.attachExportBlob(session.projectId, m.blob_ref, hint);
+    if (outcome.attached) {
+      await this.repos.logEventDirect(session.projectId, actor, "export_ready", {
+        blob_ref: m.blob_ref, render_id: outcome.renderId, index: outcome.index, complete: outcome.complete,
+      });
+      return;
+    }
+    await this.repos.logEventDirect(
+      session.projectId, actor,
+      outcome.reason === "job_full" ? "export_ready_extra" : "export_ready_unmatched",
+      { blob_ref: m.blob_ref, reason: outcome.reason },
+    );
   }
 
   private async onHello(
