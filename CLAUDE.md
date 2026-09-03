@@ -245,7 +245,7 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   validator (targets in layout ∩ id-map, SKU tier vs brief finish_tier with reasoned
   tier_override, surface class DERIVED from csi_section, walls per room with conflicts → Comments
   + wall_finish_conflict, appliances not selectable, placeholders refused unless allowed, every
-  emitted op re-checked against param_allowlist.json; blocking ⇒ ops = []); 54 tests. Goldens
+  emitted op re-checked against param_allowlist.json; blocking ⇒ ops = []); 61 tests. Goldens
   (gen_golden_render.py sole writer, eyeballed): fixtures/renders/phase7_2br_{plan,section,
   3d_hidden}_2048.png, control-map PNGs, phase7_2br_render.json (109-op golden selection: 51
   targets, 18 walls applied, 7 conflicts, 2 tier overrides). Sim: render_section (+Y elevation)
@@ -259,13 +259,24 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   → finish_failure) → finish_selections + finish_done; SI-2/SI-4: set_parameter /
   set_phase_demolished / delete_element / update_wall are commit-class, buildEnvelope refuses
   off-allowlist params by name + target-id category (param_not_allowlisted);
-  ALLOW_PLACEHOLDER_SKUS (CI-only like AUTO_APPROVE); cards; 102 gateway tests. Plugin: Core
+  ALLOW_PLACEHOLDER_SKUS (CI-only like AUTO_APPROVE); cards; 107 gateway tests. Plugin: Core
   BlobRef / ExportPlan / GatewayUrls / ParamAllowlist / ParamCategories / ParamValueCoercion
   (161 Core tests); Addin ExportViewsHandler (temporary HLR views → PNG → PUT → export_ready
   after commit_result, name never on the wire), SetParameterHandler (allowlist + BuiltInCategory
   + StorageType), HttpBlobUploader, own-transaction handlers, param_allowlist.json enrolled.
   e2e phase7 (6 children): export at seq 4, control-map refs == the golden sha256 strings,
   golden selection → Commit #3 at seq 5; make demo-phase7.
+  ADVERSARIAL REVIEW (8 finders + 2-lens refutation, 34 raw findings): confirmed items fixed on
+  this branch — /envelopes verifies EVERY approval_ref (committable kinds only), export frames
+  bind to the newest committed envelope (frames_lost instead of a stranger's slot), undispatched
+  envelopes abandoned, one compose per project + one pending render_review (index) +
+  render_export_stale after a later Commit #2, finish_review_awaiting_issue, hard failure before
+  the re-issue cap, deadline-bounded HttpRenderer with image validation, IHDR limits before
+  imdecode, request_invalid error body, sim blobs written only at commit, exact resvg pin in
+  both locks, per-file plugin catalogs, section box documented per the API (BasisZ = view
+  direction). Known and accepted: the CSI→surface table is kind-agnostic (a lav SKU on a WC
+  passes — a finer table needs the real catalog, G3); the sim has no casework records (K-
+  targets are unknown_target there); the export/compose ladders are order-correlated until G1.
   GATE QUESTIONS FOR ERAN (defaults ship if unanswered): G1 amend wss `export_ready` with
   optional envelope_id + name? (default: no schema change, order correlation — a frame that
   beats its commit_result is dropped as export_ready_unmatched); G2 the real AIDM API
