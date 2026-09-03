@@ -11,9 +11,10 @@ SIM_DIR := tools/revit-sim
 SCAN_DIR := services/scan-converter
 BRIEF_DIR := services/brief-extractor
 LAYOUT_DIR := services/layout-compiler
+AIDM_DIR := services/aidm-bridge
 DATABASE_URL ?= postgres://chapter:chapter@127.0.0.1:5432/revit_agent
 
-.PHONY: verify lint typecheck test codegen codegen-check dev-up dev-down test-ts test-py test-cs e2e demo-phase1 demo-phase2 demo-phase3 demo-phase4 demo-phase5 demo-phase6
+.PHONY: verify lint typecheck test codegen codegen-check dev-up dev-down test-ts test-py test-cs e2e demo-phase1 demo-phase2 demo-phase3 demo-phase4 demo-phase5 demo-phase6 demo-phase7
 
 verify: lint typecheck test codegen-check
 	@echo "verify: all green"
@@ -25,6 +26,7 @@ lint:
 	cd $(SCAN_DIR) && uv run ruff check . && uv run ruff format --check .
 	cd $(BRIEF_DIR) && uv run ruff check . && uv run ruff format --check .
 	cd $(LAYOUT_DIR) && uv run ruff check . && uv run ruff format --check .
+	cd $(AIDM_DIR) && uv run ruff check . && uv run ruff format --check .
 
 typecheck:
 	pnpm -r --if-present typecheck
@@ -42,6 +44,7 @@ test-py:
 	cd $(SCAN_DIR) && uv run pytest -q
 	cd $(BRIEF_DIR) && uv run pytest -q
 	cd $(LAYOUT_DIR) && uv run pytest -q
+	cd $(AIDM_DIR) && uv run pytest -q
 
 test-cs:
 	$(DOTNET) build plugin/ChapterHub.sln --nologo -v q
@@ -66,6 +69,7 @@ e2e:
 	cd $(SCAN_DIR) && uv sync --quiet
 	cd $(BRIEF_DIR) && uv sync --quiet
 	cd $(LAYOUT_DIR) && uv sync --quiet
+	cd $(AIDM_DIR) && uv sync --quiet
 	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run
 
 # Phase 1 demo (Part E): runs the golden 4-wall pipeline and names the plan artifact.
@@ -124,6 +128,19 @@ demo-phase6:
 	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run phase6
 	cd $(LAYOUT_DIR) && uv run python scripts/demo_phase6.py
 	@echo "demo-phase6: merged plan SVG golden at fixtures/goldens/phase6_2br_mep.svg"
+
+# Phase 7 demo (Part E): control maps + the mock render + the finish-selection payload side
+# by side in out/phase7/, after the phase7 e2e (export -> compose -> render_review ->
+# finish-selection -> Commit #3 against the real bridge child and the real sim).
+demo-phase7:
+	cd $(SIM_DIR) && uv sync --quiet
+	cd $(SCAN_DIR) && uv sync --quiet
+	cd $(BRIEF_DIR) && uv sync --quiet
+	cd $(LAYOUT_DIR) && uv sync --quiet
+	cd $(AIDM_DIR) && uv sync --quiet
+	cd tests/e2e && DATABASE_URL=$(DATABASE_URL) pnpm vitest run phase7
+	cd $(AIDM_DIR) && uv run python scripts/demo_phase7.py
+	@echo "demo-phase7: control maps, mock render and finish payload in out/phase7/ (goldens fixtures/goldens/phase7_2br_*)"
 
 dev-up:
 	docker compose up -d
