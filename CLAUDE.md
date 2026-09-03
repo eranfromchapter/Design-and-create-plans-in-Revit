@@ -304,14 +304,12 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   {furnished, mep} (the design said commit1/mep); (c) a moved/dropped plumbing FIXTURE
   re-resolves inputs and re-runs P-1..P-4 + E-4 (design named furniture re-legalize only);
   (d) unknown clash ids are a contract error except `revit:<ElementId>` structure.
-  GATE ITEMS FOR ERAN: (1) bless or flip the ⚠ PINs 08, 12, 13, 16, 17, 20, 29, 30, 37 (each
-  flip = one gen_golden_mep.py re-run; the gate note carries the alternative tables);
-  (2) catalog vocabulary — mep_types.json is 100% _PLACEHOLDER (pipe types, system type
-  names, conduit type, device families), clash_prisms.json kind heights/device box are
-  engineering defaults, and E-2 needs a counter casework family (is_counter) — counter walls
-  are derived from sink/DW today; (3) the human Pre-Phase-6 Revit spike + Phase 6 gate
-  checklist (docs/MANUAL_REVIT_TEST.md) — face convention, door flip mapping, catalog
-  enrollment dir; (4) v1 scope = sanitary DWV only (vent/supply/gas are review items);
-  (5) registry prose amendment for create_pipe/create_conduit/run_interference_check
-  sim_behavior (Q5). Standing asks unchanged (catalogs, ANTHROPIC_API_KEY,
-  MANUAL_REVIT_TEST Phases 1–2).
+  GATE DECISIONS (Eran, 2026-09-03): (1) ⚠ PINs 08, 12, 13, 16, 17, 20, 29, 30, 37 BLESSED as
+  shipped (no golden re-run); (2) catalog vocabulary stays _PLACEHOLDER for now — Eran will
+  connect the real vocabulary through knowledge later (mep_types.json, clash_prisms.json
+  heights/device box, counter casework family); (3) deviations (a)–(g) signed off; (4) the
+  human Pre-Phase-6 Revit spike + Phase 6 checklist (docs/MANUAL_REVIT_TEST.md) stays OPEN —
+  it needs a person at a Revit workstation, like the Phase 1–2 checklists; (5) v1 scope =
+  sanitary DWV only confirmed; registry prose amendment for sim_behavior (Q5) folded into the
+  Phase 7 contracts commit. Standing asks unchanged (catalog vocabulary via knowledge,
+  ANTHROPIC_API_KEY, MANUAL_REVIT_TEST Phases 1–2 and 6).
