@@ -30,23 +30,47 @@ plugin version, and outcome for each run.
       re-upload refused (`commit0_already_done`).
 
 ## Pre-Phase-6 spike (before the MEP agent is built)
-Runner for a Claude Code session on the workstation: `docs/REVIT_SPIKE.md` (stage 1 answers the
-convention rows below through the AUTOM8LABS MCP bridge; stage 2 is the add-in itself).
+Runner for a Claude session on the workstation: `docs/REVIT_SPIKE.md` — stage 1 (the API
+conventions through the AUTOM8LABS bridge) is DONE 2026-09-03, results in
+`docs/REVIT_SPIKE_RESULTS.md`; stage 2 (the add-in itself) is OPEN. Stage-1 outcomes per row:
 - [ ] One `create_pipe` envelope (two segments + one 90° elbow) executes; tee case emits REVIEW.
+      Stage 1: straight pipes OK at Ø76 (`Sanitary` system exists; no PVC type, `Default` steel
+      used); the elbow FAILED because the template has no pipe elbow family → the plugin now
+      preflights the type's routing preferences (`routing_preference_missing`) and surfaces
+      Revit's refusal as `fitting_insert_failed`. Re-test once an elbow family is loaded
+      (stage 2 prerequisite 3).
 - [ ] One `create_door` + `place_device` envelope: door lands at offset-centerline convention;
       receptacle is face-hosted at 380 mm AFF on the ROOM-side face named by `args.face`
       (left = +90° CCW of start→end); record any wall whose `face` the executor got wrong.
+      Stage 1: exterior face = LEFT of start→end CONFIRMED live (both draw directions); hosting
+      untestable through the connector (it placed face-based families unhosted at z = 0) → the
+      plugin now fails `unhosted` unless `Host` is the wall and `HostFace` is set. Needs the
+      add-in + a face-based fixture family (stage 2).
 - [ ] `create_door` `swing` L|R + `flip_facing`: leaf sweeps LEFT of start→end when
-      `flip_facing` is falsy (Phase 5 swing.py convention); confirm or invert the
-      `flipHand()`/`flipFacing()` mapping in `CreateDoorHandler`.
+      `flip_facing` is falsy (Phase 5 swing.py convention); hinge at the plan's jamb.
+      Stage 1: BLOCKED (no door family, no hosted placement, no flip tools). The plugin no longer
+      maps onto HandFlipped/FacingFlipped: it compares the placed door's HandOrientation /
+      FacingOrientation with the plan's directions and flips on disagreement, assuming the
+      Door.rft convention (hinge at family −X, swing to family +Y). Verify with Chapter's real
+      door family — a different family convention fails `door_flip_failed`.
 - [ ] Template prerequisite: routing preferences loaded (runbook); missing-fitting failure mode
-      recorded.
+      recorded. Stage 1: RECORDED — pipe type `Default` carries Coupling / Tee / Transition but
+      no elbow; conduit type `Conduit with Fittings : Conduit` (EMT) carries all five fittings
+      and its auto-elbow works. Content list: `docs/REVIT_SPIKE.md` stage 2 prerequisites.
+- [ ] Sizes bind to the type's table: Ø76 → 76.2 (3"), Ø51 → 50.8 (2"), conduit 21 → 19.05
+      (¾" EMT); a request with no table nominal within 2.5 mm fails `unknown_size`. Stage 1
+      showed literal values never bind (OD = ID = 76.0; 21 mm displayed as 7/8").
+- [ ] Interference law: touching-but-not-overlapping elements are NOT reported (strict overlap).
+      Stage 1: CONFIRMED — an end-to-end touching pipe was not flagged; a true crossing and an
+      unmitred corner were.
 
 ## Phase 6 gate (MEP + Commit #2)
 Prerequisite: the enrollment catalog directory `%AppData%\ChapterHub\catalogs\` holds
 `mep_types.json` and `clash_prisms.json` copied from `packages/contracts/catalogs/` (the
 add-in fails MEP ops with `catalog_missing` otherwise) — with the REAL template names, not
-the `_PLACEHOLDER` rows.
+the `_PLACEHOLDER` rows — and the template content listed under `docs/REVIT_SPIKE.md` stage 2
+prerequisites (door family per the Door.rft convention, one face-based fixture family per device
+kind, a PVC DWV pipe type whose routing preferences carry an elbow, trade-size diameters).
 - [ ] Pre-Phase-6 spike rows ticked (create_pipe two segments + elbow; create_door +
       place_device face-hosted 380 AFF; routing preferences loaded); walls needing `face`
       corrections recorded.

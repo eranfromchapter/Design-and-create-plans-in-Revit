@@ -308,10 +308,17 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   shipped (no golden re-run); (2) catalog vocabulary stays _PLACEHOLDER for now — Eran will
   connect the real vocabulary through knowledge later (mep_types.json, clash_prisms.json
   heights/device box, counter casework family); (3) deviations (a)–(g) signed off; (4) the
-  human Pre-Phase-6 Revit spike + Phase 6 checklist (docs/MANUAL_REVIT_TEST.md) stays OPEN —
-  it needs a person at a Revit workstation, like the Phase 1–2 checklists — Eran offers his
-  dev-only Revit workstation via the AUTOM8LABS MCP bridge; runner: docs/REVIT_SPIKE.md (a
-  local Claude Code session, bridge on localhost, throwaway models); (5) v1 scope =
-  sanitary DWV only confirmed; registry prose amendment for sim_behavior (Q5) folded into the
-  Phase 7 contracts commit. Standing asks unchanged (catalog vocabulary via knowledge,
-  ANTHROPIC_API_KEY, MANUAL_REVIT_TEST Phases 1–2 and 6).
+  human Pre-Phase-6 Revit spike: STAGE 1 DONE 2026-09-03 on Eran's dev-only workstation (Claude
+  Cowork + AUTOM8LABS bridge, throwaway model) — docs/REVIT_SPIKE_RESULTS.md; face law
+  CONFIRMED (exterior = LEFT of start→end), touching not flagged (strict law), conduit + elbow
+  work; template lacks door/electrical families, a PVC type and a pipe elbow. Plugin follow-ups
+  shipped (docs/PHASE6_DESIGN.md §9b): door flips decided from HandOrientation/FacingOrientation
+  vectors under the declared Door.rft convention (`door_flip_failed`), `unhosted` post-checks,
+  routing-preference preflight (`routing_preference_missing`, `fitting_insert_failed`),
+  size-table snapping within 2.5 mm (`unknown_size`); Core 107 tests. STAGE 2 (the add-in on the
+  workstation, docs/MANUAL_REVIT_TEST.md Pre-Phase-6 + Phase 6 rows) stays OPEN until the
+  template has the content listed in docs/REVIT_SPIKE.md; (5) v1 scope = sanitary DWV only
+  confirmed; registry prose amendment for sim_behavior (Q5) folded into the Phase 7 contracts
+  commit. Standing asks: catalog vocabulary via knowledge (conduit_diameter_mm as a trade size),
+  template content (door family per Door.rft convention, face-based device families, PVC DWV
+  pipe type + elbow fitting), ANTHROPIC_API_KEY, MANUAL_REVIT_TEST Phases 1–2 and 6.

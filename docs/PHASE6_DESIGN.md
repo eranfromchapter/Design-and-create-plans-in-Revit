@@ -597,6 +597,50 @@ pinned details of this document, recorded here so §4/§5 are read with them:
   wire; `commit_result`/`ack` are project-scoped in the gateway; the sim's device boxes use
   the as-built thickness like Phase A.
 
+## 9b. Live-spike amendments (stage 1, 2026-09-03)
+
+Stage 1 of `docs/REVIT_SPIKE.md` ran on Eran's dev-only workstation (Revit 2027.2, AUTOM8LABS
+connector, throwaway model); results in `docs/REVIT_SPIKE_RESULTS.md`. No contract, catalog,
+sim, gateway or golden changed; the plugin changed as follows (amends §7):
+
+- **Face law confirmed.** Exterior/finish face = LEFT of start→end, proven geometrically for
+  both draw directions — `Placement.Place("face_left")` and the D1 wall convention stand.
+  `PlaceDeviceHandler` chooses the face geometrically (outward normal on the named side AND
+  within 1 mm of the law's point), never by shell layer, so `Wall.Flipped` cannot move a
+  device; a placement that comes back unhosted (the connector did exactly that, silently, at
+  z = 0) fails `unhosted`, as does a door not hosted by its wall.
+- **Door flips from orientation vectors, not flags.** `CreateDoorHandler` no longer sets
+  HandFlipped/FacingFlipped from `swing`/`flip_facing`: those flags are relative to the family's
+  authoring and to `Wall.Orientation` (a fresh door faces the wall's exterior, negated on a
+  flipped wall). It computes the desired world directions from the swing.py law
+  (`ChapterHub.Core.DoorOrientation`: hinge toward start for L, leaf sweeps the left normal
+  unless `flip_facing`), flips on a negative dot product, re-reads, and fails `door_flip_failed`
+  if either direction still disagrees. Declared assumption, verified in stage 2 against
+  Chapter's real door family: Door.rft authoring — hinge at family −X, swing to family +Y
+  (HandOrientation = hinge → latch).
+- **Fittings are a template prerequisite.** The stage-1 pipe type carried no elbow family and
+  `NewElbowFitting` failed ("failed to insert elbow"). The handlers preflight
+  (`RoutingPreferenceManager` elbow rules for pipes, `ConduitType.Elbow` for conduits →
+  `routing_preference_missing`) and wrap the insert (`fitting_insert_failed` carrying Revit's
+  text). Both are hard codes in the gateway (anything but `interference`/`expired_ttl`) →
+  `commit2_failure`, correct because re-issuing cannot fix a template. Tees stay `wye_manual`
+  (the connector could not route them either).
+- **Sizes bind to the type's table.** A literal 76 mm produced OD = ID = 76 (no 3" binding) and
+  21 mm displayed as 7/8". `ChapterHub.Core.MepSizes` snaps to the nearest segment /
+  conduit-standard nominal within 2.5 mm (76→76.2, 51→50.8, 38→38.1, 32→31.75, 21→19.05 = ¾" EMT),
+  else `unknown_size`; a type without any table keeps the literal value. The sim has no tables
+  and keeps the literal Ø — Revit's real OD (3" steel = 88.9) exceeds the Phase A prism, a gap
+  Phase B recovery covers by design. Gate note: `E4_CONDUIT_DIAMETER_MM = 21` and
+  `mep_types.conduit_diameter_mm: 21` should become the real trade size when the vocabulary
+  lands (golden re-run then).
+- **Interference law confirmed.** Revit does not flag end-to-end touching (strict overlap only),
+  matching Phase A, the sim and `ElementIntersectsElementFilter`; it does flag unmitred pipe
+  corners, which cannot arise once elbows insert (same-run pairs are skipped anyway).
+- **Template gaps → standing asks.** No door, window or electrical-fixture families, no PVC
+  pipe type, no pipe elbow, local family library not installed; the observed real names
+  `Sanitary` (piping system type) and `Conduit with Fittings : Conduit` (EMT) are candidates
+  for Eran's `mep_types.json`, never written by us.
+
 ---
 
 ## 10. Build order, risks
