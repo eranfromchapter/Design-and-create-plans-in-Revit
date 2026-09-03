@@ -276,7 +276,9 @@ Update this section at every phase gate: phase number, what passed, open REVIEW 
   both locks, per-file plugin catalogs, section box documented per the API (BasisZ = view
   direction). Known and accepted: the CSI→surface table is kind-agnostic (a lav SKU on a WC
   passes — a finer table needs the real catalog, G3); the sim has no casework records (K-
-  targets are unknown_target there); the export/compose ladders are order-correlated until G1.
+  targets are unknown_target there); the export/compose ladders are order-correlated until G1; blob GET is actor/service-wide
+  like every other actor/service read (the flat FS store is shared with the sim) — the Azure
+  implementation (Phase 10) adds a project prefix.
   GATE QUESTIONS FOR ERAN (defaults ship if unanswered): G1 amend wss `export_ready` with
   optional envelope_id + name? (default: no schema change, order correlation — a frame that
   beats its commit_result is dropped as export_ready_unmatched); G2 the real AIDM API
