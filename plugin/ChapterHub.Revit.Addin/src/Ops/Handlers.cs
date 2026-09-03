@@ -147,14 +147,29 @@ public sealed class CreateDoorHandler : IOpHandler
         var instance = context.Doc.Create.NewFamilyInstance(
             new XYZ(MmToFt(point.X), MmToFt(point.Y), level.Elevation),
             symbol, host, level, StructuralType.NonStructural);
-        // Phase 5 swing.py convention: the leaf sweeps LEFT of start->end when flip_facing is
-        // falsy; swing L|R is the hinge side seen from the swept side. Revit's hand/facing flags
-        // are relative to the family's authored orientation, so the mapping below is the
-        // literal one the pre-Phase-6 live spike confirms or inverts (docs/MANUAL_REVIT_TEST.md).
-        if ((a.Swing == "R") != instance.HandFlipped) instance.flipHand();
-        if ((a.FlipFacing ?? false) != instance.FacingFlipped) instance.flipFacing();
+        if (instance.Host is not { } doorHost || doorHost.Id != host.Id)
+            throw new OpFailure("unhosted", $"{a.Id}: not hosted by {a.HostWallId}");
+        // Phase 5 swing.py law: hinge at offset - w/2 (toward start) for swing L, + w/2 for R;
+        // the leaf sweeps LEFT of start->end when flip_facing is falsy. Revit's HandFlipped /
+        // FacingFlipped are relative to the family's authoring and to Wall.Orientation (a fresh
+        // door faces the wall's exterior, which Wall.Flipped negates), so the flags are never
+        // read: the placed instance's orientation VECTORS are compared with the desired world
+        // directions (live spike 2026-09-03, docs/REVIT_SPIKE_RESULTS.md step 3). Assumes the
+        // Door.rft authoring convention — hinge at the family's -X jamb, swing to family +Y —
+        // which stage 2 of the spike verifies against Chapter's real door family.
+        var desired = DoorOrientation.For(start, end, a.Swing, a.FlipFacing ?? false);
+        var flipped = false;
+        if (DoorOrientation.Sign(Vec(instance.HandOrientation), desired.Hand) < 0) flipped |= instance.flipHand();
+        if (DoorOrientation.Sign(Vec(instance.FacingOrientation), desired.Facing) < 0) flipped |= instance.flipFacing();
+        if (flipped) context.Doc.Regenerate();
+        var hand = DoorOrientation.Sign(Vec(instance.HandOrientation), desired.Hand);
+        var facing = DoorOrientation.Sign(Vec(instance.FacingOrientation), desired.Facing);
+        if (hand <= 0 || facing <= 0)
+            throw new OpFailure("door_flip_failed", $"{a.Id}: hand {hand} facing {facing} after flips");
         context.MapCreated(a.Id, instance.Id);
     }
+
+    private static DoorOrientation.Vec2 Vec(XYZ v) => new(v.X, v.Y);
 }
 
 public sealed class CreateWindowHandler : IOpHandler
@@ -227,31 +242,55 @@ public sealed class PlaceDeviceHandler : IOpHandler
         var symbol = Lookup.SymbolByFamilyAndType(context.Doc, Categories, family.RevitFamily, family.RevitType);
         var (start, end) = Lookup.CenterlineMm(host);
         // The shared placement law (fixtures/placement): left = +90° CCW of start->end, which is
-        // the wall's exterior/finish side under the D1 convention; `face` names the ROOM side.
+        // the wall's exterior/finish side under the D1 convention (confirmed live, spike step 1);
+        // `face` names the ROOM side. The face is chosen GEOMETRICALLY — by its outward normal and
+        // by lying within 1 mm of the law's point — never by shell layer, so Wall.Flipped (which
+        // swaps Exterior/Interior against the draw direction) cannot move a device.
         var kind = a.Face == "right" ? "face_right" : "face_left";
         var point = Placement.Place(kind, start, end, FtToMm(host.Width), a.Offset, a.HeightAfl);
         var level = context.Doc.GetElement(host.LevelId) as Level
             ?? throw new OpFailure("unknown_level", a.HostWallId);
         var location = new XYZ(MmToFt(point.X), MmToFt(point.Y), level.Elevation + MmToFt(a.HeightAfl));
-        var face = SideFaceAt(context.Doc, host, location)
-            ?? throw new OpFailure("unknown_host", $"no face of {a.HostWallId} within 1 mm of the {a.Face} placement");
+        var (face, sideSeen) = SideFaceOn(host, location, OutwardNormal(start, end, a.Face));
+        if (face is null)
+            throw new OpFailure("unknown_host", sideSeen
+                ? $"{a.Id}: no face of {a.HostWallId} within 1 mm of the {a.Face} placement (host Location Line off the centerline?)"
+                : $"{a.Id}: {a.HostWallId} has no side face on its {a.Face} side");
         var instance = context.Doc.Create.NewFamilyInstance(face, location, XYZ.BasisZ, symbol);
+        // spike cross-cutting finding 1: a placement can "succeed" unhosted at z=0 — never commit one
+        if (instance.Host is not { } deviceHost || deviceHost.Id != host.Id || instance.HostFace is null)
+            throw new OpFailure("unhosted", $"{a.Id}: not face-hosted by {a.HostWallId}");
         context.MapCreated(a.Id, instance.Id);
     }
 
-    /// <summary>The wall side face (interior or exterior shell) the placement point lies on.</summary>
-    private static Reference? SideFaceAt(Document doc, Wall host, XYZ point)
+    private static XYZ OutwardNormal(Pt2 start, Pt2 end, string face)
     {
+        var dx = end.X - start.X;
+        var dy = end.Y - start.Y;
+        var length = Math.Sqrt(dx * dx + dy * dy);
+        var left = new XYZ(-dy / length, dx / length, 0);
+        return face == "right" ? -left : left;
+    }
+
+    /// <summary>The wall side face (either shell) whose outward normal points along `outward`
+    /// and which lies within 1 mm of `point`; SideSeen reports whether ANY face on that side
+    /// exists (distinguishes an off-centre Location Line from a missing side).</summary>
+    private static (Reference? Face, bool SideSeen) SideFaceOn(Wall host, XYZ point, XYZ outward)
+    {
+        var sideSeen = false;
         foreach (var layer in new[] { ShellLayerType.Exterior, ShellLayerType.Interior })
         {
             foreach (var reference in HostObjectUtils.GetSideFaces(host, layer))
             {
                 if (host.GetGeometryObjectFromReference(reference) is not Face face) continue;
                 var projection = face.Project(point);
-                if (projection is not null && projection.Distance < MmToFt(1.0)) return reference;
+                if (projection is null) continue;
+                if (face.ComputeNormal(projection.UVPoint).DotProduct(outward) < 0.5) continue;
+                sideSeen = true;
+                if (projection.Distance < MmToFt(1.0)) return (reference, true);
             }
         }
-        return null;
+        return (null, sideSeen);
     }
 }
 
@@ -276,6 +315,12 @@ public sealed class CreatePipeHandler : IOpHandler
             ?? throw new OpFailure("unknown_revit_type", a.PipeType);
         var level = Lookup.LevelByName(doc, a.Level);
         var path = Classify(a.Path);
+        var preferences = pipeType.RoutingPreferenceManager;
+        // live spike steps 4/7: a pipe type without an elbow rule makes NewElbowFitting fail
+        // ("failed to insert elbow") — a template prerequisite, checked before anything is created
+        if (path.Segments > 1 && preferences.GetNumberOfRules(RoutingPreferenceRuleGroupType.Elbows) == 0)
+            throw new OpFailure("routing_preference_missing", $"{pipeType.Name}: no elbow in its routing preferences");
+        var diameter = Fittings.BindSize(a.Id, a.Diameter, PipeNominalsMm(doc, preferences), pipeType.Name);
 
         var created = new List<ElementId>();
         var pipes = new List<Pipe>();
@@ -283,18 +328,27 @@ public sealed class CreatePipeHandler : IOpHandler
         {
             var pipe = Pipe.Create(doc, systemType.Id, pipeType.Id, level.Id,
                 Lookup.Xyz(path.Points[i - 1]), Lookup.Xyz(path.Points[i]));
-            pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM)?.Set(MmToFt(a.Diameter));
+            pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM)?.Set(MmToFt(diameter));
             pipes.Add(pipe);
             created.Add(pipe.Id);
         }
         for (var i = 1; i < pipes.Count; i++)
-        {
-            var joint = Lookup.Xyz(path.Points[i]);
-            var elbow = doc.Create.NewElbowFitting(
-                Lookup.ConnectorAt(pipes[i - 1], joint), Lookup.ConnectorAt(pipes[i], joint));
-            created.Add(elbow.Id);
-        }
+            created.Add(Fittings.Elbow(doc, a.Id, pipes[i - 1], pipes[i], Lookup.Xyz(path.Points[i])).Id);
         Lookup.MapRun(context, a.Id, created);
+    }
+
+    /// <summary>Nominal diameters (mm) of every segment the type's routing preferences carry.</summary>
+    private static IEnumerable<double> PipeNominalsMm(Document doc, RoutingPreferenceManager preferences)
+    {
+        var count = preferences.GetNumberOfRules(RoutingPreferenceRuleGroupType.Segments);
+        var seen = new HashSet<double>();
+        for (var i = 0; i < count; i++)
+        {
+            var rule = preferences.GetRule(RoutingPreferenceRuleGroupType.Segments, i);
+            if (doc.GetElement(rule.MEPPartId) is not PipeSegment segment) continue;
+            foreach (var size in segment.GetSizes())
+                if (seen.Add(size.NominalDiameter)) yield return FtToMm(size.NominalDiameter);
+        }
     }
 
     internal static PipePath.Classification Classify(IReadOnlyList<Pt3> path)
@@ -325,6 +379,10 @@ public sealed class CreateConduitHandler : IOpHandler
             ?? throw new OpFailure("unknown_revit_type", types.ConduitType);
         var level = Lookup.LevelByName(doc, a.Level);
         var path = CreatePipeHandler.Classify(a.Path);
+        // conduit types carry their fittings as type properties (spike step 7: Bend = the elbow)
+        if (path.Segments > 1 && conduitType.Elbow is null)
+            throw new OpFailure("routing_preference_missing", $"{conduitType.Name}: no elbow (Bend) fitting on the conduit type");
+        var diameter = Fittings.BindSize(a.Id, a.Diameter, ConduitNominalsMm(doc, conduitType), conduitType.Name);
 
         var created = new List<ElementId>();
         var conduits = new List<Conduit>();
@@ -332,18 +390,57 @@ public sealed class CreateConduitHandler : IOpHandler
         {
             var conduit = Conduit.Create(doc, conduitType.Id,
                 Lookup.Xyz(path.Points[i - 1]), Lookup.Xyz(path.Points[i]), level.Id);
-            conduit.get_Parameter(BuiltInParameter.RBS_CONDUIT_DIAMETER_PARAM)?.Set(MmToFt(a.Diameter));
+            conduit.get_Parameter(BuiltInParameter.RBS_CONDUIT_DIAMETER_PARAM)?.Set(MmToFt(diameter));
             conduits.Add(conduit);
             created.Add(conduit.Id);
         }
         for (var i = 1; i < conduits.Count; i++)
-        {
-            var joint = Lookup.Xyz(path.Points[i]);
-            var elbow = doc.Create.NewElbowFitting(
-                Lookup.ConnectorAt(conduits[i - 1], joint), Lookup.ConnectorAt(conduits[i], joint));
-            created.Add(elbow.Id);
-        }
+            created.Add(Fittings.Elbow(doc, a.Id, conduits[i - 1], conduits[i], Lookup.Xyz(path.Points[i])).Id);
         Lookup.MapRun(context, a.Id, created);
+    }
+
+    /// <summary>Trade sizes (mm) of the conduit standard the type is set to (e.g. EMT).</summary>
+    private static IEnumerable<double> ConduitNominalsMm(Document doc, ConduitType conduitType)
+    {
+        var standard = conduitType.get_Parameter(BuiltInParameter.CONDUIT_STANDARD_TYPE_PARAM)?.AsValueString();
+        if (string.IsNullOrEmpty(standard)) yield break;
+        foreach (var entry in ConduitSizeSettings.GetConduitSizeSettings(doc))
+        {
+            if (entry.Key != standard) continue;
+            foreach (var size in entry.Value) yield return FtToMm(size.NominalDiameter);
+        }
+    }
+}
+
+/// <summary>Shared by the pipe and conduit handlers: trade-size binding and guarded elbow
+/// insertion (live spike steps 4–5, docs/REVIT_SPIKE_RESULTS.md).</summary>
+internal static class Fittings
+{
+    /// <summary>The diameter actually written: the size-table nominal nearest the request when
+    /// the type exposes a table (a literal 76 mm never binds OD/ID — Revit needs the table's
+    /// 76.2 = 3"), the literal request when the type has no table at all; `unknown_size` when
+    /// the table has nothing within MepSizes.SnapToleranceMm.</summary>
+    public static double BindSize(string id, double requestedMm, IEnumerable<double> nominalsMm, string typeName)
+    {
+        var table = nominalsMm.ToList();
+        if (table.Count == 0) return requestedMm;
+        return MepSizes.Snap(requestedMm, table)
+            ?? throw new OpFailure("unknown_size",
+                $"{id}: {requestedMm} mm is not a size of {typeName} (nearest {MepSizes.Nearest(requestedMm, table):0.##} mm)");
+    }
+
+    /// <summary>NewElbowFitting with Revit's refusal surfaced as `fitting_insert_failed` (the
+    /// routing preferences name a fitting Revit cannot place here) instead of `internal`.</summary>
+    public static FamilyInstance Elbow(Document doc, string id, MEPCurve first, MEPCurve second, XYZ joint)
+    {
+        try
+        {
+            return doc.Create.NewElbowFitting(Lookup.ConnectorAt(first, joint), Lookup.ConnectorAt(second, joint));
+        }
+        catch (Autodesk.Revit.Exceptions.ApplicationException ex)
+        {
+            throw new OpFailure("fitting_insert_failed", $"{id}: {ex.Message}");
+        }
     }
 }
 
