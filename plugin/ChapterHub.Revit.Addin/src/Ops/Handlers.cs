@@ -11,10 +11,11 @@ using Wall = Autodesk.Revit.DB.Wall;
 namespace ChapterHub.Revit.Addin.Ops;
 
 // The op handlers the phase gates exercise live: Phase 1 (create_level, create_wall,
-// create_door, create_window, place_device), Phase 5 (place_family) and Phase 6
-// (create_pipe, create_conduit, run_interference_check; place_device gains `face`).
-// Every other registry op routes to NotImplementedOpHandler, which fails the envelope
-// CLEANLY (rolled_back) instead of pretending — those handlers land with their phases.
+// create_door, create_window, place_device), Phase 5 (place_family), Phase 6
+// (create_pipe, create_conduit, run_interference_check; place_device gains `face`) and
+// Phase 7 (export_views, set_parameter). Every other registry op routes to
+// NotImplementedOpHandler, which fails the envelope CLEANLY (rolled_back) instead of
+// pretending — those handlers land with their phases.
 
 internal static class Lookup
 {
@@ -546,6 +547,240 @@ public sealed class RunInterferenceCheckHandler : IOpHandler
     };
 }
 
+/// <summary>Phase 7 export (docs/PHASE7_DESIGN.md §3.6, P7-12): per views[] entry a temporary
+/// view in its own transaction (plan: ViewPlan on the first mapped wall's level; section: an
+/// elevation through the framed model's centre looking +Y — the sim's render_section law;
+/// 3d_hidden: an isometric View3D), all hidden-line, exported to PNG at `px` (fit
+/// horizontally), hashed (BlobRef), PUT to the gateway, the view deleted, and ONE
+/// export_ready per entry emitted after the commit_result — in views order, name never on
+/// the wire. Nothing enters the id-map (the model is unchanged). Failures roll the envelope
+/// back: view_export_failed, blob_upload_failed.</summary>
+public sealed class ExportViewsHandler : IOpHandler
+{
+    public string Op => "export_views";
+
+    public bool NeedsOwnTransactions => true;
+
+    private const double FrameMarginMm = 250.0;
+    private const double MinHalfExtentMm = 500.0;
+
+    public void Execute(OpContext context, JsonElement args)
+    {
+        var a = ContractJson.Deserialize<ExportViewsArgs>(args);
+        IReadOnlyList<ExportPlan.Frame> frames;
+        try
+        {
+            frames = ExportPlan.From(a);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new OpFailure("invalid_args", ex.Message);
+        }
+        var envelope = context.Envelope ?? throw new OpFailure("internal", "export_views needs the envelope context");
+        var doc = context.Doc;
+        var (box, level) = FrameOf(context);
+        var tempDir = Path.Combine(Path.GetTempPath(), "ChapterHub", envelope.EnvelopeId.ToString());
+        Directory.CreateDirectory(tempDir);
+        var refs = new List<string>(frames.Count);
+        try
+        {
+            foreach (var frame in frames)
+            {
+                ElementId viewId;
+                using (var create = new Transaction(doc, $"HUB export {frame.Index}"))
+                {
+                    create.Start();
+                    viewId = CreateTemporaryView(doc, frame, box, level);
+                    create.Commit();
+                }
+                byte[] png;
+                try
+                {
+                    png = ExportPng(doc, viewId, frame, tempDir);
+                }
+                finally
+                {
+                    // the temporary view never survives the envelope, success or failure
+                    using var cleanup = new Transaction(doc, $"HUB export cleanup {frame.Index}");
+                    cleanup.Start();
+                    doc.Delete(viewId);
+                    cleanup.Commit();
+                }
+                var blobRef = BlobRef.Of(png);
+                if (!context.Uploader.Put(envelope.ProjectId.ToString(), blobRef, png, out var error))
+                    throw new OpFailure("blob_upload_failed", $"{frame.Name}: {error}");
+                refs.Add(blobRef);
+            }
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+            catch (IOException)
+            {
+                // best effort: a locked temp file must not fail a committed export
+            }
+        }
+        foreach (var blobRef in refs) context.Emit(ExportPlan.ReadyMessage(blobRef));
+    }
+
+    /// <summary>The union bounding box of everything the HUB created (fallback: every wall) and
+    /// the level the plan view is drawn on (the first mapped wall's, else the first level).</summary>
+    private static (BoundingBoxXYZ Box, Level Level) FrameOf(OpContext context)
+    {
+        var doc = context.Doc;
+        BoundingBoxXYZ? union = null;
+        Level? level = null;
+        foreach (var entry in context.Store.Entries)
+        {
+            var element = doc.GetElement(new ElementId(entry.Value));
+            if (element is null) continue;
+            if (level is null && element is Wall wall) level = doc.GetElement(wall.LevelId) as Level;
+            union = Union(union, element.get_BoundingBox(null));
+        }
+        if (union is null)
+        {
+            foreach (var wall in new FilteredElementCollector(doc).OfClass(typeof(Wall)).Cast<Wall>())
+            {
+                level ??= doc.GetElement(wall.LevelId) as Level;
+                union = Union(union, wall.get_BoundingBox(null));
+            }
+        }
+        level ??= new FilteredElementCollector(doc).OfClass(typeof(Level)).Cast<Level>().FirstOrDefault()
+            ?? throw new OpFailure("unknown_level", "no level in model");
+        if (union is null) throw new OpFailure("view_export_failed", "nothing to frame: no walls with geometry");
+        return (union, level);
+    }
+
+    private static BoundingBoxXYZ? Union(BoundingBoxXYZ? a, BoundingBoxXYZ? b)
+    {
+        if (b is null) return a;
+        if (a is null) return new BoundingBoxXYZ { Min = b.Min, Max = b.Max };
+        return new BoundingBoxXYZ
+        {
+            Min = new XYZ(Math.Min(a.Min.X, b.Min.X), Math.Min(a.Min.Y, b.Min.Y), Math.Min(a.Min.Z, b.Min.Z)),
+            Max = new XYZ(Math.Max(a.Max.X, b.Max.X), Math.Max(a.Max.Y, b.Max.Y), Math.Max(a.Max.Z, b.Max.Z)),
+        };
+    }
+
+    private static ElementId ViewFamilyTypeId(Document doc, ViewFamily family) =>
+        new FilteredElementCollector(doc).OfClass(typeof(ViewFamilyType)).Cast<ViewFamilyType>()
+            .FirstOrDefault(t => t.ViewFamily == family)?.Id
+        ?? throw new OpFailure("view_export_failed", $"the model has no {family} view family type");
+
+    private static ElementId CreateTemporaryView(Document doc, ExportPlan.Frame frame, BoundingBoxXYZ box, Level level)
+    {
+        View view;
+        switch (frame.Kind)
+        {
+            case "plan":
+                view = ViewPlan.Create(doc, ViewFamilyTypeId(doc, ViewFamily.FloorPlan), level.Id);
+                break;
+            case "section":
+            {
+                // an elevation through the framed centre looking +Y: view direction = +Y, up = +Z,
+                // right = -X (right-handed); the near plane sits at the cut, the far plane past
+                // the model (the sim's render_section draws the same half)
+                var centre = (box.Min + box.Max) / 2.0;
+                var halfWidth = Math.Max((box.Max.X - box.Min.X) / 2.0 + MmToFt(FrameMarginMm), MmToFt(MinHalfExtentMm));
+                var halfHeight = Math.Max((box.Max.Z - box.Min.Z) / 2.0 + MmToFt(FrameMarginMm), MmToFt(MinHalfExtentMm));
+                var depth = Math.Max((box.Max.Y - box.Min.Y) / 2.0 + MmToFt(FrameMarginMm), MmToFt(MinHalfExtentMm));
+                var transform = Transform.Identity;
+                transform.Origin = centre;
+                transform.BasisX = new XYZ(-1, 0, 0);
+                transform.BasisY = XYZ.BasisZ;
+                transform.BasisZ = XYZ.BasisY;
+                var section = new BoundingBoxXYZ
+                {
+                    Transform = transform,
+                    Min = new XYZ(-halfWidth, -halfHeight, 0),
+                    Max = new XYZ(halfWidth, halfHeight, depth),
+                };
+                view = ViewSection.CreateSection(doc, ViewFamilyTypeId(doc, ViewFamily.Section), section);
+                break;
+            }
+            default:
+                view = View3D.CreateIsometric(doc, ViewFamilyTypeId(doc, ViewFamily.ThreeDimensional));
+                break;
+        }
+        view.Name = $"HUB export {frame.Index} {Guid.NewGuid():N}";
+        view.DisplayStyle = DisplayStyle.HLR;
+        return view.Id;
+    }
+
+    private static byte[] ExportPng(Document doc, ElementId viewId, ExportPlan.Frame frame, string tempDir)
+    {
+        var prefix = Path.Combine(tempDir, $"view_{frame.Index}");
+        var options = new ImageExportOptions
+        {
+            ExportRange = ExportRange.SetOfViews,
+            PixelSize = frame.Px,
+            ZoomType = ZoomFitType.FitToPage,
+            FitDirection = FitDirectionType.Horizontal,
+            HLRandWFViewsFileType = ImageFileType.PNG,
+            ShadowViewsFileType = ImageFileType.PNG,
+            ImageResolution = ImageResolution.DPI_150,
+            FilePath = prefix,
+        };
+        options.SetViewsAndSheets(new List<ElementId> { viewId });
+        try
+        {
+            doc.ExportImage(options);
+        }
+        catch (Exception ex)
+        {
+            throw new OpFailure("view_export_failed", $"{frame.Name}: {ex.Message}");
+        }
+        // Revit appends " - <view type> - <view name>.png" to FilePath
+        var file = Directory.GetFiles(tempDir, $"view_{frame.Index}*.png").OrderBy(f => f, StringComparer.Ordinal).FirstOrDefault()
+            ?? throw new OpFailure("view_export_failed", $"{frame.Name}: Revit wrote no PNG");
+        return File.ReadAllBytes(file);
+    }
+}
+
+/// <summary>Phase 7 finish parameters (SI-4, docs/PHASE7_DESIGN.md §3.6): the id-mapped
+/// element's parameter is set only when the enrolled allowlist names the param for the
+/// element's category (ParamCategories from its BuiltInCategory), the parameter exists
+/// (Comments via ALL_MODEL_INSTANCE_COMMENTS; the CHPT_* shared parameters must be bound
+/// per docs/REVIT_TEMPLATE_CONTENT.md), is writable, and the value fits its StorageType.
+/// Codes: param_not_allowlisted, unknown_param, param_readonly, param_type_mismatch,
+/// param_set_failed. Nothing enters the id-map.</summary>
+public sealed class SetParameterHandler : IOpHandler
+{
+    public string Op => "set_parameter";
+
+    public void Execute(OpContext context, JsonElement args)
+    {
+        var a = ContractJson.Deserialize<SetParameterArgs>(args);
+        var allowlist = context.Catalogs.RequireParamAllowlist();
+        var element = context.ResolveTarget(a.TargetId);
+        var category = ParamCategories.Vocabulary(element.Category?.BuiltInCategory.ToString());
+        if (!allowlist.IsAllowed(a.Param, category))
+            throw new OpFailure("param_not_allowlisted",
+                $"{a.Param} on {a.TargetId} ({category ?? element.Category?.Name ?? "no category"})");
+        var parameter = a.Param == "Comments"
+            ? element.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+            : element.LookupParameter(a.Param);
+        if (parameter is null)
+            throw new OpFailure("unknown_param",
+                $"{a.Param} is not bound to {element.Category?.Name ?? "this element"} in this model — bind the shared parameter (docs/REVIT_TEMPLATE_CONTENT.md)");
+        if (parameter.IsReadOnly) throw new OpFailure("param_readonly", $"{a.Param} on {a.TargetId}");
+        if (allowlist.RequiresString(a.Param) && a.Value.ValueKind != JsonValueKind.String)
+            throw new OpFailure("param_type_mismatch", $"{a.Param} takes a string, got {a.Value.ValueKind}");
+        var decision = ParamValueCoercion.Decide(a.Value, parameter.StorageType.ToString());
+        var ok = decision.Kind switch
+        {
+            ParamValueCoercion.Kind.SetString => parameter.Set(decision.StringValue!),
+            ParamValueCoercion.Kind.SetDouble => parameter.Set(decision.DoubleValue),
+            ParamValueCoercion.Kind.SetInteger => parameter.Set(decision.IntegerValue),
+            _ => throw new OpFailure("param_type_mismatch", $"{a.Param}: {decision.Reason}"),
+        };
+        if (!ok) throw new OpFailure("param_set_failed", $"{a.Param} on {a.TargetId}");
+    }
+}
+
 public sealed class NotImplementedOpHandler(string op) : IOpHandler
 {
     public string Op { get; } = op;
@@ -569,6 +804,8 @@ public static class OpHandlerRegistry
             new CreatePipeHandler(),
             new CreateConduitHandler(),
             new RunInterferenceCheckHandler(),
+            new ExportViewsHandler(),
+            new SetParameterHandler(),
         };
         var map = handlers.ToDictionary(h => h.Op);
         foreach (var op in OpArgsRegistry.ArgTypes.Keys)

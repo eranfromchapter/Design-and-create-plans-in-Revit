@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Autodesk.Revit.DB;
 using ChapterHub.Core;
+using ChapterHub.Core.Contracts;
 using ChapterHub.Revit.Addin.IdMap;
+using ChapterHub.Revit.Addin.Transport;
 
 namespace ChapterHub.Revit.Addin.Ops;
 
@@ -16,11 +18,24 @@ public sealed class OpFailure(string code, string message) : Exception($"{code}:
     public string Detail { get; } = message;
 }
 
-public sealed class OpContext(Document doc, HubStateStore store, AddinCatalogs catalogs)
+public sealed class OpContext(
+    Document doc,
+    HubStateStore store,
+    AddinCatalogs catalogs,
+    EnvelopeBody? envelope = null,
+    IBlobUploader? uploader = null)
 {
+    private readonly List<object> _sideMessages = [];
+
     public Document Doc { get; } = doc;
     public HubStateStore Store { get; } = store;
     public AddinCatalogs Catalogs { get; } = catalogs;
+
+    /// <summary>Phase 7: the envelope being executed (project id for blob uploads).</summary>
+    public EnvelopeBody? Envelope { get; } = envelope;
+
+    /// <summary>Phase 7: where exported bytes go before they are announced.</summary>
+    public IBlobUploader Uploader { get; } = uploader ?? NullBlobUploader.Instance;
 
     /// <summary>The id-map delta this envelope commits: one entry per op that creates.</summary>
     public List<(string LogicalId, long ElementId)> Delta { get; } = [];
@@ -54,6 +69,18 @@ public sealed class OpContext(Document doc, HubStateStore store, AddinCatalogs c
             ?? throw new OpFailure("unknown_target", logicalId);
         return Doc.GetElement(mapped) ?? throw new OpFailure("unknown_target", logicalId);
     }
+
+    /// <summary>Phase 7: queue a frame (export_ready) that must reach the gateway ONLY after
+    /// the envelope's commit_result — a rolled-back envelope announces nothing. Drained by
+    /// the EnvelopeHandler after Assimilate, in emission order.</summary>
+    public void Emit(object message) => _sideMessages.Add(message);
+
+    public IReadOnlyList<object> DrainSideMessages()
+    {
+        var drained = _sideMessages.ToList();
+        _sideMessages.Clear();
+        return drained;
+    }
 }
 
 /// <summary>One handler per allowlisted op (ops/registry.json). Args arrive already
@@ -63,5 +90,11 @@ public sealed class OpContext(Document doc, HubStateStore store, AddinCatalogs c
 public interface IOpHandler
 {
     string Op { get; }
+
+    /// <summary>Phase 7: a handler that creates and deletes transient elements (temporary
+    /// export views) runs OUTSIDE the batch transactions and opens its own — still inside the
+    /// envelope's TransactionGroup, so a rollback undoes everything it did.</summary>
+    bool NeedsOwnTransactions => false;
+
     void Execute(OpContext context, JsonElement args);
 }
